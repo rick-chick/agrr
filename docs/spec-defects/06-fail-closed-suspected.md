@@ -1,10 +1,12 @@
 # 06. fail-closed 違反の疑い（8 項目）と同種箇所: 判定と対応計画（厳格適用）
 
 **種別:** 仕様不具合の対応計画（ドキュメント）。本書はコードを変更しない。
-**版:** 第 2 版。§0 の決定「厳格」を反映した。第 1 版の判定（違反確定 / 仕様上許容 / 要判断）は §2.1 の「旧判定」列に残し、確定判定へ置き換えた。
+**版:** 第 3 版。§0 の決定「厳格」を反映した。第 1 版の判定（違反確定 / 仕様上許容 / 要判断）は §2.1 の「旧判定」列に残し、確定判定へ置き換えた。第 3 版は既存の判定を変えず、次の 4 点を更新した。(1) README の決定事項（第 1〜3 回）と、05・07・08・10 の最新版に合わせた依存と本文の形（§0 末尾、§3.3、§3.9、§7.1 の Q1・Q2、§9）。(2) master の #1337〜#1344 が特性化テストで固定した現状挙動の一覧（§2.5）と、それに伴う TDD 計画の更新（§5、§6、§8）。(3) 行番号の再確認（次の「行番号の再確認」）。(4) 05 が本書へ送ったが本書で未割当だった箇所と、01 R9 が挙げた箇所の受け皿（§2.3 の H11・H12、§7.2 R12）。
 **対象:** `crates/agrr-server/src/entry_schedule.rs`、`crates/agrr-domain/src/field_cultivation/interactors/field_cultivation_climate_data_interactor.rs`、`crates/agrr-server/src/optimization_chain_phase.rs`、`crates/agrr-domain/src/cultivation_plan/{calculators/fields_allocation.rs, interactors/cultivation_plan_initialize_interactor.rs, interactors/entry_schedule/window_service.rs}`、`crates/agrr-server/src/weather_reschedule_proposals.rs`。第 2 版で追加した対象は §2.2 と §2.3 に file:line 付きで示す。
 
-根拠は 2026-09-29 時点で実際に読んだファイル・実行した `rg` / `ls` / `sed` と、fixture JSON の集計（`python3`）のみ。読んでいない・実行していないものは「未確認」と明記する。テストは実行していない（本書は調査と計画のみ）。
+根拠は 2026-09-29 時点（第 1・2 版）と 2026-10-07 時点（第 3 版。`master` = `3de664648`、#1344）で実際に読んだファイル・実行した `rg` / `ls` / `sed` / `git diff` と、fixture JSON の集計（`python3`）のみ。読んでいない・実行していないものは「未確認」と明記する。テストは実行していない（本書は調査と計画のみ）。§2.5 の「固定している挙動」は、テストのソースを読んで得たもので、`cargo test` の結果ではない。
+
+**行番号の再確認（第 3 版）:** 第 2 版の基準（`cdfd21ac6` 以降）から `3de664648` までに変わった `crates/` の非テスト行は 3 か所だけで、いずれもファイル末尾への追記か、テストモジュール内の挿入である（`git diff cdfd21ac6 HEAD --stat -- crates` と `git diff` で確認）。(a) `field_cultivation_climate_data_interactor.rs` の末尾（`:641-648`）に、`interactors_field_cultivation_climate_data_interactor_test.rs` を取り込む `#[cfg(test)]` ブロックが加わった。(b) `fields_allocation.rs` の末尾（`:79-87`）に、`calculators_fields_allocation_test.rs` を取り込むブロックが加わった。(c) `optimization_chain_phase.rs` のテストモジュールに、`:299-313` のテスト 1 件が挿入された。本書が引用する非テスト行は、これらより前にあるため不変である。本書が file:line で引用した 262 件を、実ファイルの該当行と突き合わせた。python3 で引用を抽出し、該当行の先頭を読み出して、引用の説明と構文が一致するかを確認した。ファイル名が複数のファイルに該当する引用は、実体を指定して確認した。ずれていたものは本文で訂正した。主な訂正は次のとおり。`optimization_chain_phase.rs` の `run_guarded_optimization_step_skips_when_plan_not_optimizing` は `:300-321` から `:315-337`。`has_transplant_stage` のテストは `:62-76` から `:62-78`。`entry_schedule.rs` のテストモジュールは `:644-` から `:645-`。`returns_failure_when_total_area_is_not_positive` の `#[test]` は `:171` から `:173`。`entry_schedule.rs` の `CropWrap` は `:98-124` から `:97-124`、`AgrrCropBuilder` は `:131-142` から `:127-142`。テストファイルの行番号は #1337〜#1344 で大きくずれたため、§2.5 は関数名と現在の行番号を併記した。
 
 ---
 
@@ -22,15 +24,28 @@
    - 業務上意味のある「行なし」「`Ok(None)`」。ただし DB エラーと区別し、停止や `None` は観測可能（ログまたは明示結果）にする。無言の停止は許容に含めない。
 3. 修正後の形は、明示エラー（`on_failure` / 4xx・5xx とエラーコード）、`eligible: false` と理由、`501` のいずれか。握りつぶしを「ログだけ残して成功形を返す」に置き換えることは修正と認めない。
 4. 本番から到達しないコードは、修正より**削除**を第一選択にする（`.cursor/rules/project-necessary-code-only.mdc`）。
-5. ユーザー確認に残すのは、外部から見える契約（HTTP ステータス・エラー形）、製品仕様、テスト実行経路、可用性とのトレードオフに限る。§7.1 に理由付きで 4 件を残した。
+5. ユーザー確認に残すのは、外部から見える契約（HTTP ステータス・エラー形）、製品仕様、テスト実行経路、可用性とのトレードオフに限る。§7.1 に理由付きで 5 件を残した（第 3 版で Q5 を追加）。
 
 **第 1 版からの主な変更:**
 
 - 許容・要判断だった項目 3・4 を確定した。項目 3 は削除（明示失敗）、項目 4 は「許容」部分の実態を再確認して修正へ。
 - 到達不能の項目 5・6・7 を「潜在違反として修正または削除」に確定した。項目 6 は、本番の呼び出し元が常に `"public"` を渡すことを新たに確認し、`with_private_planning` ごと削除へ。
 - 依頼外の A〜G を本課題の範囲に含めた。05 が扱う A・B は本書で二重に直さない（§2.2）。
-- 同型の握りつぶし H 系と、失敗し得ないシリアライズの握りつぶしのクラス S を追加した（§2.3）。
+- 同型の握りつぶし H 系と、失敗し得ないシリアライズの握りつぶしのクラス S を追加した（§2.3）。第 3 版で H11・H12 を追加した。
 - 機械検出は、厳格方針の下で再評価し、`agrr-domain` に限定した 1 ルールを推奨に更新した（§4.2）。
+
+**第 3 版: 他課題の決定との整合（本書の判定は変えない）:**
+
+README の決定事項（第 1〜3 回）のうち本書に関わるものと、05・07・08・10 の最新版との整合を、次のとおり固定する。読んだ版は、05 が改訂 2、07・08・10 と 01・02・03 が 2026-10-07 時点の作業ツリー（未コミットを含む）である。各決定は「文脈からの解釈」を含むため、解釈が差し替わったら該当行を直す。
+
+| 決定・他課題の記述 | 本書への影響 | 反映先 |
+| ------------------ | ------------ | ------ |
+| 第 2 回「errors」・第 3 回「削除」（07 §0.2、§0.3、§3.3 の C1〜C9、§3.6） | 本書が新設・変更する失敗応答の本文は、`errors`（非空の文字列配列）を必須とし、機械可読コードは任意の `error_code` に置く（例: `{"errors": ["メッセージ"], "error_code": "コード"}`）。`error`（単数）と `message` は失敗の主メッセージにしない。`success: false` などの付加情報は許容される（C8）。実装は `api_error.rs` のヘルパー経由で、新規の失敗は `Legacy::None`（07 §3.6）。本書が触る既存の `error` / `message` 箇所（`entry_schedule.rs` の `error` 7 箇所、`field_cultivation_climate.rs` の `message` 5 箇所、`account.rs` の `error` など）は、07 の S1 で旧キーが併記され S2 で撤去される（区分 A / B。07 §2.7 の #9・#15・#18）ため、本書の失敗応答の変更は 07 の手順 2（`api_error.rs` の導入）の後に行う（07 §10 の 05・06 行）。`weather_reschedule_proposals.rs` は既に `errors`（区分 C。07 §2.7 の #14）で、本文の変更は無い | §3.3、§3.8、§3.9（D・H1・S3）、§6、§7.1 の Q1・Q2 |
+| 05 改訂 2（05 §3.A-6、§5.A） | 失敗通知は出力ポートの `on_failure(FieldCultivationClimateFailure { reason, message })` 1 つで、種別は `FieldCultivationClimateFailureReason`。第 2 版が参照した `on_progress_unavailable` は 05 から消えた。本書の「予測未生成」「予測ペイロード欠落」は、同じ enum の種別として追加する。HTTP は `reason` の網羅的な `match` で決め、`status_for_message` の文字列推定を使わない。作業記録側は `on_climate_snapshot_unavailable` と `WorkRecordClimateSnapshotUnavailableError`（05 §5.A の 9） | §2.2、§3.3、§7.1 の Q2 |
+| 第 2 回「閲覧も許さない」・第 3 回「縮小」（10 §0。Plan 系は所有者のみ、Farm / Crop の編集も所有者のみ） | 本書の判定は変わらない。10 は `climate_data` の認可を適合とし変更しない（10 §0 の D2 の確定、§2.2 の表）。10 の縮小は次の 3 点で本書に触れる。(a) `cable.rs:402-407` の `member_organization_ids(..).unwrap_or_default()` を不要にして除去する（10 §8.1、T7-13）ため、§2.4 の未精査候補から外れる。(b) `work_record_{create,update}_interactor.rs` ほかのコンストラクタから `scope_gateway` を外す（10 §4.1）ため、§2.5 の H9 のテスト（`&EmptyScopeGateway` を渡す 2 件）の呼び出しも更新対象になる。(c) `weather_reschedule_proposals.rs:125,200` の scope gateway の生成を除く（10 §2.9.3）ため、項目 8 の行番号が実装時にずれる | §2.4、§2.5、§6 |
+| 第 3 回「移行する」・第 2 回「削除」（03 の V27 と `apply_crop_setup` の削除） | 03 の V27 を含む作業ツリーから `run-production-data-migrate.sh` を実行すると V27 も適用される（03 §5.4.4 の 0.4）。本書の事前確認のうち、参照作物の `cultivation_method` の補修は同じ経路を使うため、V27 の窓と分ける（§6 のステップ 0）。読み取り専用 SQL は同じ復元コピーで続けて行ってよい（03 §10 の 06 行） | §6 |
+| 第 1 回「Cloudflare」（02 の Turnstile） | 検証器は `contact_message_recaptcha.rs` から `contact_message_turnstile.rs` へ置き換わる（02 §5 の edge 行）。secret 未設定は 503 で fail-closed のまま（02 D-3） | §2.4、§9 |
+| 第 3 回「共有」（01） | 本書と独立 | – |
 
 ---
 
@@ -69,8 +84,9 @@
 - **項目 6:** 期間未指定の既定値だけでなく、`with_private_planning` 全体が本番から呼ばれない（`PublicPlanCreateInteractor` が常に `"public"` を渡す。`public_plan_create_interactor.rs:113`）。削除が妥当（§3.6）。
 - **項目 7:** `WindowService::call` の呼び出し元はテストのみ。削除する（§3.7）。
 - 依頼外の A〜G は、厳格方針のため本課題に含めた。A は 05-B、B は 05-A と同一箇所であり、そちらで実施する（§2.2）。C・D・E・F は本書で実施する。G はクラス S に統合した。
-- 新たに H 系 10 件（うち 2 件はユーザー確認）とクラス S を確認した（§2.3）。`unwrap_or*` / `.ok()` の全数は本書では調査していない。監査の手順と基準を §2.4 に定め、実装ステップ 0 に置いた。
-- ユーザー確認は 4 件のみ（§7.1）。
+- 新たに H 系 12 件（うち 3 件 H9・H10・H11 はユーザー確認。H12 は 05 から引き継いだ未割当の 3 点で、判定は監査後）とクラス S を確認した（§2.3）。`unwrap_or*` / `.ok()` の全数は本書では調査していない。監査の手順と基準を §2.4 に定め、実装ステップ 0 に置いた。
+- ユーザー確認は 5 件のみ（§7.1）。
+- **既に固定されているテスト（第 3 版）:** master の直近 15 コミット（#1330〜#1344）のうち、テストを足した #1338〜#1344 と、#1330〜#1333・#1337 が、8 項目のうち項目 3・4・5・7 と、A・B・C・F・H1・H8・H9 の現状挙動を特性化テストで固定している。#1342〜#1344 の一部のテストには、本書を指すコメント（`docs/spec-defects/06`）が付いている。厳格方針ではこれらの表明が「失敗するのが正」の挙動を固定しているため、対応する実装変更と同じコミットで反転または削除する前提とした。項目別の一覧は §2.5、TDD 計画への反映は §5 に記した。項目 1・6・8、D、E、G、S、H2〜H7・H10 には、直近の追加で固定されたテストが無い（項目 1 は #1307 のインラインテストが代替 Crop を固定している。項目 2 は `entry_schedule.rs` のインラインテストが成功系だけを固定している。§2.5）。
 
 ---
 
@@ -89,18 +105,20 @@
 | 7 | `WindowService` が温度しきい値走査で常に `eligible: true`（rule `temperature_thresholds`） | 違反確定 → **削除する**（§3.7） | `crates/agrr-domain/src/cultivation_plan/interactors/entry_schedule/window_service.rs:88-113`（`eligible: true` は `:106`）。`fallback.mdc:33` の禁止例に文言が一致 | 到達しない。`WindowService::call` の呼び出し元は自身のテスト（`crates/agrr-domain/test/cultivation_plan/interactors_entry_schedule_window_service_test.rs`）のみ。`rg '\bWindowService\b' crates` で確認。型 `DateRange` / `WindowServiceResult` は本番で使用（`entry_schedule_optimize_interactor.rs:14`、`entry_schedule_phase_timeline.rs:8`） | 低（到達不能だが禁止例そのもの） |
 | 8 | `serde_json::to_value(..).unwrap_or_else(\|_\| json!([]))` と `presenter.body.unwrap_or_default()` | 違反確定（低。実害なし）→ **修正する**（クラス S の一部。§3.8） | `crates/agrr-server/src/weather_reschedule_proposals.rs:98-100`（同型が `:102-104` にもある）、`:141`。対比: preview は `None` を 500 にしている `:224-231` | `unwrap_or_else`: 型が導出 Serialize のみ（`weather_reschedule_proposal_read.rs:6-23`、`weather_reschedule_proposal_preview_read.rs:9-22`）のため失敗しない。`unwrap_or_default`: interactor は `Ok(())` を返す前に必ず `on_success` を呼ぶ（`weather_reschedule_proposals_list_interactor.rs:66`）ので `None` にならない。ハンドラは到達する | 低 |
 
+表の「根拠 file:line」のうち、既存テストが現状挙動を固定している項目（項目 1・3・4・5・7）は、固定しているテストの関数名と行を §2.5 にまとめた。第 3 版で、項目 3・4・5・7 に直近のテストが加わった。
+
 ### 2.2 依頼範囲外で見つけた同種の握りつぶし A〜G（再確認と確定）
 
 ID の対応に注意: 本書の A は 05 の B、本書の B は 05 の A（05 は「climate の progress 失敗」を A、「entry-schedule の作物要件」を B とする）。05 は本書の C・D・E・F・G を「06 に引き継ぐ」箇所として挙げている（05 §10）。
 
 | ID | 箇所 | 再確認した事実 | 確定 | 扱い |
 | -- | ---- | -------------- | ---- | ---- |
-| A | `entry_schedule.rs:131-142`（`AgrrCropBuilder::build_from`） | `.ok().flatten().unwrap_or(json!({}))`（`:137-140`）を再確認。`build_crop_agrr_requirement` の Err と `Ok(None)` の両方を `{}` にして最適化デーモンへ渡す。ポートが `Value` 返しで Err を運べない（`crates/agrr-domain/src/shared/ports/crop_agrr_requirement_builder_port.rs:7-10`） | 修正する | **05-B で実施**（05 §5.B の案 B-1）。本書では二重に直さない。ただし `OptimizeRunner::call` を項目 1 と共有するため、コミット順を §6 で調整する |
-| B | `field_cultivation_climate_data_interactor.rs:308-311` | `calculate_progress` の Err を `{"progress_records": []}` にする。05 §2.A の調査で、この値は mapper で手計算 GDD の非空 `gdd_data` になることが分かっている（`field_cultivation_climate_data_mapper.rs:187-188`。05 の記載） | 修正する | **05-A で実施**（`on_progress_unavailable`）。本書では二重に直さない |
-| C | 同 `:361-362` | `load_plan_prediction_payload(...)?.unwrap_or(json!({}))`。メタデータはあるがストアにペイロードが無い（`Ok(None)`）とき `{}` になり、観測値のみのマージで 200 になり得る（`merge_cached_with_observed`: `field_cultivation_climate_weather_payload_mapper.rs:79-114` は、キャッシュ側の `data` が無ければ空配列として扱い、観測値が空でなければ観測値だけの `data` を返す）。`skip_merge` のときは `{}` が `WeatherPayloadInvalidError` になる（`:329-332`、`:503-515`）。ストア読取の Err は `?` で伝播済み（`:361`）。ストア実装の 1 つは GCS（`crates/agrr-adapters-gcs/src/predicted_weather_store_gateway.rs:33`）。ペイロード欠落は「メタデータとストアの不整合」であり、業務上の「無い」ではない | 修正する | **本書で実施**（項目 3 と同一変更）。`Ok(None)` を明示エラー（予測ペイロード欠落）にする |
-| D | `entry_schedule.rs:445-449`（`stage_rows`）、`:481`（resolve interactor の `.ok()`）、`:567-569`（`list_by_is_reference(...).unwrap_or_default()`）。同ファイルで追加確認: `:434-442`（`load_farm` が全 Err を 404 `farm not found`）、`:264-265`（`load_weather_location_by_id` の Err を `WeatherLocationMissingError`＝422 にする）。同型: `masters_crops.rs:111`（`list_by_crop_id(id).unwrap_or_default()`。08 §R8 が 05/06 に判定を委ねた箇所） | いずれも DB 読取エラーを「空リストの 200」「404」「422」に変える。`stage_rows` はポート `EntryScheduleCropGateway::list_by_crop_id -> Vec<CropStageRow>`（`crates/agrr-domain/src/public_plan/ports/entry_schedule_crop_gateway.rs:5`）が Err を運べないことが構造的原因。`EntryScheduleFailureKind::InternalError` は既にあり、ハンドラで 500 になる（`entry_schedule.rs:393-396` の `_` 分岐） | 修正する | **本書で実施**。ポートを `Result` にし、`RecordNotFoundError` だけ 404、それ以外は 500（`masters_crops.rs:111` は既存の `internal_error()` を使う） |
+| A | `entry_schedule.rs:127-142`（`AgrrCropBuilder::build_from`。メソッドは `:133-141`） | `.ok().flatten().unwrap_or(json!({}))`（`:138-140`）を再確認。`build_crop_agrr_requirement` の Err と `Ok(None)` の両方を `{}` にして最適化デーモンへ渡す。ポートが `Value` 返しで Err を運べない（`crates/agrr-domain/src/shared/ports/crop_agrr_requirement_builder_port.rs:7-10`） | 修正する | **05-B で実施**（05 §5.B の案 B-1）。本書では二重に直さない。ただし `OptimizeRunner::call` を項目 1 と共有するため、コミット順を §6 で調整する。現状挙動は `interactors_entry_schedule_optimize_interactor_test.rs` の `forwards_empty_crop_requirement_when_builder_swallows_missing_requirement`（`:1042`）が固定している（§2.5） |
+| B | `field_cultivation_climate_data_interactor.rs:308-311` | `calculate_progress` の Err を `{"progress_records": []}` にする。05 §2.A の調査で、この値は mapper で手計算 GDD の非空 `gdd_data` になることが分かっている（`field_cultivation_climate_data_mapper.rs:187-188`。05 の記載） | 修正する | **05-A で実施**（05 改訂 2 は `on_failure(FieldCultivationClimateFailure)` を追加する。第 2 版が書いた `on_progress_unavailable` は 05 から消えた）。本書では二重に直さない。現状挙動は `interactors_field_cultivation_climate_data_interactor_test.rs` の `presents_manual_gdd_when_progress_gateway_fails`（`:668`）ほかが固定している（§2.5） |
+| C | 同 `:361-362` | `load_plan_prediction_payload(...)?.unwrap_or(json!({}))`。メタデータはあるがストアにペイロードが無い（`Ok(None)`）とき `{}` になり、観測値のみのマージで 200 になり得る（`merge_cached_with_observed`: `field_cultivation_climate_weather_payload_mapper.rs:79-114` は、キャッシュ側の `data` が無ければ空配列として扱い、観測値が空でなければ観測値だけの `data` を返す）。`skip_merge` のときは `{}` が `WeatherPayloadInvalidError` になる（`:329-332`、`:503-515`）。ストア読取の Err は `?` で伝播済み（`:361`）。ストア実装の 1 つは GCS（`crates/agrr-adapters-gcs/src/predicted_weather_store_gateway.rs:33`）。ペイロード欠落は「メタデータとストアの不整合」であり、業務上の「無い」ではない | 修正する | **本書で実施**（項目 3 と同一変更）。`Ok(None)` を明示エラー（予測ペイロード欠落）にする。固定済みのテストは、観測値を足さない分岐（`skip_merge`。栽培期間が今日以降）だけで、`{}` が `WeatherPayloadInvalidError` になることを表明する（`:869`、`:940`）。観測値を足す分岐（期間が過去を含み、観測値が非空）で `{}` が観測値だけの成功になる点は、`merge_cached_with_observed` が観測値の `data` を採るコード（`field_cultivation_climate_weather_payload_mapper.rs:79-100`）の読解のみで、テストでは固定されていない（§2.5） |
+| D | `entry_schedule.rs:445-449`（`stage_rows`）、`:481`（resolve interactor の `.ok()`）、`:567-569`（`list_by_is_reference(...).unwrap_or_default()`）。同ファイルで追加確認: `:434-442`（`load_farm` が全 Err を 404 `farm not found`）、`:264-265`（`load_weather_location_by_id` の Err を `WeatherLocationMissingError`＝422 にする）。同型: `masters_crops.rs:111`（`list_by_crop_id(id).unwrap_or_default()`。08 §R8 が 05/06 に判定を委ねた箇所） | いずれも DB 読取エラーを「空リストの 200」「404」「422」に変える。`stage_rows` はポート `EntryScheduleCropGateway::list_by_crop_id -> Vec<CropStageRow>`（`crates/agrr-domain/src/public_plan/ports/entry_schedule_crop_gateway.rs:5`）が Err を運べないことが構造的原因。`EntryScheduleFailureKind::InternalError` は既にあり、ハンドラで 500 になる（`entry_schedule.rs:393-396` の `_` 分岐） | 修正する | **本書で実施**。ポートを `Result` にし、`RecordNotFoundError` だけ 404、それ以外は 500（`masters_crops.rs:111` は既存の `internal_error()` を使う）。失敗本文は 07 の契約に従う。新しい 500 は `api_error.rs` の `internal_error()`（`errors: ["internal"]`）に揃え、既存の `error` を返す 404 などは 07 の S1 で `errors` が追加される区分 A（07 §2.7 の #1、#15）。`entry_schedule.rs:402` の `error_key` は付加情報として据え置く（07 の Q10、C8）。`weather_location_required`（`:263-265` の `WeatherLocationMissingError`）は、行なしの場合だけ 422 のまま、DB エラーは 500 にする。フロントは 422 の `weather_location_required` を `errors` の要素で比較する（07 §3.7.1）ため、行なしの本文は変えない |
 | E | `field_cultivation_climate.rs:89-92`、`work_record_climate_snapshot.rs:74-77` | `StoreBackedWeatherPredictionService` がストア読取の Err を `.ok().flatten()` で `None` にし、その場予測へ落とす | 削除する | **項目 3 で `StoreBackedWeatherPredictionService` ごと消える**（`invoke_plan_prediction` が唯一の使用箇所。§3.3） |
-| F | `entry_schedule_optimize_interactor.rs:199-208` | `cultivation_method` が `None` のとき、ステージ名（「定植」「植え付」。`stage_role_resolver.rs:13`）から移植を推定し、なければ直播にする。`ARCHITECTURE.md:106-111` が禁じる「fuzzy match, fixed defaults」に該当する。列は NULL 許容（`crates/agrr-migrate/migrations/schema/V26__crops_cultivation_method.sql`）。ただし参照作物の fixture は 3 ファイル（`db/fixtures/reference_crops.json` 15 件、`us_reference_crops.json` 30 件、`india_reference_crops.json` 30 件）すべて `cultivation_method` が設定済みで、NULL は 0 件（`python3` で集計）。`scripts/production-data-migrate-inner.sh:40` は jp の `cultivation_method` を fixture から補修する | 修正する | **本書で実施**。推定を削除し、`None` は `failed_result("missing_cultivation_method")`（`:202` に既存）にする。事前確認として本番 DB の参照作物の NULL 件数を読み取り専用で確認する（§6 ステップ 0）。推定を表明する既存テスト 2 件（`interactors_entry_schedule_optimize_interactor_test.rs:574`、`:641`）は反転または削除する |
+| F | `entry_schedule_optimize_interactor.rs:199-208` | `cultivation_method` が `None` のとき、ステージ名（「定植」「植え付」。`stage_role_resolver.rs:13`）から移植を推定し、なければ直播にする。`ARCHITECTURE.md:106-111` が禁じる「fuzzy match, fixed defaults」に該当する。列は NULL 許容（`crates/agrr-migrate/migrations/schema/V26__crops_cultivation_method.sql`）。ただし参照作物の fixture は 3 ファイル（`db/fixtures/reference_crops.json` 15 件、`us_reference_crops.json` 30 件、`india_reference_crops.json` 30 件）すべて `cultivation_method` が設定済みで、NULL は 0 件（`python3` で集計）。`scripts/production-data-migrate-inner.sh:40` は jp の `cultivation_method` を fixture から補修する | 修正する | **本書で実施**。推定を削除し、`None` は `failed_result("missing_cultivation_method")`（`:202` に既存）にする。事前確認として本番 DB の参照作物の NULL 件数を読み取り専用で確認する（§6 ステップ 0）。推定を表明する既存テスト 2 件（`interactors_entry_schedule_optimize_interactor_test.rs:574`、`:641`。#1309 から存在）は反転する。`None` かつステージなしを `missing_cultivation_method` とする既存テスト（`:542`）は、そのまま維持する（§2.5） |
 | G | `crates/agrr-server/src/account.rs:39` | `serde_json::to_value(export).unwrap_or(json!({}))`。`UserDataExport` は導出 Serialize で、フィールドは `String` と `Vec<serde_json::Value>`（`crates/agrr-domain/src/user_account/dtos/user_data_export.rs:6-12`）のため失敗しない。ただし失敗すれば、データ持ち出し（アカウント削除前のエクスポート）が空の `{}` で 200 になる | 修正する | **クラス S に統合**（§2.3） |
 
 ### 2.3 依頼外で新たに確認した同種箇所

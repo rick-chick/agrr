@@ -11,7 +11,7 @@
 - i18n カタログの比較と、コード中のキー参照の静的抽出は Python スクリプトで機械的に実施した（付録 D に再現手順）。テンプレートリテラルなどで動的に組み立てるキーは検出できない（未確認）。
 - 本書の「サーバー全 handler の返却形」（§2.7）の箇所数は、`crates/agrr-server/src/**/*.rs` の各ファイルを最初の `#[cfg(test)]` の手前で切り、正規表現で `"error"` / `"errors"` / `"success": false` / `"success": false, "message"` を数えた概数である（付録 D-2 に再現手順）。インラインのテストモジュール内の期待値は含まない。`json!` を介さずに組み立てる本文は数え漏れがあり得る（§8 R13）。
 - 第 2 回決定（§0.2）で統合先を `errors` にしたため、§2.7 の箇所数を「`error` 単数と `message` 形式の全数」として再集計し直した（§3.2.1）。第 1 回の版が §2.7 に書いた Plans 系の `error` の件数（61）は誤りで、表の値から 71 に訂正した。
-- 外部 API キー利用者が実際にどのキー（`error` / `errors`）に依存しているかは、リポジトリ内のコードとドキュメントからしか調べていない。API キー経由のリクエストを利用者別に集計する手段は、`security_audit_log.rs:11-19` のイベント種別（キー生成・再生成など）を見る限り無い。Cloud Logging 側の HTTP ログで数えられるかは**未調査**。
+- 外部 API キー利用者が実際にどのキー（`error` / `errors`）に依存しているかは、リポジトリ内のコードとドキュメントからしか調べていない。API キー経由のリクエストを利用者別に集計する手段は、`security_audit_log.rs:11-19` のイベント種別（キー生成・再生成など）を見る限り無い。Cloud Logging 側の HTTP ログについては第 3 回の改訂で調べた（§3.5.2）。結論は、**ログからは「どのクライアントが失敗応答を受け取ったか」までしか分からず、「`error` キーを読んでいるか」は分からない**（応答本文はログに載らない）。`httpRequest.userAgent` などのフィールドが本番ログに実際に出ているかは**未確認**（本番ログへは問い合わせていない。確認は §3.5.2 の E2 に実施前提として含めた）。
 
 ---
 
@@ -32,13 +32,25 @@
 | 項目 | 内容 |
 |------|------|
 | 決定 | エラー契約の統合先を **`errors`（文字列配列）に確定**する |
-| 具体 | (a) 4xx / 5xx の失敗本文は、必ず `errors: string[]`（1 件以上、各要素は非空文字列）を含む。単一メッセージも `errors: ["<msg>"]` とする。(b) `error`（単数文字列）と `message` は失敗本文の契約から外す。移行期間だけ旧キーを併記し、ゲートを満たしたら削除する（§3.5）。(c) 任意の付加情報として、機械可読コード `error_code` と項目別メッセージ `field_errors` を許す。(d) フロントは `errors` の 1 系統だけを読む（§3.7） |
+| 具体 | (a) 4xx / 5xx の失敗本文は、必ず `errors: string[]`（1 件以上、各要素は非空文字列）を含む。単一メッセージも `errors: ["<msg>"]` とする。(b) `error`（単数文字列）と `message` は失敗本文の契約から外す。移行期間だけ旧キーを併記し、実施前提（§3.5.3）を満たしたら削除する（第 3 回決定 §0.3 で確定）。(c) 任意の付加情報として、機械可読コード `error_code` と項目別メッセージ `field_errors` を許す。(d) フロントは `errors` の 1 系統だけを読む（§3.7） |
 | 出典 | ユーザー指示「errors」（[`README.md`](README.md) の「決定事項（第 2 回: 未決事項への回答）」表。07 の統合先選択への回答として対応づけた） |
 | 解釈 | 「errors」を「統合先の単一形式は、既に API に存在する `errors` キーである」と解釈した。値を**文字列配列**に限るのは、現行の Masters create / update が返す形（§2.1）と一致し、OpenAPI 課題 08 の D-14 も同じ形を推奨しているため。項目別の map（`{field: [msg]}`）とオブジェクト配列（`{path, message}`）を `errors` に入れる解釈は採らない（→ §3.3 C3） |
 | **前回推奨を覆す点** | 第 1 回の版は、`error`（単数）を統合先とする案（旧 U1）を推奨していた。**この推奨は採用しない**。根拠に挙げた事実（`error` が約 313 箇所・`errors` が約 102 箇所、外部契約 `getting-started.md:57` が `error`、公式 MCP クライアント `tools/agrr-mcp` が `error` を読む、フロントが `error` をコードとして比較している）は消えない。これらは「`errors` 統合の追加コスト」として §3.2 で整理し直した |
-| 解釈の限界 | 「errors」は、旧キー（`error` / `message`）をいつ削除するかや、外部 API キー利用者への影響の許容までは含意しない。それらは未決（§3.9 Q2）のまま残す。旧版の統合先選択（旧 Q1）は本決定で解消したため削除した |
+| 解釈の限界 | 「errors」は、旧キー（`error` / `message`）をいつ削除するかや、外部 API キー利用者への影響の許容までは含意しない。第 2 回の時点では未決（旧 Q2）としていたが、削除そのものは第 3 回決定（§0.3）で確定した。旧版の統合先選択（旧 Q1）は第 2 回決定で解消したため削除した |
 
-### 0.3 本書が実コードの調査から導いた設計（ユーザー決定ではない）
+### 0.3 決定（第 3 回: ユーザー指示「削除」の解釈）
+
+| 項目 | 内容 |
+|------|------|
+| 決定 | エラー契約の旧キー（`error` 単数、`{success:false, message}` の `message`）を**削除する**。第 2 回決定（§0.2）の `errors` 統合の最終段階として、実施前提（§3.5.3 の P1〜P6）を満たした時点で、S1 で併記していた旧キーを撤去する |
+| 具体 | (a) 段階は S0（ヘルパー導入）→ S1（`errors` 追加と旧キー併記）→ F1（フロント厳格化）→ S2（旧キー撤去）で**確定**する（§3.5.1）。併記を無期限に残さない。(b) 外部 API キー利用者の依存確認（旧 Q2）は、削除の**前提条件として実施する**。確認なしでは S2 を実施しない（P6。手順は §3.5.2）。(c) 撤去後の最終状態を受け入れ条件として固定する（§3.5.4、§9 の 17〜24）。(d) 撤去後に旧形式が混入しないよう、R4 契約テスト（S-T2）・アーキテクチャガード（S-T6）・MCP テスト（S-T7）・フロントの不読テスト（T1 / T4 / T14 / T16）を常設の回帰テストにする（§6.3、§3.5.5） |
+| 出典 | ユーザー指示「削除」（[`README.md`](README.md) の「決定事項（第 3 回: 残りの未決事項への回答）」表。07 の旧キー削除に対応づけられている） |
+| 解釈 | 「削除」を「**07 の旧キー（`error` / `message`）の削除**」と解釈した。第 2 回決定の「削除」は 03 の MCP ツール `apply_crop_setup` の削除と解釈されており（[`03`](03-api-key-scope-docs.md) §0）、今回はそれとは別の対象である。**03 の `apply_crop_setup` 削除（M-A）は本決定の影響を受けない**。ユーザー指示のうち「削除ゲートを満たしたら実施」「外部依存確認を前提とする」は、確認なしの即時撤去を意味しない、と読んだ |
+| 段階名の対応 | 依頼文の「S2/S3 旧キー撤去」は、本書の **S2**（旧キー `error` / `message` の撤去と区分 D の `errors` 平坦化。§3.5.1）に対応させた。本書の **S3 は `public_plan_save` の `record invalid: ` 接頭辞の除去（Q6）で、旧キー撤去ではない**。S3 は S2 とは独立に実施でき、参照が多い（S-T3 / S-T4 など）ため名前は据え置いた |
+| 解釈の限界 | (1) 「削除」は、外部 API キー利用者への告知方法や、告知から撤去までの猶予の長さを含意しない。猶予は日時ではなく**条件**で定義した（§3.5.2 の E4）。(2) 外部依存の確認結果が「依存あり、または測定不能」のとき、猶予を延ばすか、延長に上限を置くかは未決として残す（§3.9 Q2）。(3) 本決定でも、HTTP ステータス（課題 10）、`errors` 要素の中身（Q7）、運用用 backdoor の本文（#20。Q5）は変えない |
+| 位置づけ | 上記は文脈からの**解釈**であり、誤りがあればこの節を差し替える |
+
+### 0.4 本書が実コードの調査から導いた設計（ユーザー決定ではない）
 
 移行方式や共通ヘルパーは指示では指定されていないため、実コードの事実から決めた（根拠は §2.7〜§2.9、§3.2〜§3.8）。ユーザーが覆せる点は §3.9 の Q に集約した。
 
@@ -47,7 +59,7 @@
 | 統合先の形 | 4xx / 5xx は必ず `{"errors": ["<非空文字列>", ...]}`。任意で `error_code` と `field_errors` を付ける。`error` と `message` は失敗本文から廃止する | `errors` 102 箇所のうち 96 箇所は既に文字列配列で、Masters の create / update の検証失敗と Plans 系の大半がこの形（§2.7）。OpenAPI も文字列配列を推奨（課題 08 D-14） |
 | 追加コスト（サーバー） | 変更箇所は **349**（`error` 299 + `message` 47 + 項目別 map 3）。前回推奨の `error` 統合で必要だった 146（`errors` 99 + `message` 47）の約 2.4 倍 | §3.2.1 |
 | 旧形式の扱い（フロント） | 統合後は**許容しない**。`error` も `message` も読まない | 「統合」の意図。二重の読み取りを残すと、`no-convenience-tech-debt.mdc` の「軽微な技術負債は残置しない」に反する |
-| 移行方式 | 併記は**必要**。サーバー S1（`errors` を追加し、旧キー `error` / `message` を併記）→ フロント F1（`errors` 1 系統に切替）→ サーバー S2（旧キー削除）の 3 リリース。併記の要否と期間はデプロイ順序と削除ゲートで定義する。項目別 map の 3 箇所だけは、`errors` の型そのものが変わるため併記できず、S2 で型を変える | 旧フロントは `error` を 15 ファイルで読み、警告分類（`backend-warmup.ts:74-80`）も `error` の有無に依存する（§3.5、§3.7） |
+| 移行方式 | 併記は**必要**。サーバー S1（`errors` を追加し、旧キー `error` / `message` を併記）→ フロント F1（`errors` 1 系統に切替）→ サーバー S2（旧キー撤去）の 3 リリース。第 3 回決定（§0.3）で手順として**確定**した。併記の期間は日時ではなく実施前提（P1〜P6）で定義する。項目別 map の 3 箇所だけは、`errors` の型そのものが変わるため併記できず、S2 で型を変える | 旧フロントは `error` を 15 ファイルで読み、警告分類（`backend-warmup.ts:74-80`）も `error` の有無に依存する（§3.5、§3.7） |
 | 共通ヘルパー | `crates/agrr-server/src/api_error.rs`（エッジ層）に薄いヘルパーを導入する。単一メッセージも `errors: [msg]`、任意の `error_code`、項目別は `field_errors` | 現状、共通のエラー応答ヘルパーは無く、`"error": "internal"` だけで 88 箇所・23 ファイルに複製されている（§2.9）。LAYER-RULES の R6 / R7 に適合（§3.6） |
 | フロントの共通関数 | `frontend/src/app/core/api-error-message.ts`（純関数）に集約し、24 usecase と、それ以外の本文リーダー、`error` をコードとして比較している箇所を置換する。本文の解釈は下位モジュール `core/api-error-body.ts` に置く（循環参照の回避） | §2.2、§2.8、§3.7 |
 
@@ -453,7 +465,7 @@ Masters API は API キー（`Authorization: Bearer` / `x-api-key`）でも呼�
 | `error` が約 313 箇所、`errors` が約 102 箇所（§2.7） | (a) サーバーで**変更が必要な箇所は 349**（`error` 299 + `message` 47 + 項目別 map 3）。前回の 146 の約 2.4 倍。`errors` の 96 箇所は変更なし | §3.2.1 |
 | 401 / 500 の定型本文が大量に複製されている（§2.9） | (b) 共通ヘルパーを `errors` 前提で設計する。単一メッセージも `errors: [msg]`、任意の `error_code`、項目別は `field_errors` | §3.6 |
 | フロントが `error` をコード / i18n キーとして比較している（§2.8） | (c) 共通純関数を `errors` 前提にし、24 usecase の置換に加え、`error` の値を比較している既存箇所（i18n キー解決、警告分類、`resolveActiverecordApiErrorI18nKey` の入力元）を移行する | §3.7、§3.7.1 |
-| 外部契約 `getting-started.md:57` が `error`、公式 MCP `tools/agrr-mcp` が `error` を読む | (d) **文書化された外部契約の破壊的変更**。`getting-started.md`、`openapi.yaml` の `Error` スキーマ、MCP クライアントの読み取りを更新する必要がある。旧キーの併記期間とその終了ゲートを定義する | §3.5、§3.8 |
+| 外部契約 `getting-started.md:57` が `error`、公式 MCP `tools/agrr-mcp` が `error` を読む | (d) **文書化された外部契約の破壊的変更**。`getting-started.md`、`openapi.yaml` の `Error` スキーマ、MCP クライアントの読み取りを更新する必要がある。旧キーの併記は S1 から S2 までの一時措置とし、終了は実施前提（P1〜P6）で定義する | §3.5、§3.8 |
 
 #### 3.2.1 (a) サーバーで変更が必要な箇所の全数
 
@@ -538,7 +550,7 @@ Masters API は API キー（`Authorization: Bearer` / `x-api-key`）でも呼�
 2. F1: 項目別エラーを `field_errors` から読む。`errors` が map のときは無視する（§3.7 の `errors` は「非空の文字列配列」だけ読む）。
 3. S2: `errors` を平坦化した文字列配列にする。
 
-`task_schedules.rs:112` の map をフロントのどの箇所が読んでいるかは特定できていない（§2.8 の項目別 map 読みは work record の 3 usecase のみ）。S2 の前に確定する（§3.5 のゲート 5）。
+`task_schedules.rs:112` の map をフロントのどの箇所が読んでいるかは特定できていない（§2.8 の項目別 map 読みは work record の 3 usecase のみ）。S2 の前に確定する（§3.5.3 の P5）。
 
 #### 中間状態ごとの影響
 
@@ -550,18 +562,87 @@ Masters API は API キー（`Authorization: Bearer` / `x-api-key`）でも呼�
 | S1 → S2 を F1 の反映前に実施 | F0 は `error` / `message` を読めなくなる。警告分類が変わり、D の map が文字列配列になって項目別エラーが消える | **退行。順序ガードが必要** |
 | F1 稼働中に S1 を S0 へロールバック | S0 は A / B に `errors` を持たないため F1 が劣化する | S1 のロールバックは F1 のロールバックと同時に行う（§8 R15） |
 | F1 稼働中に S2 済み | 正常（F1 は旧キーを読まない） | 正常 |
-| 外部クライアント（S2 以降） | `error` / `message` を読んでいた利用者は読めなくなる。公式 MCP は更新版に置換すれば読める（§3.8） | Q2 の承認が前提（§3.9） |
+| 外部クライアント（S2 以降） | `error` / `message` を読んでいた利用者は読めなくなる。公式 MCP は更新版に置換すれば読める（§3.8） | P6（外部依存確認。§3.5.2）が前提。確認なしでは実施しない |
 
-#### 旧キー（`error` / `message`）削除（S2）の実施ゲート（日時ではなく条件で定義する）
+#### 3.5.1 確定手順（段階）
 
-1. F1 が本番に反映済みで、CDN 無効化が実行されたことをデプロイのログで確認している。
-2. S2 用の R4 テスト（旧キーが**存在しない**こと）が RED であることを確認済み（§6.3 S-T2）。
-3. `docs/api/getting-started.md` と `docs/api/openapi.yaml` に、`errors` を主とする失敗本文の形と、`error` / `message` の廃止（S1 の時点で `deprecated`）が反映され、公開済みである（課題 08、03 と同一ファイルを編集するため順序に注意）。
-4. 公式 MCP クライアント（`tools/agrr-mcp`）が `errors` を読む版に更新され、テストが GREEN である（§3.8）。
-5. リポジトリ内に `error` / `message` を失敗本文から読むフロントのコードが無い（`rg` 条件は §8 R8）。かつ、区分 D の 3 箇所を読むフロントの箇所（work record の 3 usecase と、`task_schedules.rs:112` の読み手）が `field_errors` に移行済みである。
-6. 外部利用者の依存について、確認できた、または確認手段が無いことをユーザーが承認した（Q2）。
+第 3 回決定（§0.3）により、旧キーの撤去は選択肢ではなく**確定した最終段階**である。併記（S1）は撤去までの一時措置であり、`no-convenience-tech-debt.mdc` の「軽微な技術負債は残置しない」に従って期限を条件で閉じる。段階と次へ進む条件は次のとおり固定する。
 
-ゲート 1〜5 は機械的に確認できる。ゲート 6 だけは人の判断であり、未承認の間は S2 を実施せず、S1 の併記を維持する。併記の期間は日時では定めない。
+| 段階 | 内容 | 本番反映の単位 | 次へ進む条件 |
+|------|------|----------------|--------------|
+| S0 | 共通ヘルパー `api_error.rs` の導入。本文の形は変えない（`Legacy` は従来の形を再現）。§7 手順 2 | サーバー | S-T5、既存 R4 が GREEN |
+| S1 | 区分 A 299 / B 47 に `errors: [msg]` を追加し旧キーを併記。区分 D は `field_errors` を追加し `errors` は map のまま。**同じリリースで**旧キーの deprecated 告知（`getting-started.md`、`openapi.yaml`）と、`errors` を読む MCP 更新版を公開する。§7 手順 1・3〜6 | サーバー + 文書 + MCP | S-T0 / S-T1 / S-T7 が GREEN。サーバーが本番に反映済み |
+| F1 | フロントを `errors` / `error_code` / `field_errors` の 1 系統に厳格化（旧形式を読まない）。§7 手順 7〜12 | フロント | S1 が本番に反映済みであることを確認してから出す（S0 × F1 は退行。上表）。CDN 無効化のログ確認（P1） |
+| 外部依存確認 | §3.5.2 の E1〜E4。E1 と E2 の基準計測は、コード変更に依存しないため**今すぐ開始できる**。E3（告知）は S1 のリリースで成立する | – | P6 を満たす |
+| S2 | 旧キーの撤去。S2-a: `Legacy` 型・`attach_legacy_keys`・`legacy` 引数の削除と、R4 の `error` 表明 10 箇所の更新。S2-b: 区分 D の `errors` を平坦化した文字列配列にし、R4 の map 表明 2 箇所を `field_errors` に更新。S2-c: `openapi.yaml` / `getting-started.md` から `error` / `message` と deprecated 記述を削除。§7 手順 14 | サーバー + 文書 | P1〜P6 がすべて満たされ、記録がある（§3.5.3） |
+| S3 | `public_plan_save` の `record invalid: ` 接頭辞の除去（Q6）。旧キー撤去ではない。S1 / F1 / S2 とは独立 | サーバー | S-T3 / S-T4 が GREEN |
+
+順序の不変条件: (1) S0・S1 → F1 → S2。フロントを S1 より先に出さない。(2) S2 を F1 より先に出さない。(3) P6 が満たされるまで S2 を出さず、S1 の併記を維持する。(4) S2 の切り戻し先は S1 のリビジョンである（S1 は `errors` と旧キーの両方を持つため、F1 とも旧クライアントとも整合する）。`deploy-server` に切り戻し手順があるかは**未確認**（R15）。
+
+#### 3.5.2 外部 API キー利用者の依存確認（P6 の具体手順）
+
+**範囲の確認（事実）**: API キーで認証できるのは Masters API だけである。`resolve_masters_principal`（`masters_auth.rs:1`、`MastersUserId` エクストラクタ）を使うのは `masters_auth.rs` 自身を含む `masters_*.rs` の 17 ファイルだけで、それ以外のルートはこのエクストラクタを使わない（`rg "MastersUserId|resolve_masters" crates/agrr-server/src` の結果。他ルートの認証方式の全数は未調査）。公開文書の `openapi.yaml` のパスも Masters の 9 件だけで、`getting-started.md` が失敗本文として書いているのは Masters の 429 だけである（`getting-started.md:57`）。フロントの Masters 呼び出しはセッション Cookie で行い、API キーはブラウザから送らない（`masters-client.service.ts:21-24`）。よって、外部 API キー利用者に影響し得る失敗本文は、**`/api/v1/masters/*` の 4xx / 5xx**（区分 A の Masters 系、`masters_auth.rs` の 401 / 403、`masters_rate_limit.rs` の 429）に限られる。Plans 系・contact・organizations などは、文書化された外部契約ではない（ただし認証不要の `contact_messages` や、トークンで呼ばれる `scheduler_weather_update.rs` などを非ブラウザが呼ぶ可能性は、ログでしか確認できない）。
+
+**ログで分かることと分からないこと（コード読解による。本番ログは未確認）**:
+
+| 手段 | 分かること | 分からないこと | 根拠 |
+|------|-----------|----------------|------|
+| アプリのログ | リクエストの method / URI、応答の status とレイテンシ（`TraceLayer`） | 認証方式（API キーかセッションか）、利用者、応答本文、リクエストヘッダー | `lib.rs:185-188`。`include_headers` の呼び出しは無い（`rg` 0 件）。Masters の認証成功は監査ログに記録されず（`security_audit_log.rs:11-19`）、`masters_auth.rs` / `masters_rate_limit.rs` に `tracing::` の呼び出しも無い。キーの最終使用日時を持つ列も無い（[`03`](03-api-key-scope-docs.md) §2.10） |
+| Cloud Run のリクエストログ | `httpRequest.status`、`httpRequest.requestUrl`（運用文書が既にこの 2 項目で `gcloud logging read` している） | **応答本文**。したがって、クライアントが `error` を読むかは分からない | `docs/ops/core-api-optimization-sli-slo.md:34-46`。`httpRequest.userAgent` / `remoteIp` が本番ログに出ているか、保持期間がどれだけかは**未確認**（E2 で確認する） |
+| ロードバランサーのログ | 未確認 | 未確認 | リポジトリ内に LB のログ有効化設定は見つからない（`enable-logging` / `logConfig` の `rg` が 0 件）。API が LB 経由かも未確認 |
+
+**結論**: ログで確認できるのは「`/api/v1/masters/*` で失敗応答を受け取った**非ブラウザのクライアント**がいるか」（曝露の有無）までで、「`error` キーに依存しているか」は**どの手段でも測定できない**。曝露が無いことは「依存の証拠が無い」ことを意味するが、未発生の失敗（例: 文書化された 429）を `error` で処理するコードの存在までは否定できない。そのため確認は、**計測 + 告知 + 未解消分の解消**の 3 点で構成し、「確認なしの撤去」を防ぐ。
+
+| 手順 | 内容 | 成果物 / 判定 |
+|------|------|----------------|
+| E1 保有者数の確定（読み取り専用） | 03 §5.4.1.5 の確認 1（`users` のキー状態の分布。`api_key_hash` の有無）と同じ SQL を、[`production-primary-sqlite-query`](../../.cursor/skills/production-primary-sqlite-query/SKILL.md) で GCS レプリカに対して実行する。03 の件数確認（03 §5.4.4 Phase 1。V27 の本番実施自体は 03 の第 3 回決定で承認済み）と同じ実行にまとめられる。ただし GCP 認証情報の有無（`production-primary-sqlite-query` の利用可否）は 03 でも**未確認**（03 §5.4.1.4）で、実行できない場合は E1 が成立せず、P6 は満たされない（Q2 の既定どおり S2 を実施しない） | キーを持つユーザー数。**0 件なら外部 API キー利用者は存在せず、E2〜E4 は不要で P6 を満たす**（記録だけ残す）。1 件以上なら E2 へ |
+| E2 計測可否の確認と基準計測 | `gcloud logging read` で `resource.type="cloud_run_revision"` かつ `service_name="agrr-production"` かつ `httpRequest.requestUrl:"/api/v1/masters/"` かつ `httpRequest.status>=400` を、ログ保持範囲いっぱいで読み、`httpRequest.userAgent` と `httpRequest.remoteIp` が取得できるかを確認する。取得できれば、ブラウザの UA（SPA 由来）を除いた**非ブラウザのクライアントの集合 U**（UA と送信元 IP の組）を記録する。クエリの形は `core-api-optimization-sli-slo.md:38-46` を踏襲する | U（空かもしれない）。`userAgent` が取得できない場合は「測定不能」と記録し、E4 の C4 に進む。UA だけでは MCP とその他の区別が付くかは**未確認** |
+| E3 告知 | 次の経路で公開する。(a) `getting-started.md` に失敗本文の形（`errors` 必須）と「`error` / `message` は廃止予定」を書き、`openapi.yaml` の `Error` に旧キーを `deprecated: true` で残す（§3.8。S1 と同時）。API キー管理画面は `API_DOCS_URL`（`api-key-management.service.ts:7-8`）で `getting-started.md` にリンクしているため、これが利用者への到達経路になる。(b) 公式 MCP の更新版（`errors` を読む）を公開する。(c) 保有者への個別連絡は、メール送信の仕組みがリポジトリ内で確認できない（03 §2.10）ため、手段は 03 の Q8 の回答に従い、V27 の通知と**同じ告知にまとめる**（保有者の集合は同じ）。(d) RFC 9745 の `Deprecation` / `Sunset` ヘッダー（`builtin_generation_deprecation.rs:48`）は採らない。`Sunset` は日時を要求するが、本書は日時ではなく条件で定義するため | 告知の公開（P3 と P4）。個別連絡の対象と方法の記録 |
+| E4 猶予の条件 | 日時ではなく次の条件で判定する。**C1**: 告知（E3 の (a) と (b)）が公開済みで、S1 が本番に反映され、F1 も本番に反映された後に E2 の計測をやり直している。**C2**: やり直した計測で U が空である。**C3**: U が空でない場合、U の各要素が次のいずれかで解消済みである: (r1) 利用者を特定でき、`errors` に移行済み、または `error` を使っていないという回答を得た。(r3) 利用者を特定できない・連絡できないが、影響を許容するとユーザーが判断し、記録した。**C4**: E2 が測定不能だった場合は、E1 のキー保有ユーザーごとに r1 または r3 を記録する。**C5**: 告知後に U に加わった要素も C3 と同様に解消する | P6 の充足（C1 かつ、C2・C3・C4 のいずれか。C5 を含む）。未解消の要素が残る間は S2 を実施せず、S1 の併記を維持する |
+
+猶予の長さは日時で決めず、上記の条件が満たされた時点が S2 の起点である。**未解消の要素が残ったままのとき、猶予を延長し続けるか、r3（許容）として打ち切るか**は、外部依存の確認結果に依存するため未決として残す（§3.9 Q2）。既定は「延長する（S2 を実施しない）」で、確認なしでは撤去しない。
+
+#### 3.5.3 旧キー撤去（S2）の実施前提（P1〜P6）
+
+旧版の「ゲート」を、第 3 回決定による**実施前提**に書き換えた。すべてを満たし、結果を記録した後にだけ S2 を実施する。P1〜P5 は機械的に確認でき、P6 は §3.5.2 の記録に基づく判断である。
+
+1. **P1**: F1 が本番に反映済みで、CDN 無効化が実行されたことをデプロイのログで確認している。
+2. **P2**: S2 用の回帰テスト（S-T2: 旧キーが**存在しない**こと、S-T7: MCP が `error` を読まないこと）が、S1 の状態で**RED** であることを確認済み（§6.3）。
+3. **P3**: `docs/api/getting-started.md` と `docs/api/openapi.yaml` に、`errors` を主とする失敗本文の形と、`error` / `message` の廃止（S1 の時点で `deprecated`）が反映され、公開済みである（課題 08、03 と同一ファイルを編集するため順序に注意。§10）。
+4. **P4**: 公式 MCP クライアント（`tools/agrr-mcp`）が `errors` を読む版に更新され、テストが GREEN で、更新版が公開済みである（§3.8）。
+5. **P5**: リポジトリ内に `error` / `message` を失敗本文から読むフロントのコードが無い（`rg` 条件は §8 R8。現状 16 ファイル 19 行が 0 件になること）。かつ、区分 D の 3 箇所を読むフロントの箇所（work record の 3 usecase と、`task_schedules.rs:112` の読み手）が `field_errors` に移行済みである。
+6. **P6**: §3.5.2 の E1〜E4 が完了し、次を記録している: E1 の保有者数、E2 の計測可否と U、E3 の告知の公開と個別連絡の対象、E4 の C1〜C5 の充足。**確認なしでは撤去しない。**
+
+#### 3.5.4 撤去後の受け入れ条件（最終状態の全数）
+
+S2 完了後、旧キーの読み書きの残存は次の表のとおり 0 になる。表は、旧キーを書く側・読む側・文書化する側をリポジトリで検索して洗い出した全数である（検索は 2026-10-07 の改訂時に実施）。
+
+| # | 対象 | 現状（根拠） | 撤去後の最終状態 | 確認方法 |
+|---|------|--------------|------------------|----------|
+| A1 | ヘルパーの `Legacy` 引数 | `api_error.rs` は未作成（`ls` で確認）。S0 / S1 で `Legacy`（`None` / `Error` / `Message` / `ErrorsMap`）、`attach_legacy_keys`、`api_error` / `api_error_with_code` / `api_field_errors` / `unauthorized` の `legacy` 引数が入る（§3.6）。呼び出しは区分 A 299 + B 47 + D 3 のうちヘルパーに集約されたもの | 型・関数・引数が存在せず、ヘルパーの署名は `api_error(status, msg)`、`api_error_with_code(status, msg, code)`、`api_errors(status, msgs)`、`api_field_errors(status, fields)`、`unauthorized()`、`internal_error()` だけになる | `rg -n "Legacy\|attach_legacy_keys" crates` が 0 件。コンパイルエラーで呼び出し側が列挙される |
+| A2 | サーバーの失敗本文（A / B） | `error` を返す 299 箇所（`masters_*` 156、Plans / 公開プラン系 71、その他 72）と `message` を返す 47 箇所（§3.2.1、§4.2） | すべて非空の文字列配列 `errors` を持ち、失敗の主メッセージとしての `error` / `message` を持たない。`error_code` は維持。許可する例外は 3 種: (i) 運用用 backdoor `backdoor/routes.rs` の `error` 14 箇所（Q5 の範囲外）、(ii) 結果ペイロード `masters_crop_setup_proposal.rs:94` の `errors: [{path, message}]`（C3 の例外 i）、(iii) 付加情報（C8: `success`、`status`、`error_key`、`path`、`timestamp`、`technical_details`） | S-T2 が GREEN。S-T6（Q9）が許可リスト以外の直書きを検出しない |
+| A3 | 区分 D（項目別 map） | `task_schedules.rs:112`、`work_records.rs:189`、`work_record_photos.rs:202` が `errors` を map で返す | `errors` は平坦化した文字列配列、`field_errors` に項目別 map。R4 の `411`・`636` は `field_errors` を表明する | S-T2、R4 |
+| A4 | 403 `insufficient_scope`（03 の V27 移行後の応答） | `masters_auth.rs:95-100` の `scope_denied()` が `{"error":"forbidden","error_code":"insufficient_scope"}` | `{"errors":["forbidden"],"error_code":"insufficient_scope"}`。`error_code` は維持（C6）。R4 の `3043` の `error_code` 表明は変更しない | S-T2（Masters の 403 行）、既存の `contracts.rs:3040-3045` |
+| A5 | 429 `rate_limit` | `masters_rate_limit.rs:147` が `{"error":"rate_limit"}`、`getting-started.md:57` が同じ形を文書化 | `{"errors":["rate_limit"]}`（`Retry-After` ヘッダーは維持）。文書の例も同じ形 | S-T2、`rg -n '"error"' docs/api` が 0 件 |
+| F1 | フロントの旧形式フォールバック | `rg -n "\.error\??\.(error\|message)\b\|body\??\.(error\|message)\b\|as \{ error\?: (string\|unknown) \}" frontend/src/app --glob '!*.spec.ts'` が **16 ファイル 19 行**: `adapters/plans/gantt-plan-http.helpers.ts`、`usecase/work-hub/ensure-plan-for-farm.usecase.ts`、`usecase/crops/delete-crop.usecase.ts`、`usecase/public-plans/{save-public-plan,create-public-plan}.usecase.ts`、`usecase/plans/delete-plan.usecase.ts`、`usecase/plans/field-climate/load-field-climate.usecase.ts`、`usecase/pesticides/delete-pesticide.usecase.ts`、`usecase/pests/delete-pest.usecase.ts`、`usecase/farms/{retry-farm-weather-fetch,load-farm-temperature-chart}.usecase.ts`、`usecase/interaction-rules/create-interaction-rule.usecase.ts`、`usecase/private-plan-create/create-private-plan.usecase.ts`、`components/settings/account/account.component.ts`、`core/api-error-i18n-key.ts`、`core/backend-warmup/backend-warmup.ts` | 上記の検索が 0 件。`ValidationErrorBody`（`create-work-record` / `update-work-record` / `save-work-record-sheet`）も 0 件。共通関数 `apiErrorMessage` 系は `errors` / `error_code` / `field_errors` だけを読む（T1 のケース 5・6・7・12・14） | `rg`（§9 の 11）、T1、T4、T14、T16 |
+| F2 | フロント spec の旧形式 fixture | 本文を `error: { error: ... }` で書く spec が 14 ファイル、`error: { message: ... }` が 2 ファイル（§4.3） | `errors` 形式に書き換え済み。旧形式の fixture が残るのは「旧形式を読まない」ことを表明するテスト（T1、T2、T3、T4、T14、T16）だけ | レビュー。`rg "error: \{ ?error:" frontend/src/app --glob '*.spec.ts'` の残りが上記のみ |
+| O1 | OpenAPI の `Error` スキーマ | `openapi.yaml:453-461` が `error: string` と `errors: array<object>`。`deprecated` 記述は現状 0 件（`rg` で確認）。S1 で旧キーを `deprecated: true` で足す | `errors`（必須・文字列配列・1 件以上）、`error_code`、`field_errors` だけ。`error` / `message` のプロパティと deprecated 記述が無い。08 の D-03 / D-07 / D-12 の失敗本文の例も `errors` 形式 | 目視 + `rg -n "deprecated" docs/api/openapi.yaml`（`Error` 配下が 0 件）。課題 08 の機械検証（P3）に S-T0 の包絡検査を取り込む（§10） |
+| O2 | `getting-started.md` | `:57` が `{ "error": "rate_limit" }`。失敗本文の節は無い | 429 の例が `errors`、失敗本文の節（`errors` 必須、`error_code` / `field_errors` 任意）があり、`error` / `message` と「廃止予定」の記述が無い | 目視 + `rg -n '"error"' docs/api` が 0 件 |
+| M1 | 公式 MCP クライアント | `tools/agrr-mcp/src/agrr-client.mjs:87-95` が `payload.error` を `Error.message` にする。`agrr-client.test.mjs:122-126` の fixture は 401 `{error:'unauthorized'}` | `errors` が非空の文字列配列なら `', '` で結合して `Error.message`、それ以外は `AGRR API <status> for <path>`。`error` を読まない。`err.status` と `err.body` は維持。fixture は `errors`。※ 03 の `apply_crop_setup` 削除で行番号が上にずれる（03 §5.3.6）。実装時に再確認する | S-T7、`rg -n "payload\??\.error" tools/agrr-mcp/src` が 0 件 |
+| M2 | リポジトリ内のその他の読み手 | `tools/`、`scripts/`、`frontend/e2e`、`.cursor/skills` を `rg` で検索し、HTTP 本文の `error` を読むコードは MCP 以外に見つからなかった。`.cursor/skills/agrr-crop-setup/SKILL.md:34` の `errors` は結果ペイロードで対象外 | 変更なし | 同じ検索を S2 の PR で再実行 |
+| R1 | R4 契約テスト | 失敗本文の表明 19 箇所。`error` を表明する 10 箇所と map を表明する 2 箇所 | 12 箇所を `errors` / `field_errors` の表明に更新済み。S-T1（旧キー併記の検査）は削除済み | `contracts.rs`、S-T2 |
+
+#### 3.5.5 撤去後に旧形式が混入しないための回帰テスト（S-T 系の確認）
+
+| 混入の経路 | 防ぐテスト | 常設 / 時限 | 備考 |
+|------------|-----------|-------------|------|
+| サーバーの既存経路が旧キーを返す | **S-T2**（R4 の失敗経路に旧キー不在を表明。§6.3） | **常設**（S2 で GREEN になった後も `contracts.rs` に残す） | 列挙した経路だけが対象。新しい失敗経路は R4 を書くときに `assert_error_envelope` を使う規則とする（S-T0） |
+| サーバーの新規コードが旧キーを直書きする | **S-T6**（アーキテクチャガード。§6.3、Q9 の既定は「足す」） | 常設 | `json!` を介さない組み立ては検出できない可能性がある（R13）。S-T2 と併用する |
+| 併記の検査が残る | **S-T1**（旧キー併記を要求する） | **時限**（S2 のコミットで削除する） | 残すと S2 の回帰テスト（S-T2）と矛盾する |
+| MCP が旧キーを再び読む | **S-T7**（新規。§6.3） | 常設 | CI の `agrr-mcp unit tests`（`.github/workflows/frontend-test.yml:131-132`）で実行される。`test-common` に入口が無い（README の共通制約） |
+| フロントの共通関数が旧形式を読む | T1（ケース 5・6・7・12）、T4（24 usecase の旧形式不読）、T14、T16 | 常設 | 既存の読み手を固定する |
+| フロントの**新規** usecase が `err.error.error` を読む | 上記のテストは検出しない | – | **残余リスク**（§8 R25）。S2 の受け入れ条件（§9 の 11）の `rg` を PR のたびに実行する。機械ガード化は `project-necessary-code-only.mdc` に照らし、本書では提案しない |
+| 文書が旧キーの例を再導入する | `rg -n '"error"' docs/api`（0 件） | 時限（S2 の受け入れ） | `Error` スキーマの内容を機械検証する仕組みは現状無い。08 の P3 は path × method のみ（§10） |
 
 ### 3.6 共通エラー型・レスポンスヘルパーの導入（(b)。LAYER-RULES R6 / R7 に照らす）
 
@@ -660,18 +741,18 @@ LAYER-RULES との照合:
 | `docs/api/openapi.yaml:453-461`（`Error` スキーマ） | `error: string` と `errors: array<object>` | `errors: array<string>`（必須、1 件以上）、`error_code: string`、`field_errors: map<string, array<string>>`。`error` と `message` は S1 の間 `deprecated: true` で残し、S2 で削除する（課題 08 D-03 / D-14） |
 | 公式 MCP クライアント `tools/agrr-mcp/src/agrr-client.mjs:87-95` | 本文の `error` が非空ならそれを `Error.message` にし、無ければ `AGRR API <status> for <path>` にする。`errors` は読まない | `errors` が非空の文字列配列なら `', '` で結合して `Error.message` にする。`error` は読まない。テスト `tools/agrr-mcp/test/agrr-client.test.mjs:122-126` の fixture（401 `{error: 'unauthorized'}`）を `errors` に書き換え、422 の複数メッセージのテストを足す |
 | 更新しない MCP の利用者（S2 以降） | – | `Error.message` が `AGRR API <status> for <path>` に**劣化**する（本文は `err.body` に残る）。読み取りが失敗するのではなく具体メッセージが失われる |
-| API キー経由のクライアント全般 | `error` を読んでいるかは、リポジトリ内では計測できない（調査の限界） | S1 の間は併記で非破壊。S2 は Q2 の承認が前提 |
+| API キー経由のクライアント全般 | `error` を読んでいるかは、リポジトリ内では計測できない（調査の限界） | S1 の間は併記で非破壊。S2 は P6（§3.5.2 の E1〜E4）を満たした後にだけ実施する |
 | `.cursor/skills/agrr-crop-setup/SKILL.md:34` | dry_run の結果 `errors`（`{path, message}`）を読む | 変更なし（結果ペイロード。C3 の例外 i） |
 
-MCP はこのリポジトリ内のコードであり、`errors` を読む版への更新は S2 の前提（ゲート 4）として本書の範囲に含める。
+MCP はこのリポジトリ内のコードであり、`errors` を読む版への更新は S2 の前提（P4）として本書の範囲に含める。更新版は S1 と同時に公開し、告知の一部にする（§3.5.2 の E3）。
 
 ### 3.9 ユーザー確認が必要な点
 
-旧 Q1（統合先の選択）は、第 2 回決定（§0.2）で確定したため削除した。番号は他の節からの参照を保つため詰めない。
+旧 Q1（統合先の選択）は、第 2 回決定（§0.2）で確定したため削除した。旧 Q2 のうち「旧キー削除の可否」は、第 3 回決定（§0.3）で**解消**した（削除する。外部依存確認は実施前提 P6 として手順化した）。Q2 には「外部依存確認の結果次第での猶予延長」だけが残る。番号は他の節からの参照を保つため詰めない。
 
 | # | 確認事項 | 既定（未回答時の進め方） |
 |---|----------|--------------------------|
-| Q2 | **旧キー（`error` / `message`）削除 S2 の実施可否**と、外部 API キー利用者が `error` / `message` に依存していないかの確認（§3.5 のゲート 6） | 依存が確認できない間は S2 を実施しない。S1（併記）は維持する |
+| Q2 | **外部依存確認（§3.5.2）の結果次第での猶予延長**。E4 の C3 で、未解消の要素（利用者を特定できない・連絡できない・無回答のクライアント、または E2 が測定不能のときのキー保有ユーザー）が残ったとき、(a) 延長を続けるか、(b) いつ r3（影響を許容する）として打ち切るか | 延長する。未解消の要素が残る間は S2 を実施せず、S1（併記）を維持する。打ち切り（r3）は、ユーザーが明示的に記録するまで行わない |
 | Q3 | 項目別の検証情報の名前 `field_errors` | `field_errors` |
 | Q4 | 共通ヘルパー `api_error.rs` の導入（§3.6） | 導入する |
 | Q5 | 適用範囲。既定は Masters・Plans 系・公開プラン系・contact・organizations・account 系・スケジューラ認証（§2.7 の #1〜#19 の区分 A / B / D）。運用用の backdoor（#20）は対象外 | 左記 |
@@ -701,7 +782,7 @@ MCP はこのリポジトリ内のコードであり、`errors` を読む版へ�
 | `components/` | `components/settings/account/account.component.ts:180-182`、`components/masters/crops/crop-create.component.ts`、`crop-create.view.ts` | 本文読みの共通関数化、事前チェックの呼び出し、ブロック表示 |
 | i18n | `assets/i18n/{ja,en,in}.json` | `crop_limit_exceeded`（`in`）、`crops.new.limit_*`（3 言語）、サーバー送出キーの欠落、コード参照の欠落 7 件 |
 
-### 4.2 バックエンド（Q2〜Q5 の回答により実施）
+### 4.2 バックエンド（第 3 回決定による確定段階 S0〜S2 と、Q3〜Q5 の既定により実施）
 
 変更対象の箇所数は §2.7 と §3.2.1 の集計に基づく（区分 A = `error` 299、B = `message` 47、D = 項目別 map 3。区分 C の 96 箇所は変更なし）。
 
@@ -717,7 +798,7 @@ MCP はこのリポジトリ内のコードであり、`errors` を読む版へ�
 | domain | `crates/agrr-domain/src/cultivation_plan/interactors/public_plan_save_interactor.rs:127-128` | – | `invalid.to_string()` ではなく `RecordInvalidError::detail_message()`（`shared/exceptions/mod.rs:21-23`）を使う（Q6 / S3） |
 | adapters | `crates/agrr-adapters-sqlite/src/cultivation_plan/plan_save_session.rs:109` | – | `err.to_string()` の代わりに `RecordInvalidError` を判別して詳細メッセージのみ渡す（S3） |
 | docs | `docs/api/openapi.yaml:453-461`、`docs/api/getting-started.md:57` | – | `Error` スキーマと 429 の例、失敗本文の節の更新（課題 08、03。§3.8、§10） |
-| tools | `tools/agrr-mcp/src/agrr-client.mjs:87-95`、`tools/agrr-mcp/test/agrr-client.test.mjs:122-126` | – | `errors` を読む版に更新（S2 のゲート 4。§3.8） |
+| tools | `tools/agrr-mcp/src/agrr-client.mjs:87-95`、`tools/agrr-mcp/test/agrr-client.test.mjs:122-126` | – | `errors` を読む版に更新（S1 と同時に公開。S2 の前提 P4。§3.8、§3.5.4 の M1） |
 
 `crates/agrr-server/**`、`crates/agrr-domain/**`、`crates/agrr-adapters-*/**` を変更した場合、Docker 検証前に `.cursor/skills/dev-docker/scripts/rebuild-restart.sh` が必須（`docker-dev-agrr-server-rebuild.mdc`）。
 
@@ -730,7 +811,7 @@ MCP はこのリポジトリ内のコードであり、`errors` を読む版へ�
 | フロント catalog spec | `core/i18n/farms-activerecord-locale.catalog.spec.ts`（参考）、`core/i18n/crops-new-locale.spec.ts`（拡張） | §6.2 T10〜T12 |
 | R4 契約 | 失敗本文の表明は `contracts.rs` に 19 箇所（§2.8）。S1（旧キー併記）では**既存の表明はすべて通ったまま**（旧キー・map が残るため）。S2 で変更が必要なのは 12 箇所: `error` を表明する 10 箇所（`348,2123,3192,3280,3454,3471,3879,4502,4563,4595`）を `errors` の表明に、項目別 map を表明する 2 箇所（`411,636`）を `field_errors` の表明に更新する。`errors` の配列を表明する 5 箇所（`1221,1626,1726,2418,2442`）と `3043`（`error_code`）、`2689`（結果ペイロード）は変更しない | §6.3 S-T0〜S-T2 |
 | ドメイン | `agrr-domain/test/cultivation_plan/interactors_public_plan_save_interactor_test.rs`（構造流用） | §6.3 S-T3 |
-| 公式 MCP | `tools/agrr-mcp/test/agrr-client.test.mjs:122-126`（401 の `{error}` fixture を `errors` に変更） | 422 の複数メッセージが `Error.message` に出るテスト |
+| 公式 MCP | `tools/agrr-mcp/test/agrr-client.test.mjs:122-126`（401 の `{error}` fixture を `errors` に変更） | §6.3 S-T7: 422 の複数メッセージが `Error.message` に出るテスト、旧形式 `{error}` を `Error.message` に使わないテスト |
 
 ### 4.4 i18n 3 言語
 
@@ -773,11 +854,11 @@ MCP はこのリポジトリ内のコードであり、`errors` を読む版へ�
 
 ### 5.5 サーバー
 
-段階は S0〜S3 とし、デプロイは S0・S1 → フロント（F1）→ S2 の順に行う（§3.5）。S3 は独立している。
+段階は S0〜S3 とし、デプロイは S0・S1 → フロント（F1）→ S2 の順に行う（§3.5.1。第 3 回決定で確定）。S3（`record invalid: ` 接頭辞の除去）は旧キー撤去ではなく、独立している。
 
 - **S0（ヘルパー導入）**: `api_error.rs` を追加し、既存の `internal_error()` の 10 個の定義と `unauthorized` の定型本文（`error` 21 箇所 + `errors` 13 箇所 + `message` 6 箇所）をヘルパー呼び出しに置き換える。この時点では本文の形は変えない（`Legacy` は従来の形を再現する）。
 - **S1（`errors` の追加。旧キーは併記）**: §3.2.1 の区分 A の 299 箇所と B の 47 箇所を、`api_error.rs` 経由で `errors: [msg]` に変更する。A には `Legacy::Error`、B には `Legacy::Message` で旧キーを併記する。区分 D の 3 箇所は `field_errors` を追加し、`errors` は map のまま（`Legacy::ErrorsMap`）。区分 C の 96 箇所は本文を変えない。ファミリー単位で進める: (1) Masters（`masters_*.rs`）、(2) Plans / 公開プラン系（A、B、D を別コミット）、(3) contact・organizations・account 系・スケジューラ認証。
-- **S2（旧キー削除）**: §3.5 のゲートを満たした後に、`Legacy` 型と `attach_legacy_keys` を削除する。コンパイルエラーが指す呼び出し側の引数を削除する。区分 D の 3 箇所は `errors` を平坦化した文字列配列にする。R4 の表明 12 箇所（§4.3）を `errors` / `field_errors` の表明に更新する。OpenAPI と `getting-started.md` から `error` / `message` の deprecated 記述を削除する。
+- **S2（旧キー撤去。確定）**: §3.5.3 の P1〜P6 を満たし記録した後に実施する。S2-a: `Legacy` 型と `attach_legacy_keys` を削除し、コンパイルエラーが指す呼び出し側の `legacy` 引数を削除する。R4 の `error` 表明 10 箇所を `errors` の表明に更新し、S-T1 を削除する。S2-b: 区分 D の 3 箇所の `errors` を平坦化した文字列配列にし、R4 の map 表明 2 箇所（`411`、`636`）を `field_errors` の表明に更新する。S2-c: OpenAPI と `getting-started.md` から `error` / `message` と deprecated の記述を削除する。撤去後の最終状態は §3.5.4 の表（A1〜R1）で全数を確認する。
 - **S3（Q6 で承認された場合）**: `public_plan_save` の失敗本文から `record invalid: ` を除く。ドメインの `PublicPlanSaveInteractor`（`:127-128`）と、アダプタの `PlanSaveSession::call`（`plan_save_session.rs:105-111`）の 2 箇所で、`RecordInvalidError` の詳細メッセージのみを使う。
 
 ### 5.6 i18n カタログ
@@ -877,34 +958,38 @@ Q12 の回答により、crop 下位リソース（`update-crop-stage`、`update
 | ID | 場所 | Given / When / Then | RED になる理由 |
 |----|------|---------------------|----------------|
 | S-T0 | `crates/agrr-r4-contract/tests/contracts.rs`（共通アサート `assert_error_envelope` を追加し、既存の失敗系 18 箇所（§2.8。`2689` は結果ペイロードのため除く）に組み込む。R4 に無い経路は新規テスト） | Given 各ファミリーの失敗経路。When リクエスト。Then 本文が JSON オブジェクトで、`errors` が 1 件以上の非空文字列の配列。検証失敗は各メッセージが別要素。項目別検証は `field_errors`。対象の新規経路: Masters の crops update（403、`reference_flag_denied`）・farms update（403）・fields 各操作・各 destroy・crop_stages create（`invalid`。区分 C の保護）・requirements の 404・blueprint の 404 と検証（`error_code` を維持）・`masters_auth` の 401 / 403 / `masters_rate_limit` の 429、Plans 系の plans 404・work_records 409 と 422（`field_errors.name`）・entry_schedule 422 / 503・cultivation_plans_mutations 404（`message` 形式）・field_cultivations 422、contact 429 / 検証 422（`field_errors`）、organizations の 403 | `error` のみ、または `message` のみを返す箇所（区分 A / B）で `errors` が無い。区分 C の箇所は GREEN の保護 |
-| S-T1 | 同（S1 の互換テスト） | Given S-T0 と同じ経路のうち、区分 A / B / D の箇所。When リクエスト。Then 旧キーが**併記**されている（A は `error` が `errors[0]` と同一文字列、B は `message` が `errors[0]` と同一文字列、D は `errors` が従来の map と同一で `field_errors` が同じ内容）。区分 C の箇所には旧キーが無い | S1 の実装前は、新形式（`errors`）が無いため S-T0 が RED。S1 の実装後は GREEN。S2 で削除される |
-| S-T2 | 同（S2 の削除テスト） | Given S-T0 と同じ経路。Then 失敗本文に `error` と `message` が**存在しない**（`fallback.rs` の `path` などの付加情報は除く）。区分 D の `errors` が文字列配列で、`field_errors` と内容が対応している。setup_proposal の結果ペイロードの `errors`（`contracts.rs:2689`）は対象外 | S1 の状態では旧キーが併記されているため RED。S2 の実装で GREEN |
+| S-T1 | 同（S1 の互換テスト） | Given S-T0 と同じ経路のうち、区分 A / B / D の箇所。When リクエスト。Then 旧キーが**併記**されている（A は `error` が `errors[0]` と同一文字列、B は `message` が `errors[0]` と同一文字列、D は `errors` が従来の map と同一で `field_errors` が同じ内容）。区分 C の箇所には旧キーが無い | S1 の実装前は、新形式（`errors`）が無いため S-T0 が RED。S1 の実装後は GREEN。**時限テスト**で、S2 のコミットで削除する（旧キーを要求するため、S-T2 と矛盾する） |
+| S-T2 | 同（S2 の削除テスト。**常設の回帰テスト**） | Given S-T0 と同じ経路（Masters の 403 `insufficient_scope`、429 `rate_limit`、401 を含む）。Then 失敗本文に `error` と `message` が**存在しない**（`fallback.rs` の `path` などの付加情報は除く）。区分 D の `errors` が文字列配列で、`field_errors` と内容が対応している。setup_proposal の結果ペイロードの `errors`（`contracts.rs:2689`）は対象外。`backdoor/routes.rs` は対象外（Q5） | S1 の状態では旧キーが併記されているため RED（P2 で確認）。S2 の実装で GREEN。以後は削除せず、S2 のコミットで `assert_error_envelope` に旧キー不在の検査を加え、新しい失敗経路にも同じ検査を使う |
 | S-T3 | `crates/agrr-domain/test/cultivation_plan/interactors_public_plan_save_interactor_test.rs`（既存に追加。既存の Stub 群を流用） | Given 永続化ポートが `RecordInvalidError::new(Some("activerecord.errors.models.farm.attributes.user.farm_limit_exceeded"), None)` を返す。When `PublicPlanSaveInteractor::call`。Then 出力ポートの失敗は `KIND_SAVE_FAILED`、`message == Some("activerecord.errors.models.farm.attributes.user.farm_limit_exceeded")` | `public_plan_save_interactor.rs:127-128` は `invalid.to_string()` で `record invalid: ` が付く |
 | S-T4 | `crates/agrr-adapters-sqlite/src/cultivation_plan/plan_save_session_integration_test.rs`（既存に追加。`invoke_save` 流用） | Given 非参照農場を 4 件持つユーザーと保存対象の公開プラン。When `invoke_save`。Then 出力が失敗で、`error_message` が上限キーのみ（接頭辞なし） | `plan_save_session.rs:109` が `err.to_string()` |
 | S-T5（任意） | `crates/agrr-server/src/api_error.rs` のインライン `#[cfg(test)]` | `api_error(422, "a", Legacy::Error)` が `errors == ["a"]` かつ `error == "a"`。`Legacy::None` は `error` を持たない。`api_errors(422, ["a","b"])` が `errors == ["a","b"]`。`api_errors(422, [])` が 500 の `errors == ["internal"]`。`api_field_errors(.., Legacy::ErrorsMap)` が `errors` に map、`field_errors` に同内容。`api_error_with_code` が `error_code` を保持 | ヘルパーが存在しない。`test-common` の入口が無いため、契約は S-T0〜S-T2 が担保する |
-| S-T6（Q9） | `scripts/run-architecture-guard-lib.test.mjs` | Given `crates/agrr-server/src` に失敗本文の `"error"` / `"message"` キーを直書きしたフィクスチャ。When ガードを実行。Then 違反として検出される。許可リスト（`api_error.rs`、`backdoor/routes.rs`）は検出されない | 検査が存在しない |
+| S-T6（Q9） | `scripts/run-architecture-guard-lib.test.mjs` | Given `crates/agrr-server/src` に失敗本文の `"error"` / `"message"` キーを直書きしたフィクスチャ。When ガードを実行。Then 違反として検出される。許可リスト（`api_error.rs`、`backdoor/routes.rs`）は検出されない。S2 後は `api_error.rs` から旧キーの書き込みが無くなるため、許可リストから `api_error.rs` を外しても違反が出ないことを確認する | 検査が存在しない。**常設の回帰テスト**（Q9 の既定で足す） |
+| S-T7 | `tools/agrr-mcp/test/agrr-client.test.mjs`（既存に追加。`mockFetch` 流用） | Given 422 の本文 `{errors:['a','b']}`。When 公開メソッド（既存の失敗テストと同じ `client.listReferenceCrops()`: `agrr-client.test.mjs:122-133`）を呼ぶ。Then 例外の `message` が `'a, b'`、`status` が 422、`body` が本文。Given 本文 `{error:'x'}`（旧形式のみ）または `{errors:[], error:'x'}`。Then `message` が `AGRR API <status> for <path>`（`'x'` にならない）で、`body` に本文が残る。既存の 401 fixture（`:122-126`）は `{errors:['unauthorized']}` に書き換える | 現状は `payload.error` だけを読む（`agrr-client.mjs:87-95`）ため、1 つ目は `AGRR API 422 for <path>` になり、2 つ目は `'x'` になって RED。**常設の回帰テスト**。実行は `cd tools/agrr-mcp && npm test`（`test-common` に入口は無く、CI の `.github/workflows/frontend-test.yml:131-132` が実行する） |
+
+S-T5 は、S2 で `Legacy` 型が消えるため、`legacy` 引数を使うケースを削除し、旧キーが出ないことの確認に書き換える。
 
 S-T0 の経路ごとに必要な seed ヘルパー（`support.rs`）の有無は**未確認**。無い場合は `support.rs` に追加する（例: 上限に達した専用ユーザーは、共有ユーザー `developer_session_id` に 20 件を作ると他の R4 テストの上限を壊すため専用が要る。`support.rs:164` のコメントが同種の問題を示す）。
 
-S1 のみで止める場合に実行するのは S-T0 と S-T1、S3 を含めるなら S-T3 と S-T4。R4 契約は `rebuild-restart.sh` 後に全件を実行して回帰を確認する。
+S1 のときに実行するのは S-T0、S-T1、S-T7（MCP）。S2 のときは S-T1 を削除して S-T2 と S-T5 の更新を実行し、以後 S-T2 / S-T6 / S-T7 を常設する（§3.5.5）。S3 を含めるなら S-T3 と S-T4。R4 契約は `rebuild-restart.sh` 後に全件を実行して回帰を確認する。
 
 ---
 
 ## 7. 実装ステップ
 
-1 論理変更 = 1 コミット。各ステップは「RED を確認 → 実装 → 個別 GREEN」の順（[`tdd-on-edit`](../../.cursor/skills/tdd-on-edit/SKILL.md)）。Q2〜Q15 の確認が済んでいない間に着手できるのは、既定で進められるステップ 1〜12。ステップ 13（S3）は Q6 の承認後、ステップ 14（S2）は Q2 と §3.5 のゲート後、ステップ 15（機械ゲート）は Q9 の承認後。
+1 論理変更 = 1 コミット。各ステップは「RED を確認 → 実装 → 個別 GREEN」の順（[`tdd-on-edit`](../../.cursor/skills/tdd-on-edit/SKILL.md)）。Q3〜Q15 の既定で進められるのはステップ 0〜12。ステップ 13（S3）は Q6 の承認後、ステップ 14（S2）は §3.5.3 の実施前提 P1〜P6 を満たし記録した後（Q2 は猶予延長の判断だけ）、ステップ 15（機械ゲート）は Q9 の承認後。
 
-**デプロイ順序は固定**: サーバー S1（手順 1〜6）→ フロント F1（手順 7〜12）→ S2（手順 14）。フロントを先に出さない。S2 を F1 の前に出さない。詳細とゲートは §3.5。
+**デプロイ順序は固定**（第 3 回決定で確定）: サーバー S1（手順 1〜6）→ フロント F1（手順 7〜12）→ 外部依存確認（E1〜E4）→ S2（手順 14）。フロントを先に出さない。S2 を F1 の前に出さない。外部依存確認（P6）なしで S2 を出さない。詳細と実施前提は §3.5。
 
 | 順 | コミット | 内容 | RED → GREEN |
 |----|----------|------|-------------|
+| 0 | （コミットなし）外部依存確認の基準計測 E1 / E2（§3.5.2） | 読み取り専用。E1 は 03 の件数確認（03 §5.4.4 Phase 1）と同じ実行にまとめる。E2 は `gcloud logging read` で計測可否と集合 U を記録する。結果は PR / issue に残す | – |
 | 1 | `test(r4): assert errors envelope on failure paths` | `assert_error_envelope` と、既存・新規の失敗経路への組み込み（S-T0）、旧キー併記の検査（S-T1） | S-T0 / S-T1 が RED（区分 A / B の箇所に `errors` が無い） |
 | 2 | `feat(server): add api_error helper` | `api_error.rs`（S0）。既存の `internal_error()` 10 定義と `unauthorized` の定型本文を置換。`Legacy` は従来の形を再現し、本文の形は変えない | S-T5。S-T0 の既存 `error` 系は GREEN のまま |
 | 3 | `feat(server): add errors to masters failure bodies` | Masters の区分 A 156 箇所を `api_error` 経由の `errors: [msg]` に変更し、`error` を併記する（S1-1）。`masters_auth.rs` / `masters_rate_limit.rs` を含む | S-T0 / S-T1 の Masters 行 |
 | 4 | `feat(server): add errors to plans failure bodies` | Plans / 公開プラン系の区分 A 71 箇所、区分 B の `message` 47 箇所、区分 D の 3 箇所（`field_errors` を追加）（S1-2）。A / B / D でコミットを分ける | S-T0 / S-T1 の Plans 行 |
 | 5 | `feat(server): add errors to remaining failure bodies` | contact・organizations・account 系・スケジューラ認証の区分 A 72 箇所（S1-3）。`contact_messages.rs` は `field_errors` を追加。課題 02 の Turnstile 実装と同じファイルを触るため、順序を調整（§10） | S-T0 / S-T1 の contact / organizations 行 |
-| 6 | `docs: declare errors failure contract` と `feat(mcp): read errors from failure body` | `getting-started.md` と `openapi.yaml` の失敗本文を `errors` 主体に更新し、`error` / `message` を `deprecated` で記載（課題 08、03）。`tools/agrr-mcp` を `errors` 読みに更新し、テストを更新。S1 のデプロイと同時に公開する（§3.5 ゲート 3、4） | MCP のテスト（422 の複数メッセージ）が RED → GREEN |
-| – | （デプロイ）サーバー S1 | `rebuild-restart.sh` → `run-rust-contract-tests.sh` → `run-test-rust-domain.sh` を GREEN にしてから `deploy-server` | – |
+| 6 | `docs: declare errors failure contract` と `feat(mcp): read errors from failure body` | `getting-started.md` と `openapi.yaml` の失敗本文を `errors` 主体に更新し、`error` / `message` を `deprecated` で記載（課題 08、03）。`tools/agrr-mcp` を `errors` 読みに更新し、テストを更新。S1 のデプロイと同時に公開する。これが外部 API キー利用者への告知（E3 の (a)(b)）になる（§3.5.3 の P3、P4。03 の文書公開が先） | S-T7 が RED → GREEN |
+| – | （デプロイ）サーバー S1 | `rebuild-restart.sh` → `run-rust-contract-tests.sh` → `run-test-rust-domain.sh` を GREEN にしてから `deploy-server`。MCP の `npm test` を実行する | – |
 | 7 | `core: add api error body and message helpers` | `core/api-error-body.ts`、`core/api-error-message.ts`、`error` 比較の移行（`api-error-i18n-key.ts`、`backend-warmup.ts`。§3.7.1） | T1, T16 |
 | 8 | `usecase: read errors in masters usecases` | Masters 24 usecase を共通関数に置換 | T2, T3, T4 |
 | 9 | `usecase: read errors in other readers` | §2.8 の本文リーダー、`ensure-plan-for-farm` の比較、`create-private-plan` の要素単位の翻訳、`account.component`、gantt ヘルパー、work record 3 usecase の `field_errors` 読み | T14, T15, T17 |
@@ -913,7 +998,10 @@ S1 のみで止める場合に実行するのは S-T0 と S-T1、S3 を含める
 | 12 | `usecase(public-plans): translate save error message` | `save-public-plan` に共通関数 + `translateServerToastMessage` | T13 |
 | – | （デプロイ）フロント F1 | 手順 6 までのサーバー（S1）が本番に反映済みであることを確認してから `deploy-frontend`（CDN 無効化のログを確認） | – |
 | 13 | `fix(public-plan-save): drop "record invalid" prefix from failure message`（Q6 で承認された場合） | domain と adapter の 2 箇所（S3）。S1 / F1 とは独立して実施できる | S-T3, S-T4 |
-| 14 | `refactor(server): remove legacy error keys`（§3.5 のゲートと Q2 を満たした後） | `Legacy` と `attach_legacy_keys` を削除。区分 D の `errors` を平坦化した文字列配列にする。R4 の表明 12 箇所を更新。`openapi.yaml` / `getting-started.md` から `error` / `message` の記述を削除 | S-T2 |
+| – | （確認）外部依存確認 E3 / E4 | 告知の公開（S1・F1 の反映後）を確認し、E2 の計測をやり直して C1〜C5 を記録する（§3.5.2）。未解消の要素が残る間は手順 14 に進まない（Q2） | P6 の記録 |
+| 14a | `refactor(server): remove legacy error keys`（P1〜P6 を満たし記録した後） | S2-a: `Legacy` 型、`attach_legacy_keys`、`legacy` 引数を削除。R4 の `error` 表明 10 箇所（`348,2123,3192,3280,3454,3471,3879,4502,4563,4595`）を `errors` の表明に更新。S-T1 を削除。`assert_error_envelope` に旧キー不在の検査を加える。S-T5 を更新 | S-T2（P2 で RED を確認済み） |
+| 14b | `refactor(server): flatten field errors to string array` | S2-b: 区分 D の 3 箇所の `errors` を平坦化した文字列配列にする。R4 の map 表明 2 箇所（`411`,`636`）を `field_errors` の表明に更新 | S-T2 の区分 D 行 |
+| 14c | `docs: remove deprecated error keys from api docs` | S2-c: `openapi.yaml` の `Error` から `error` / `message` と deprecated を削除。`getting-started.md` の旧キーと廃止予定の記述を削除（§3.5.4 の O1、O2） | `rg -n '"error"' docs/api` が 0 件 |
 | 15 | `chore(guard): forbid error and message keys in failure bodies`（Q9） | `run-architecture-guard-lib.mjs` に検査と許可リストを追加 | S-T6 |
 
 手順 13（S3）はユーザーに見える結果がフロントの手順 12 と揃って初めて完成する。手順 11 では、Farm 側の実装（`farm-create.component.ts`、`create-farm.usecase.ts`、`farm-create.presenter.ts`）には触れない（`create-farm.usecase.ts` は手順 8 で共通関数化する際に触れるが、`resolveActiverecordApiErrorI18nKey` の流れは維持する）。
@@ -923,7 +1011,7 @@ S1 のみで止める場合に実行するのは S-T0 と S-T1、S3 を含める
 1. 個別 spec を `run-test-frontend.sh` で GREEN にする。
 2. フロントは手順 7〜9・11 の後に全件を実行する。
 3. `test-slow-detection` を実施する。
-4. サーバーに触れたステップ（1〜6, 13, 14）は `rebuild-restart.sh` → `run-rust-contract-tests.sh` → `run-test-rust-domain.sh` を実行する。
+4. サーバーに触れたステップ（1〜6, 13, 14a, 14b）は `rebuild-restart.sh` → `run-rust-contract-tests.sh` → `run-test-rust-domain.sh` を実行する。
 
 ---
 
@@ -938,13 +1026,13 @@ S1 のみで止める場合に実行するのは S-T0 と S-T1、S3 を含める
 | R5 | サーバーの上限計数は組織単位、フロントの件数は一覧（`index_list_filter_for_user`）ベースで、両者が一致するかは未確認 | 事前チェックは UX ヒントに限定し、サーバーエラー時のブロック表示（T8）で最終判定を受ける |
 | R6 | 管理者の Crop 事前チェック（参照作物は上限対象外）の扱い | Q8。既定は非管理者のみ |
 | R7 | Crop 更新は `updated_at` が必須（`crop_update_interactor.rs:68-77`）。フロントの `update-crop.usecase.ts:66` は `updated_at != null` のときだけ送る。未送信だと 422 になるが、フロントが常に送っているかは未確認。本課題の範囲外の隣接事項として記録する | 課題 11（low-priority-misc）または別課題で確認 |
-| R8 | 旧キーを読むコードの抽出は `rg` の正規表現による。分割代入や `Object.entries` など、正規表現に掛からない読み方が残っている可能性は**未確認** | 手順 9 の完了時に、`rg -n "\.error\??\.(error\|message)\b\|body\??\.(error\|message)\b\|as \{ error\?: (string\|unknown) \}" frontend/src/app --glob '!*.spec.ts'`（現状 16 ファイル 19 行）が 0 件になることを確認し、残りは目視で確認する。S2 のゲート 5 |
+| R8 | 旧キーを読むコードの抽出は `rg` の正規表現による。分割代入や `Object.entries` など、正規表現に掛からない読み方が残っている可能性は**未確認** | 手順 9 の完了時に、`rg -n "\.error\??\.(error\|message)\b\|body\??\.(error\|message)\b\|as \{ error\?: (string\|unknown) \}" frontend/src/app --glob '!*.spec.ts'`（現状 16 ファイル 19 行）が 0 件になることを確認し、残りは目視で確認する。S2 の前提 P5 |
 | R9 | 既存 CI ゲート `check-hardcoded-i18n` は「メッセージとしてキーを渡す」使い方を検査しない（§2.6）。今回の欠落 7 件が再発し得る | T12 で既知キーを固定する。ゲート拡張は本課題の範囲外（提案のみ。実施は別途ユーザー確認） |
 | R10 | `in` の欠落キーが ja にフォールバックするかは未確認（ngx-translate v17 の挙動） | 実行時確認は未実施。キーを追加すれば挙動に依存しない |
 | R11 | Hindi 訳の品質確認者が必要 | Q11 |
 | R12 | 上限のキー名 / 文言の Farm との対称性が崩れる（`farms.new.*` は `farm_limit_reached` 系が別にもある: `ja.json:2442` など） | 追加前に `crops.*` 側の既存キー（`crops.new.*`）を再確認し、命名を Farm に揃える |
 | R13 | 箇所数（A 299、B 47、D 3、C 96 ほか）は正規表現による概数。`json!` を介さずに組み立てる本文（`serde_json::Map` の手組み、`Value` を返す関数）は数え漏れがあり得る | S1 のコミットごとに、対象ファイルの `rg '"errors?"' -c` を実施前後で比較する。R4 の S-T0 が最終的な検出手段 |
-| R14 | 外部 API クライアントと旧フロントのバンドルが `error` / `message` に依存しているかは、リポジトリ内では**計測できない**（API キー利用の利用者別集計がない: 調査の限界）。S2 は破壊的変更になり得る | S1 は旧キーを併記するため非破壊。S2 は Q2 と §3.5 のゲートが前提。OpenAPI に `deprecated` を先に明記する。Cloud Logging の HTTP ログで API キー付きリクエストの失敗応答を数えられるかは**未調査** |
+| R14 | 外部 API クライアントと旧フロントのバンドルが `error` / `message` に依存しているかは、リポジトリ内では**計測できない**（API キー利用の利用者別集計がない: 調査の限界）。S2 は破壊的変更になり得る | S1 は旧キーを併記するため非破壊。S2 は P1〜P6 が前提で、**確認なしでは撤去しない**。OpenAPI に `deprecated` を先に明記する。Cloud Logging で分かるのは「失敗応答を受け取った非ブラウザのクライアントの有無」までで、`error` を読むかは測定できない（§3.5.2）。`httpRequest.userAgent` などが本番ログに出るかは**未確認**（E2）。測定不能で保有者が 1 人以上のときは、保有者ごとに解消（r1 / r3）を記録するまで S2 を実施しない（Q2） |
 | R15 | F1 稼働中にサーバーだけを S1 → S0 へロールバックすると、F1 が区分 A / B の箇所で劣化する（§3.5） | S1 のロールバックは F1 のロールバックと同時に行う運用とする。`deploy-server` スキルにロールバック手順があるかは**未確認** |
 | R16 | S2 後に、旧バンドルを開いたままのタブで destroy・認証・Plans 系の失敗メッセージが汎用文言に劣化し、区分 D では項目別エラーが表示されなくなる。強制更新の仕組みは見つからなかった（§3.5） | 再読み込みで解消する。許容できない場合は、バージョン確認による更新促しを別課題とする |
 | R17 | 複数要素の `errors` を `', '` で結合して表示すると、`translateServerToastMessage` が結合後の文字列をキーとして翻訳できない | 現行のフロントも `errors.join(', ')` で結合してから表示しており（例 `create-crop.usecase.ts:35`）、退行ではない。要素単位で翻訳する必要があれば `create-private-plan` と同じ要素単位の翻訳を使う |
@@ -953,8 +1041,10 @@ S1 のみで止める場合に実行するのは S-T0 と S-T1、S3 を含める
 | R20 | S-T0 の新規経路に必要な seed ヘルパーが `support.rs` に無い可能性（§6.3） | 無ければ追加する。追加が大きい経路は、既存の失敗系テストへの `assert_error_envelope` の組み込みのみで代替し、未検証の経路を明記する |
 | R21 | `save-public-plan.usecase.ts:37-41`（HTTP 200 で `success: false`）と `SavePublicPlanResponse.error` は、サーバー側では到達しない可能性が高い（`public_plan_save.rs:50-115` は失敗をすべて 4xx / 5xx で返す）が、他のクライアントが 200 の失敗を期待しているかは未確認 | 実装時に削除の可否を判断する（`project-necessary-code-only.mdc`）。削除しない場合、この分岐は失敗本文の契約（C1）の対象外として残る |
 | R22 | 警告分類の挙動差: `isEntryScheduleWeatherHttpError` は、503 で本文コードがあり daemon 系の文字列でなければ「明示的な失敗」とする。旧 `error` から `errors[0]` に読み替えると、**従来 `message` 形式（本文コードなし）で 503 を返していた `cultivation_plans_mutations.rs:157` は、警告扱いから明示的な失敗に変わる**。また課題 05 が新設する 503（`ProgressDaemonUnavailable`）は、`errors[0]` が daemon 系の文字列でなければ GET でも再試行されない | 変更は T16 で固定する。`cultivation_plans_mutations.rs:157` は POST 系（`post` は再試行しない: `api.service.ts:62-70`）で、表示が warmup 文言から本文のキーに変わるだけ。05 の写像は §10 |
-| R23 | 区分 D の `task_schedules.rs:112` の map を読むフロントの箇所を特定していない（§2.8 の項目別 map 読みは work record の 3 usecase のみ）。S2 で `errors` が文字列配列に変わると、その読み手が壊れる可能性がある | S2 の前に `rg` で `task_schedule` 系の 422 の読み手を確認する（§3.5 ゲート 5）。無ければ D の 2 箇所（work record 系）だけが読み手を持つ |
+| R23 | 区分 D の `task_schedules.rs:112` の map を読むフロントの箇所を特定していない（§2.8 の項目別 map 読みは work record の 3 usecase のみ）。S2 で `errors` が文字列配列に変わると、その読み手が壊れる可能性がある | S2 の前に `rg` で `task_schedule` 系の 422 の読み手を確認する（§3.5.3 の P5）。無ければ D の 2 箇所（work record 系）だけが読み手を持つ |
 | R24 | 区分 C の 96 箇所と `api_errors` は、空配列を返し得る箇所があるかを未確認（`field_cultivations.rs:179-180` の `flatten_error_messages()`、`full_messages()`、blueprint の `Vec<String>`）。空だと C1 の「1 件以上」に反する | S-T0 で検証失敗経路の `errors` が非空であることを表明する。`api_errors` は空のとき 500 にする（§3.6） |
+| R25 | 撤去後に、フロントの**新規** usecase が `err.error.error` を読む形で旧形式が再混入しても、既存のテスト（T1 / T4 / T14 / T16）は既存の読み手しか固定しないため検出されない（§3.5.5） | S2 の受け入れ条件（§9 の 11）の `rg` を PR のたびに実行する。機械ガード化は本書の範囲外（`project-necessary-code-only.mdc`）。必要になれば別途ユーザー確認 |
+| R26 | 外部依存確認（P6）の未解消の要素が残り、併記（S1）が長期に残る。`no-convenience-tech-debt.mdc` の「残置しない」と緊張する | 併記は `api_error.rs` の `Legacy` に閉じており（§3.6）、他の層に旧キーの扱いが広がらない。残置の判断はユーザーの Q2 に集約し、未解消の要素と理由を P6 の記録に残す |
 
 ---
 
@@ -977,38 +1067,42 @@ S1 のみで止める場合に実行するのは S-T0 と S-T1、S3 を含める
 
 ### サーバー（S0 / S1）
 
-13. S-T0 / S-T1 が GREEN。既存の R4 が GREEN のまま（旧キー・map の併記により、`error` / 項目別 map を表明する 12 箇所も通る）。
+13. S-T0 / S-T1 / S-T7 が GREEN。既存の R4 が GREEN のまま（旧キー・map の併記により、`error` / 項目別 map を表明する 12 箇所も通る）。
 14. §2.7 の区分 A / B / D の失敗本文（349 箇所）が、すべて非空の文字列配列の `errors` を持つ（区分 D は `field_errors`）。A の 299 箇所は `Legacy::Error`、B の 47 箇所は `Legacy::Message` で旧キーを併記している。
 15. `fn internal_error` の個別定義が `crates/agrr-server/src` から無くなり、`api_error.rs` に 1 つだけ存在する。
 16. `rebuild-restart.sh` 後に `scripts/run-rust-contract-tests.sh`、`run-test-rust-domain.sh` が GREEN。
 
-### サーバー（S2。§3.5 のゲートと Q2 を満たした後）
+### 旧キー撤去（S2。§3.5.3 の P1〜P6 を満たし、記録した後。最終状態の全数は §3.5.4）
 
-17. S-T2 が GREEN。`Legacy` 型と `attach_legacy_keys` がコードベースに存在しない。区分 D の `errors` が文字列配列で、R4 の表明 12 箇所が `errors` / `field_errors` の表明に更新されている。
-18. `docs/api/openapi.yaml` の `Error` スキーマが実装と一致し（`errors` は必須の文字列配列、`error_code` は文字列、`field_errors` は項目名 → 文字列配列の map）、`error` / `message` の `deprecated` 記述が削除されている。`docs/api/getting-started.md` の 429 の例が `errors` で、失敗本文の形式の節がある。
-19. `tools/agrr-mcp` が `errors` を読み、テストが GREEN。
-20. Q9 を承認した場合、S-T6 が GREEN で、`scripts/run-architecture-guard.sh` が OK。
+17. S-T2 が GREEN で、S-T1 が削除されている。`rg -n "Legacy|attach_legacy_keys" crates` が 0 件。R4 の表明 12 箇所（`error` 10 + map 2）が `errors` / `field_errors` の表明に更新されている（A1、R1）。
+18. 区分 A / B / D の失敗本文（349 箇所）に、失敗の主メッセージとしての `error` / `message` が無く、`errors` が非空の文字列配列である。区分 D は `errors` が平坦化され、`field_errors` と内容が対応している。残る旧キー相当の例外は、backdoor の 14 箇所、結果ペイロード（`masters_crop_setup_proposal.rs:94`）、付加情報（C8）だけである（A2、A3）。
+19. Masters の 403 `insufficient_scope` が `{"errors":["forbidden"],"error_code":"insufficient_scope"}`、429 が `{"errors":["rate_limit"]}`（`Retry-After` 維持）である（A4、A5。03 の V27 移行後の 403 を含む）。
+20. `docs/api/openapi.yaml` の `Error` スキーマが実装と一致し（`errors` は必須の文字列配列、`error_code` は文字列、`field_errors` は項目名 → 文字列配列の map）、`error` / `message` と `deprecated` の記述が無い。`docs/api/getting-started.md` の 429 の例が `errors` で、失敗本文の節があり、旧キーと廃止予定の記述が無い。`rg -n '"error"' docs/api` が 0 件（O1、O2）。
+21. `tools/agrr-mcp` が `errors` だけを読み（`error` を読まない）、S-T7 が GREEN で、`rg -n "payload\??\.error" tools/agrr-mcp/src` が 0 件（M1、M2）。
+22. フロントの旧形式の読み取りが 0 件（受け入れ条件 11。F1）で、spec の旧形式 fixture が「不読の表明」だけである（F2）。S2 の PR でも同じ `rg` を再実行している。
+23. P6 の記録が PR / issue に残っている: E1 の保有者数、E2 の計測可否と集合 U、E3 の告知の公開と個別連絡の対象、E4 の C1〜C5 の充足。未解消の要素が残る場合は、Q2 でユーザーが r3（影響を許容する）を明示的に記録している。
+24. 回帰テストが常設されている: S-T2、S-T7、T1 / T4 / T14 / T16。Q9 を承認した場合は S-T6 も GREEN で、`scripts/run-architecture-guard.sh` が OK（§3.5.5）。
 
 ### サーバー（Q6 で S3 を承認した場合）
 
-21. S-T3 / S-T4 が GREEN。公開プラン保存の上限超過応答の `errors` が `record invalid: ` を含まない。
+25. S-T3 / S-T4 が GREEN。公開プラン保存の上限超過応答の `errors` が `record invalid: ` を含まない。
 
 ---
 
 ## 10. 関連課題との依存
 
-`docs/spec-defects/` の各文書（01〜11）と [`README.md`](README.md) の決定事項表（第 1 回・第 2 回）を読んだ範囲での接点。他の文書は並行して更新されている可能性があり、下記の参照先（節番号・Q 番号）は本書作成時点のもの。
+`docs/spec-defects/` の各文書（01〜11）と [`README.md`](README.md) の決定事項表（第 1 回〜第 3 回）を読んだ範囲での接点（第 3 回の改訂時に、02・03・05・08・10 の該当箇所を再読して整合を確認した。01・06・09・11 は該当語の検索のみで、全文は精読していない）。他の文書は並行して更新されている可能性があり、下記の参照先（節番号・Q 番号）は改訂時点のもの。**第 2 回決定（`errors` 統合）への追随は、02・05・08 の本文でまだ行われていない**（02 は `error` + 新規 `code`、05 は `error_key` + `message`、08 は `error` / `error_code` / `errors` の確定表と `Error` スキーマを `error` 先頭で記述している。各文書を読んで確認）。本表はその読み替え方を本書側で固定するものである。
 
 | 番号 | 関係 | 内容 |
 |------|------|------|
 | 01 resource-limit-bypass | **強い関連（「統合」の別解釈を担当）** | 「統合」が上限判定の経路統合を含意する場合はそちらで扱う（§0.1）。本書との接点は 2 つ。(a) Farm / Crop の Masters create の上限エラーは既に `errors: [key]`（`masters_farms.rs:429`、`masters_crops.rs:283,340`）で、`errors` 統合では**本文が変わらない**。フロントの `isCropLimitExceededMessage`（T6, T8）と `resolveActiverecordApiErrorI18nKey` は、`apiErrorMessage` の結果を受ける。(b) 01 が上限をサーバー側で新たに強制する経路を追加する場合、そのエラーは `api_error.rs` 経由で `errors: [key]`（422 + 上限キー）の形にし、`MAX_*` 定数の同期（`farm-create-limit.ts:8`、`crop_create_limit_policy.rs:3`）を保つ |
-| 02 contact-recaptcha（Turnstile 採用） | **強い関連（契約の形を共有）** | 02 は CAPTCHA 失敗の応答を `contact_messages.rs:58-79` の `failure_response` で組み立て、識別用に新規キー `code`（`captcha_failed` / `captcha_unavailable`）を追加する案（02 の §3.4 Q10、§8 R10、§5.1 の presenter 行、§5.2 の usecase 行）を持つ。**`errors` 前提で本書の契約に合わせる点**: (1) 識別子は新規の `code` ではなく既存の `error_code` を使う（`masters_auth.rs:98`、blueprint 系、フロントの `crop-blueprint-regenerate-error-i18n.ts:19-26` が同名を使用済みで、2 つ目の名前を作らない）。値の名称（`captcha_failed` / `captcha_unavailable`）は 02 で確定する。(2) **CAPTCHA 失敗（422）は `{"errors": ["<文言>"], "error_code": "captcha_failed"}`、secret 未設定などの利用不可（503）は `{"errors": ["<文言>"], "error_code": "captcha_unavailable"}`**。文言は 02 の `"Turnstile failure: <error-codes>"` / `"CAPTCHA is not configured"` をそのまま `errors[0]` に入れる。S1 の間は `Legacy::Error` により `error` も併記される。(3) 入力検証の 422 は従来どおり `errors`（`full_messages`。§2.7 #16）で本文が変わらず、`field_errors`（`validation_errors.rs:45-51`）を加える。CAPTCHA 失敗と入力検証は、同じ 422 でも `error_code` の有無で区別できる（`error` 文字列と `errors` 配列の形状で区別する暫定案は不要）。フロントの spec が既に `field_errors` を想定している（`send-contact-message.usecase.spec.ts:87-93`）。(4) 02 が導入するフロントの `toErrorDto` は、本文の形状判別ではなく `apiErrorCode(err)` / `apiFieldErrors(err)` / `apiErrorMessages(err)` を使う。02 のフロントテスト F5 / F6 の fixture（`{error:'...', code:'...'}`。02 の該当行）は `{errors:['...'], error_code:'...'}` に読み替える。(5) 429 の `rate_limit` は `{"errors": ["rate_limit"]}`。専用文言は本書の契約の上で 02 が扱う。**順序**: 本書の手順 2（`api_error.rs`）を先に入れ、02 はヘルパー経由で実装する。R4 の `contracts.rs:4502-4595`（02 が Turnstile 向けに書き換える。`error` を表明している 3 箇所）は S2 の更新対象 12 箇所に含まれるため、02 のテスト書き換えと同じ PR か連続した PR で調整する |
-| 03 api-key-scope-docs | 関連 | 403 の本文 `{"error":"forbidden","error_code":"insufficient_scope"}`（`masters_auth.rs:98`）は、`errors` 統合では `{"errors":["forbidden"],"error_code":"insufficient_scope"}` になる（S1 は `error` を併記）。`docs/api/getting-started.md` を 03 と本書の手順 6 の両方が編集するため、03 を先に入れる（README の着手順どおり）。03 が扱う MCP の `apply_crop_setup` 削除（README 第 2 回決定）と、本書の MCP の `errors` 読みは同じ `tools/agrr-mcp/` を触るため、コンフリクトに注意する |
+| 02 contact-recaptcha（Turnstile 採用） | **強い関連（契約の形を共有）** | 02 は CAPTCHA 失敗の応答を `contact_messages.rs:58-79` の `failure_response` で組み立て、識別用に新規キー `code`（`captcha_failed` / `captcha_unavailable`）を追加する案（02 の §3.4 Q10、§8 R10、§5.1 の presenter 行、§5.2 の usecase 行）を持つ。**`errors` 前提で本書の契約に合わせる点**: (1) 識別子は新規の `code` ではなく既存の `error_code` を使う（`masters_auth.rs:98`、blueprint 系、フロントの `crop-blueprint-regenerate-error-i18n.ts:19-26` が同名を使用済みで、2 つ目の名前を作らない）。値の名称（`captcha_failed` / `captcha_unavailable`）は 02 で確定する。(2) **CAPTCHA 失敗（422）は `{"errors": ["<文言>"], "error_code": "captcha_failed"}`、secret 未設定などの利用不可（503）は `{"errors": ["<文言>"], "error_code": "captcha_unavailable"}`**。文言は 02 の `"Turnstile failure: <error-codes>"` / `"CAPTCHA is not configured"` をそのまま `errors[0]` に入れる。S1 の間は `Legacy::Error` により `error` も併記される。(3) 入力検証の 422 は従来どおり `errors`（`full_messages`。§2.7 #16）で本文が変わらず、`field_errors`（`validation_errors.rs:45-51`）を加える。CAPTCHA 失敗と入力検証は、同じ 422 でも `error_code` の有無で区別できる（`error` 文字列と `errors` 配列の形状で区別する暫定案は不要）。フロントの spec が既に `field_errors` を想定している（`send-contact-message.usecase.spec.ts:87-93`）。(4) 02 が導入するフロントの `toErrorDto` は、本文の形状判別ではなく `apiErrorCode(err)` / `apiFieldErrors(err)` / `apiErrorMessages(err)` を使う。02 のフロントテスト F5 / F6 の fixture（`{error:'...', code:'...'}`。02 の該当行）は `{errors:['...'], error_code:'...'}` に読み替える。(5) 429 の `rate_limit` は `{"errors": ["rate_limit"]}`。専用文言は本書の契約の上で 02 が扱う。**順序**: 本書の手順 2（`api_error.rs`）を先に入れ、02 はヘルパー経由で実装する。R4 の `contracts.rs:4502-4595`（02 が Turnstile 向けに書き換える。`error` を表明している 3 箇所）は S2 の更新対象 12 箇所に含まれるため、02 のテスト書き換えと同じ PR か連続した PR で調整する。**第 3 回決定による追加**: (6) 02 が追加する CAPTCHA 失敗の応答は、`error` / `code` を使う新規実装を S2 後に残さない。02 を S1 より先に実装する場合は、旧形式（`error` + `code`）で書いた箇所が S2 の撤去対象（区分 A）に加わるため、本書の手順 2（`api_error.rs`）の後に実装して初めから `errors` + `error_code` で書くことを推奨する（`Legacy` 引数が要るのは従来から存在する箇所だけ）。(7) 02 の現状（読んだ範囲）は `{"error": msg}` と `code` の案のままで、`errors` / `error_code` への読み替えは未反映。S-T2 / S-T6 が有効になった後に旧形式の新規実装が入ると RED になる |
+| 03 api-key-scope-docs | **強い関連（V27 移行後の 403 の本文形式、告知、MCP の編集範囲を共有）** | (1) **V27 移行後の 403 `insufficient_scope` 応答は `errors` 形式になる**。03 は現行の `{"error":"forbidden","error_code":"insufficient_scope"}`（`masters_auth.rs:95-100`。03 が `:98` と書く箇所）を前提にしている。S1 では `{"errors":["forbidden"],"error_code":"insufficient_scope","error":"forbidden"}`（`error` は併記）、S2 後は `{"errors":["forbidden"],"error_code":"insufficient_scope"}` になる。03 の R4（T-1〜T-3、`status == 403` と `error_code == "insufficient_scope"` の表明。`contracts.rs:3040-3045` と同形）は `error_code` と状態コードだけを見るため、S2 の影響を受けない。03 の文書例（`{ "error": "forbidden", "error_code": "insufficient_scope" }` など）は、S1 の公開時に `errors` 形式の例へ読み替える（03 側の改訂事項）。(2) **V27 の影響を受けるキー所有者は、07 の外部依存確認（§3.5.2）の保有者集合の部分集合**で、E1 の SQL は 03 §5.4.1.5 の確認 1 と同じである。件数確認（03 §5.4.4 Phase 1）と、告知の要否・手段（03 Q8）は 07 の E1 / E3 と**同じ実行・同じ告知にまとめる**（二重に通知しない）。03 の本文は第 3 回の反映済みで、07 の旧キー削除（S2）は 03 の対象外と明記されている（03 §0 の「課題 07 との関係」）。03 §10 の 07 行は、07 の旧キー削除の可否がまだ Q2 に残る前提で書かれており（本書の改訂前の状態）、本書の確定（§0.3）に合わせた読み替えは 03 側で行う。V27 の適用で 403 になった利用者が `error` で理由を読んでいる場合、S2 後は理由が読めなくなるため、告知には「判定には `error_code` と状態コードを使う」を含める（03 §10 の案内と同じ）。(3) 順序: `docs/api/getting-started.md` を 03 と本書の手順 6 の両方が編集するため、03 の文書公開（V27 の適用確認後）を先に入れ、本書の S1 の文書更新はその後に載せる。(4) MCP: 03 の M-A（`apply_crop_setup` の削除。第 2 回決定「削除」の解釈）は第 3 回決定の影響を受けない。両者は同じ `tools/agrr-mcp/` を触るため、03 を先に入れ、本書の MCP の `errors` 読み（`agrr-client.mjs:87-95`、テスト `:122-126`）は 03 §5.3.6 が示す削除後の行番号（`#request` 以降が約 9 行、テストが約 27 行上へずれる）で実装時に再確認する。03 の削除範囲（`agrr-client.mjs:53-61`、`agrr-client.test.mjs:95-120`）は本書の変更箇所の手前にあり、編集範囲は重ならない（テストの `:121` と `:122` は隣接し、機械的なマージで競合し得る）。MCP のバージョン引き上げ（03 Q9）は、同じ窓なら 1 回にまとめる。**03 の MCP のマージは V27 の適用確認後**（03 §5.3.7）。(5) 03 の確認 1 は `api_key_hash` / `api_key` の有無で保有者を分けており、07 の E1 はその結果をそのまま使う |
 | 04 api-key-query-auth | 関連なし（本書の範囲外） | – |
-| 05 fail-closed-critical / 06 fail-closed-suspected | **関連（typed 失敗 → HTTP の写像で本文の形を共有）** | 05 A-6 は、typed な失敗（`FieldCultivationClimateFailureReason`: `ProgressDaemonUnavailable` 503 / `ProgressExecutionFailed` 500 など）を出力ポートの `on_failure` で受け、server が `reason` の**網羅的な `match`** で状態コードと本文を決める。**本書に合わせる点**: (1) 05 の暫定案 `{"success": false, "error_key": ..., "message": ...}` は、`{"success": false, "errors": ["<reason 由来のキーまたは翻訳済み文言>"], "error_code": "<reason の snake_case>"}` に読み替える（`message` は失敗の主メッセージにしない。C4）。作業記録の新しい outcome（`SnapshotUnavailable`）も `work_records.rs` の既存の `errors` 配列に合わせる（05 の記述と一致）。(2) 05 の失敗種別ごとの `match` は `api_error_with_code` を返すようにし、新しい種別の写像漏れはコンパイルエラーで検出する。(3) `load-field-climate.usecase.ts:86-93` は `errors` を既に読むため、05 の新しい本文はフロントの追加変更なしで `onError.message` に出る（05 は「`message` は読まれない」ことを 07 の領域とした）。(4) **警告分類との相互作用**: 05 の 503（`ProgressDaemonUnavailable`）は、`errors[0]` が daemon 系の文字列（`daemon_unavailable` など: `backend-warmup.ts:31-39`）を含めば警告として GET が再試行され、含まなければ明示的な失敗で再試行されない（§8 R22）。どちらにするかは 05 が決める。06 の 8 項目に失敗応答の追加がある場合も同様に `api_error.rs` 経由の `errors`（+ `error_code`）の形にする |
-| 08 openapi-gaps | **強い関連（後続。Error スキーマを `errors[]` 主体に更新）** | 08 の D-03（`Error` に `error_code` を追加）と D-14（`Error.errors` を文字列配列に修正）は、本書の契約で次のように上書きされる。**`Error` = `{ errors: array<string>（必須、1 件以上）, error_code: string, field_errors: map<string, array<string>> }`**。`error` と `message` は S1 の期間中 `deprecated` として記載し、S2 で削除する。08 の §4.2 の After（`error: string` を先頭に置き `errors` を任意とする形）は、`errors` を必須にして `error` を deprecated に直す必要がある。08 が記載する失敗本文の例（D-03 (a) の `403 {"error":"forbidden","error_code":"insufficient_scope"}`、D-07 の `404 {"error":"crop not found"}` と `422 {"error":"mode must be dry_run or apply"}`、D-12 の `422 {"error":"record not found"}`）は `errors: [...]` 形式に書き換える。08 の T13（`error` が `mode must be dry_run or apply`）は `errors[0]` の表明に変わる。setup_proposal の 200 結果 `errors: [{path, message}]`（D-07）は `Error` ではなく専用スキーマで、本書の C3 の例外（i）に当たる。D-03 の `error_code` の型（自由文字列か enum か）は、08 の推奨（自由文字列）に本書も合わせる。08 の 403 / 429 / 400 の追記は、すべて `Error` を参照するため本書の形式に自動的に従う。08 の §5 の「実装との整合を機械検証する」仕組みには、S-T0 の `assert_error_envelope` を取り込む。openapi の更新順序は §3.5 のゲート 3（S2 の前に公開） |
+| 05 fail-closed-critical / 06 fail-closed-suspected | **関連（typed 失敗 → HTTP の写像で本文の形を共有）** | 05 A-6 は、typed な失敗（`FieldCultivationClimateFailureReason`: `ProgressDaemonUnavailable` 503 / `ProgressExecutionFailed` 500 など）を出力ポートの `on_failure` で受け、server が `reason` の**網羅的な `match`** で状態コードと本文を決める。**本書に合わせる点**: (1) 05 の暫定案 `{"success": false, "error_key": ..., "message": ...}` は、`{"success": false, "errors": ["<reason 由来のキーまたは翻訳済み文言>"], "error_code": "<reason の snake_case>"}` に読み替える（`message` は失敗の主メッセージにしない。C4）。作業記録の新しい outcome（`SnapshotUnavailable`）も `work_records.rs` の既存の `errors` 配列に合わせる（05 の記述と一致）。(2) 05 の失敗種別ごとの `match` は `api_error_with_code` を返すようにし、新しい種別の写像漏れはコンパイルエラーで検出する。(3) `load-field-climate.usecase.ts:86-93` は `errors` を既に読むため、05 の新しい本文はフロントの追加変更なしで `onError.message` に出る（05 は「`message` は読まれない」ことを 07 の領域とした）。(4) **警告分類との相互作用**: 05 の 503（`ProgressDaemonUnavailable`）は、`errors[0]` が daemon 系の文字列（`daemon_unavailable` など: `backend-warmup.ts:31-39`）を含めば警告として GET が再試行され、含まなければ明示的な失敗で再試行されない（§8 R22）。どちらにするかは 05 が決める。06 の 8 項目に失敗応答の追加がある場合も同様に `api_error.rs` 経由の `errors`（+ `error_code`）の形にする。**第 3 回決定による追加**: (5) 05 の現行の本文（`error_key` と `message` を含む暫定案。05 の該当行を読んで確認）は `errors` 形式に未反映である。S2 後は `message` を失敗の主メッセージとして残さないため、05 の実装は S0（`api_error.rs`）の後に、初めから `Legacy::None` の `errors` + `error_code` で書く。`error_key` は付加情報（C8、Q10 の既定）として残せるが、05 の `message` は S-T2 / S-T6 の検査対象になる |
+| 08 openapi-gaps | **強い関連（後続。Error スキーマを `errors[]` 主体に更新）** | 08 の D-03（`Error` に `error_code` を追加）と D-14（`Error.errors` を文字列配列に修正）は、本書の契約で次のように上書きされる。**`Error` = `{ errors: array<string>（必須、1 件以上）, error_code: string, field_errors: map<string, array<string>> }`**。`error` と `message` は S1 の期間中 `deprecated` として記載し、S2 で削除する。08 の §4.2 の After（`error: string` を先頭に置き `errors` を任意とする形）は、`errors` を必須にして `error` を deprecated に直す必要がある。08 が記載する失敗本文の例（D-03 (a) の `403 {"error":"forbidden","error_code":"insufficient_scope"}`、D-07 の `404 {"error":"crop not found"}` と `422 {"error":"mode must be dry_run or apply"}`、D-12 の `422 {"error":"record not found"}`）は `errors: [...]` 形式に書き換える。08 の T13（`error` が `mode must be dry_run or apply`）は `errors[0]` の表明に変わる。setup_proposal の 200 結果 `errors: [{path, message}]`（D-07）は `Error` ではなく専用スキーマで、本書の C3 の例外（i）に当たる。D-03 の `error_code` の型（自由文字列か enum か）は、08 の推奨（自由文字列）に本書も合わせる。08 の 403 / 429 / 400 の追記は、すべて `Error` を参照するため本書の形式に自動的に従う。08 の §5 の「実装との整合を機械検証する」仕組みには、S-T0 の `assert_error_envelope` を取り込む。openapi の更新順序は §3.5.3 の P3（S2 の前に公開）。**第 3 回決定による追加**: (1) 08 の本文は、改訂時点で `Error` の After を `error: string` 先頭・`errors: array<string>` 任意の形で記述している（08 の §4.2 を読んで確認）。S1 の公開版は `errors` 必須・`error` / `message` を `deprecated: true`、S2 後は旧キーを**削除した最終形**（§3.5.4 の O1）であり、08 は旧キーを恒久のプロパティとして書かない。(2) 08 が `openapi.yaml` を直す時期が S1 と S2 のどちらに当たっても、`Error` スキーマの最終形は同じ（`errors` / `error_code` / `field_errors`）にそろえる。08 が S1 より前に `error` 先頭の形を公開した場合は、S1 で `deprecated` 化し S2 で削除する（同じファイルの 2 回編集になるため、08 を `errors` 形式で先に書き直すのが手戻りが少ない）。(3) 08 の失敗本文の例（D-03 (a)、D-06 の `400 {"error":"Invalid parameters"}`、D-07、D-12。08 の §2 の確定表に `{"error": ...}` として多数）は、S2 の受け入れ条件 `rg -n '"error"' docs/api` の対象で、`openapi.yaml` に載せる例は `errors` 形式に統一する。08 の `contracts.rs` への追記（T13 など）のうち `error` を表明するものは、S2 の更新対象に加えるか、初めから `errors[0]` で書く。(4) 08 §5 の機械検証（P3: path × method のみ）は `Error` スキーマの内容を検証しないため、旧キーの再混入は S-T2 / S-T6 と `rg` で防ぐ（§3.5.5） |
 | 09 stale-design-docs | 関連 | `ARCHITECTURE.md:83`（i18n を `{ja,en}.json` とする記述。実際は 3 言語）、`ARCHITECTURE.md` の Resource Limits 節の「per user」（実装は組織単位: §2.5）が実態と異なる。本書の `api_error.rs` 導入後は、`ARCHITECTURE.md` / LAYER-RULES にエラー本文の契約（C1〜C9）への参照を足すかどうかを 09 で判断する |
-| 10 authorization-consistency | **強い関連** | update の認可失敗の扱いが揃っていない（pests / pesticides / fertilizes は 403、agricultural_tasks / interaction_rules は 422 + `errors: ["forbidden"]`: §3.1）。本書は本文を `{"errors": ["forbidden"]}` に揃えるだけで、状態コードの整合は 10 で扱う。10 が状態コードを変更する場合は、S-T0 の該当行の期待値を合わせる |
+| 10 authorization-consistency | **強い関連** | update の認可失敗の扱いが揃っていない（pests / pesticides / fertilizes は 403、agricultural_tasks / interaction_rules は 422 + `errors: ["forbidden"]`: §3.1）。本書は本文を `{"errors": ["forbidden"]}` に揃えるだけで、状態コードの整合は 10 で扱う。10 が状態コードを変更する場合は、S-T0 の該当行の期待値を合わせる。**第 3 回決定による追加**: 10 の縮小（所有者のみ。第 3 回決定「縮小」）で新たに 404 になる組織メンバーの Plan 操作（10 の T7-2〜T7-15）は、既存の Plans 系 handler の not found 本文（区分 A。S1 以降は `errors: [msg]`）をそのまま使い、10 は本文の形を新設しない。10 の T7-8・T7-10・T7-14 などの then は状態コード（404）の表明で、本文は表明していない（読んだ範囲）ため、S2 の更新対象 12 箇所とは重ならない。10 が 404 の本文を新たに表明する場合は `errors[0]` で書く。10 の U16（認可失敗の状態コード統一）が 07 の本文契約（C9）を前提にする点は変わらない |
 | 11 low-priority-misc | 関連 | Crop 更新の `updated_at` 必須（R7）、`in.json` のルート直下の孤立ブロックと日本語値（§2.6）、`check-hardcoded-i18n` の検出範囲（R9）を、優先度の低い課題として引き継ぐ候補 |
 
 ---
@@ -1047,6 +1141,12 @@ S1 のみで止める場合に実行するのは S-T0 と S-T1、S3 を含める
 - `rg` / `grep` によるコード読解。テストスイート・ビルド・サーバー起動は実行していない。
 - Python による `crates/agrr-server/src/**/*.rs` の `"error"` / `"errors"` / `"success": false` の箇所数の集計（付録 D-2。第 2 回決定に伴い `"success": false, "message"` の列と合計を追加して再集計）。読み取りのみ。
 - `rg` による本文リーダーの抽出（例: `rg -n "\.error\??\.(errors?|message)\b" frontend/src/app --glob '!*.spec.ts'` は 26 ファイル 36 行。旧キー `error` / `message` を読む箇所に絞った `rg -n "\.error\??\.(error|message)\b|body\??\.(error|message)\b|as \{ error\?: (string|unknown) \}" frontend/src/app --glob '!*.spec.ts'` は 16 ファイル 19 行。本文の fixture を持つ spec は `rg -l "error: \{ ?error:" --glob '*.spec.ts' frontend/src/app` などで数えた）、`tools/agrr-mcp/`・`docs/api/` の読解、`.cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh` のキャッシュ設定の読解。
+- 第 3 回改訂で追加した確認（すべて読み取りのみ。本番ログ・本番 DB へは問い合わせていない）:
+  - `rg -n "MastersUserId|resolve_masters" crates/agrr-server/src --glob '*.rs' -l`（API キー認証を使うのは `masters_*.rs` の 17 ファイル）、`rg -n "^  /api/v1/" docs/api/openapi.yaml`（Masters の 9 パスのみ）。
+  - `rg -n "include_headers" crates`（0 件）、`rg -n "tracing::" crates/agrr-server/src/masters_auth.rs crates/agrr-server/src/masters_rate_limit.rs`（0 件）、`rg -n "enable-logging|logConfig"`（0 件）。
+  - `rg -n "\.error\??\.(error|message)\b|body\??\.(error|message)\b|as \{ error\?: (string|unknown) \}" frontend/src/app --glob '!*.spec.ts'`（16 ファイル 19 行）、`rg -n "ValidationErrorBody" frontend/src/app`（3 ファイル）。
+  - `rg -n '"error"' docs/api`（`getting-started.md:57` の 1 件）、`rg -n "deprecated" docs/api/openapi.yaml`（0 件）。
+  - `tools/`、`scripts/`、`frontend/e2e`、`.cursor/skills` で HTTP 本文の `error` を読むコードを `rg` で検索（`tools/agrr-mcp/src/agrr-client.mjs:89-90` のみ）。
 
 ### 付録 C: i18n 差分の詳細
 
