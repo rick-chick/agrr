@@ -4555,26 +4555,26 @@ fn contact_message_payload(email_suffix: u128) -> serde_json::Value {
     serde_json::json!({
         "email": format!("contact-contract-{email_suffix}@example.com"),
         "message": "contract test message",
-        "recaptcha_token": "contract-test-token"
+        "captcha_token": "contract-test-token"
     })
 }
 
 #[test]
-fn get_health_reports_recaptcha_configuration_status() {
+fn get_health_reports_captcha_configuration_status() {
     let client = ContractClient::from_env();
     let (status, body) = status_and_body(client.get("/api/v1/health", None, &empty_headers()));
     assert_eq!(200, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("health JSON");
-    assert_eq!(Some(true), json["recaptcha_configured"].as_bool());
+    assert_eq!(Some(true), json["captcha_configured"].as_bool());
     assert!(json["warnings"].as_array().unwrap_or(&vec![]).is_empty());
 }
 
 #[test]
-fn post_contact_message_returns_503_when_recaptcha_not_configured() {
-    let secret = std::env::var("RECAPTCHA_SECRET_KEY").unwrap_or_default();
+fn post_contact_message_returns_503_when_captcha_not_configured() {
+    let secret = std::env::var("TURNSTILE_SECRET_KEY").unwrap_or_default();
     if !secret.trim().is_empty() {
         eprintln!(
-            "SKIP post_contact_message_returns_503_when_recaptcha_not_configured: RECAPTCHA_SECRET_KEY is set in contract runtime"
+            "SKIP post_contact_message_returns_503_when_captcha_not_configured: TURNSTILE_SECRET_KEY is set in contract runtime"
         );
         return;
     }
@@ -4595,12 +4595,12 @@ fn post_contact_message_returns_503_when_recaptcha_not_configured() {
         Some(contact_message_payload(suffix)),
     ));
     assert_eq!(503, status, "{body}");
-    let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha unavailable JSON");
-    assert_api_failure_errors_contain(&json, "reCAPTCHA", &body);
-    assert!(json["error"]
-        .as_str()
-        .unwrap_or("")
-        .contains("reCAPTCHA"));
+    let json: serde_json::Value = serde_json::from_str(&body).expect("captcha unavailable JSON");
+    assert_api_failure_errors_contain(&json, "CAPTCHA", &body);
+    assert_eq!(
+        Some("captcha_unavailable"),
+        json["error_code"].as_str()
+    );
 }
 
 #[test]
@@ -4663,10 +4663,10 @@ fn post_contact_message_returns_429_when_rate_limit_exceeded() {
 }
 
 #[test]
-fn post_contact_message_returns_422_when_recaptcha_fails() {
-    let secret = std::env::var("RECAPTCHA_SECRET_KEY").unwrap_or_default();
+fn post_contact_message_returns_422_when_captcha_fails() {
+    let secret = std::env::var("TURNSTILE_SECRET_KEY").unwrap_or_default();
     if secret.trim().is_empty() {
-        eprintln!("SKIP post_contact_message_returns_422_when_recaptcha_fails: RECAPTCHA_SECRET_KEY unset");
+        eprintln!("SKIP post_contact_message_returns_422_when_captcha_fails: TURNSTILE_SECRET_KEY unset");
         return;
     }
     let client = ContractClient::from_env();
@@ -4684,15 +4684,47 @@ fn post_contact_message_returns_422_when_recaptcha_fails() {
         None,
         &headers,
         Some(serde_json::json!({
-            "email": format!("recaptcha-contract-{suffix}@example.com"),
-            "message": "contract recaptcha failure",
-            "recaptcha_token": "invalid-token-for-contract-test"
+            "email": format!("captcha-contract-{suffix}@example.com"),
+            "message": "contract captcha failure",
+            "captcha_token": "invalid-token-for-contract-test"
         })),
     ));
     assert_eq!(422, status, "{body}");
-    let json: serde_json::Value = serde_json::from_str(&body).expect("recaptcha failure JSON");
-    assert_api_failure_errors_contain(&json, "reCAPTCHA", &body);
-    assert!(json["error"].as_str().unwrap_or("").contains("reCAPTCHA"));
+    let json: serde_json::Value = serde_json::from_str(&body).expect("captcha failure JSON");
+    assert_api_failure_errors_contain(&json, "Turnstile", &body);
+    assert_eq!(Some("captcha_failed"), json["error_code"].as_str());
+}
+
+#[test]
+fn post_contact_message_returns_422_when_captcha_token_missing() {
+    let secret = std::env::var("TURNSTILE_SECRET_KEY").unwrap_or_default();
+    if secret.trim().is_empty() {
+        eprintln!("SKIP post_contact_message_returns_422_when_captcha_token_missing: TURNSTILE_SECRET_KEY unset");
+        return;
+    }
+    let client = ContractClient::from_env();
+    let suffix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let mut headers = empty_headers();
+    headers.insert(
+        "x-forwarded-for".to_string(),
+        format!("203.0.113.{suffix}"),
+    );
+    let (status, body) = status_and_body(client.post(
+        "/api/v1/contact_messages",
+        None,
+        &headers,
+        Some(serde_json::json!({
+            "email": format!("captcha-missing-{suffix}@example.com"),
+            "message": "contract captcha token missing"
+        })),
+    ));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("captcha missing JSON");
+    assert_eq!(Some("captcha_failed"), json["error_code"].as_str());
+    assert!(json["errors"].as_array().map(|a| !a.is_empty()).unwrap_or(false));
 }
 
 #[test]

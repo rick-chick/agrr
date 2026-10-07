@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Minimal reCAPTCHA siteverify mock for R4 contract tests."""
+"""Minimal Turnstile siteverify mock for R4 contract tests."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from urllib.parse import parse_qs
 HOST = "127.0.0.1"
 PORT = 9191
 INVALID_TOKEN = "invalid-token-for-contract-test"
+UNAVAILABLE_TOKEN = "unavailable-token-for-contract-test"
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -19,8 +20,10 @@ class Handler(BaseHTTPRequestHandler):
         token = parse_qs(raw.decode()).get("response", [""])[0]
         if token == INVALID_TOKEN:
             payload = {"success": False, "error-codes": ["invalid-input-response"]}
+        elif token == UNAVAILABLE_TOKEN:
+            payload = {"success": False, "error-codes": ["internal-error"]}
         else:
-            payload = {"success": True}
+            payload = {"success": True, "error-codes": []}
         body = json.dumps(payload).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")

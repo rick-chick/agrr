@@ -17,5 +17,6 @@ export interface ContactFormViewState {
 export interface ContactFormView {
   get control(): ContactFormViewState;
   set control(value: ContactFormViewState);
+  resetCaptchaWidget(): void;
 }
 

@@ -3,7 +3,10 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   inject,
-  OnInit
+  OnInit,
+  AfterViewInit,
+  ViewChild,
+  ElementRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +29,8 @@ import {
 } from '../../domain/contact/contact-message.model';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyContactFormViewEffects } from './contact-form-view.effects';
+import { CAPTCHA_WIDGET_PORT, CaptchaWidgetPort } from '../../usecase/contact/captcha-widget.port';
+import { AppLang, documentHtmlLang } from '../../core/app-locale';
 
 const initialControl: ContactFormViewState = {
   loading: false,
@@ -97,19 +102,25 @@ const initialControl: ContactFormViewState = {
             maxlength="5000"
           ></textarea>
         </label>
+
+        <div
+          class="form-card__field"
+          #turnstileHost
+          [attr.aria-label]="'contact_form.captcha.aria_label' | translate"
+        ></div>
       </div>
 
       <div class="form-card__actions">
         <button
           type="submit"
           class="btn btn-primary"
-          [disabled]="control.sending"
+          [disabled]="control.sending || !captchaReady || !captchaToken"
         >
           {{ control.sending ? ('common.sending' | translate) : ('contact_form.submit' | translate) }}
         </button>
       </div>
 
-      <div *ngIf="control.loading || control.message" class="contact-form__status">
+      <div *ngIf="control.loading || control.message || captchaUnavailable" class="contact-form__status">
         <p
           *ngIf="control.loading"
           class="contact-form__message contact-form__message--loading"
@@ -117,6 +128,15 @@ const initialControl: ContactFormViewState = {
           aria-live="polite"
         >
           {{ 'common.loading' | translate }}
+        </p>
+        <p
+          *ngIf="captchaUnavailable"
+          class="contact-form__message contact-form__message--error"
+          role="status"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          {{ 'contact_form.errors.captcha_unavailable' | translate }}
         </p>
         <p
           *ngIf="control.message"
@@ -134,18 +154,24 @@ const initialControl: ContactFormViewState = {
   `,
   styleUrls: ['../masters/_master-layout.css', './contact-form.component.css']
 })
-export class ContactFormComponent implements ContactFormView, OnInit {
+export class ContactFormComponent implements ContactFormView, OnInit, AfterViewInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly useCase = inject(SendContactMessageUseCase);
   private readonly presenter = inject(ContactFormPresenter);
   private readonly translate = inject(TranslateService);
   private readonly flashMessage = inject(FlashMessageService);
+  private readonly captchaWidget = inject(CAPTCHA_WIDGET_PORT);
+
+  @ViewChild('turnstileHost') turnstileHost?: ElementRef<HTMLElement>;
 
   name: string | null = null;
   email = '';
   subject: string | null = null;
   message = '';
   source: string | null = null;
+  captchaToken: string | null = null;
+  captchaReady = false;
+  captchaUnavailable = false;
 
   private _control: ContactFormViewState = initialControl;
   get control(): ContactFormViewState {
@@ -160,6 +186,43 @@ export class ContactFormComponent implements ContactFormView, OnInit {
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    if (!this.captchaWidget.isConfigured()) {
+      this.captchaUnavailable = true;
+      this.captchaReady = false;
+    }
+  }
+
+  ngAfterViewInit(): void {
+    if (this.captchaUnavailable || !this.turnstileHost) {
+      return;
+    }
+    const raw = this.translate.currentLang || this.translate.defaultLang || 'ja';
+    const appLang: AppLang =
+      raw === 'ja' || raw === 'en' || raw === 'in' ? raw : 'en';
+    const lang = documentHtmlLang(appLang);
+    this.captchaWidget.render(this.turnstileHost.nativeElement, lang, {
+      onToken: (token) => {
+        this.captchaToken = token;
+        this.captchaReady = true;
+        this.cdr.detectChanges();
+      },
+      onExpired: () => {
+        this.captchaToken = null;
+        this.cdr.detectChanges();
+      },
+      onUnavailable: () => {
+        this.captchaUnavailable = true;
+        this.captchaReady = false;
+        this.captchaToken = null;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  resetCaptchaWidget(): void {
+    this.captchaToken = null;
+    this.captchaWidget.reset();
+    this.cdr.detectChanges();
   }
 
   private createMessage(
@@ -174,13 +237,13 @@ export class ContactFormComponent implements ContactFormView, OnInit {
   }
 
   submit(): void {
-    // Build payload and perform basic client-side validation using domain helpers
     const payload: ContactMessagePayload = {
       name: this.name,
       email: this.email,
       subject: this.subject,
       message: this.message,
-      source: this.source
+      source: this.source,
+      captcha_token: this.captchaToken ?? ''
     };
 
     const validation = validatePayload(payload);
@@ -203,4 +266,3 @@ export class ContactFormComponent implements ContactFormView, OnInit {
     this.useCase.execute(payload, this.presenter);
   }
 }
-

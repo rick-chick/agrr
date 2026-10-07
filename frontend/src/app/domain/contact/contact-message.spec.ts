@@ -18,7 +18,8 @@ describe('ContactMessage domain validation', () => {
       email: 'a@b.com',
       subject: 's',
       source: null,
-      message: ''
+      message: '',
+      captcha_token: 'tok'
     };
     const res1 = validatePayload(base as any);
     expect(res1.valid).toBe(false);
@@ -35,6 +36,18 @@ describe('ContactMessage domain validation', () => {
 
     const ok = validatePayload({ ...base, message: 'hello' } as any);
     expect(ok.valid).toBe(true);
+  });
+
+  it('requires captcha_token', () => {
+    const res = validatePayload({
+      email: 'a@b.com',
+      message: 'hello',
+      captcha_token: ''
+    } as any);
+    expect(res.valid).toBe(false);
+    if (isValidationFailure(res)) {
+      expect(res.message).toBe('contact_form.validation.captcha_required');
+    }
   });
 });
 

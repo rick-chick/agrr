@@ -14,29 +14,21 @@ export class HttpContactGateway implements ContactGateway {
   constructor(private readonly apiClient: ApiService) {}
 
   postMessage(payload: ContactMessagePayload): Observable<ContactMessageRecord> {
-    // POST to API as contract: POST /api/v1/contact_messages with flat JSON body
-    return this.apiClient.post<any>('/api/v1/contact_messages', payload).pipe(
-      map((res) => {
-        const record: ContactMessageRecord = {
-          id: res.id,
-          name: res.name ?? null,
-          email: res.email,
-          subject: res.subject ?? null,
-          message: res.message,
-          source: res.source ?? null,
-          status: res.status as ContactMessageStatus,
-          created_at: res.created_at,
-          sent_at: res.sent_at ?? null
-        };
-        return record;
-      })
+    const { captcha_token, ...rest } = payload;
+    const body = {
+      ...rest,
+      captcha_token
+    };
+    return this.apiClient.post<{ id: number; status: string }>('/api/v1/contact_messages', body).pipe(
+      map((res) => ({
+        id: res.id,
+        status: res.status as ContactMessageStatus
+      }))
     );
   }
 }
 
-// Export a provider so callers can register the implementation with the existing token.
 export const CONTACT_GATEWAY_PROVIDER = {
   provide: CONTACT_GATEWAY,
   useClass: HttpContactGateway
 };
-

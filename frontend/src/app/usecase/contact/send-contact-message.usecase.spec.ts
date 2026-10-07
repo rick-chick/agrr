@@ -7,24 +7,19 @@ import { SendContactMessageInputDto } from './send-contact-message.dtos';
 import { ContactMessageRecord } from '../../domain/contact/contact-message.model';
 
 describe('SendContactMessageUseCase', () => {
-  it('forwards gateway response when status is sent', () => {
-    const dto: SendContactMessageInputDto = {
-      name: 'contact',
-      email: 'a@b.com',
-      subject: 'Greetings',
-      message: 'hello',
-      source: 'landing-page'
-    };
+  const baseDto: SendContactMessageInputDto = {
+    name: 'contact',
+    email: 'a@b.com',
+    subject: 'Greetings',
+    message: 'hello',
+    source: 'landing-page',
+    captcha_token: 'tok'
+  };
+
+  it('forwards gateway response on success', () => {
     const record: ContactMessageRecord = {
       id: 1,
-      name: dto.name,
-      email: dto.email,
-      subject: dto.subject,
-      message: dto.message,
-      source: dto.source,
-      status: 'sent',
-      created_at: '2026-02-10T00:00:00Z',
-      sent_at: '2026-02-10T00:00:01Z'
+      status: 'queued'
     };
     const postMessage = vi.fn(() => of(record));
     const gateway: ContactGateway = { postMessage };
@@ -33,62 +28,25 @@ describe('SendContactMessageUseCase', () => {
     const outputPort: SendContactMessageOutputPort = { onSuccess, onError };
 
     const uc = new SendContactMessageUseCase(gateway);
-    uc.execute(dto, outputPort);
+    uc.execute(baseDto, outputPort);
 
-    expect(postMessage).toHaveBeenCalledWith(dto);
+    expect(postMessage).toHaveBeenCalledWith(baseDto);
     expect(onSuccess).toHaveBeenCalledWith({
       id: record.id,
-      status: record.status,
-      created_at: record.created_at,
-      sent_at: record.sent_at
+      status: record.status
     });
     expect(onError).not.toHaveBeenCalled();
   });
 
-  it('calls onError when gateway returns a failed status', () => {
-    const dto: SendContactMessageInputDto = {
-      name: 'contact',
-      email: 'fail@example.com',
-      subject: 'Oops',
-      message: 'issue',
-      source: null
-    };
-    const record: ContactMessageRecord = {
-      id: 2,
-      name: dto.name,
-      email: dto.email,
-      subject: dto.subject,
-      message: dto.message,
-      source: null,
-      status: 'failed',
-      created_at: '2026-02-10T00:00:00Z',
-      sent_at: null
-    };
-    const gateway: ContactGateway = { postMessage: () => of(record) };
-    const onSuccess = vi.fn();
-    const onError = vi.fn();
-    const outputPort: SendContactMessageOutputPort = { onSuccess, onError };
-
-    const uc = new SendContactMessageUseCase(gateway);
-    uc.execute(dto, outputPort);
-
-    expect(onError).toHaveBeenCalledWith({ message: 'contact_form.errors.send_failed' });
-    expect(onSuccess).not.toHaveBeenCalled();
-  });
-
   it('maps validation error responses to translation keys', () => {
-    const dto: SendContactMessageInputDto = {
-      name: null,
-      email: 'invalid',
-      subject: null,
-      message: '',
-      source: null
-    };
     const gateway: ContactGateway = {
       postMessage: () =>
         throwError(() => ({
           status: 422,
-          error: { field_errors: { email: ['is invalid'], message: ["can't be blank"] } }
+          error: {
+            errors: ['Email is invalid'],
+            field_errors: { email: ['is invalid'], message: ["can't be blank"] }
+          }
         }))
     };
     const onSuccess = vi.fn();
@@ -96,10 +54,60 @@ describe('SendContactMessageUseCase', () => {
     const outputPort: SendContactMessageOutputPort = { onSuccess, onError };
 
     const uc = new SendContactMessageUseCase(gateway);
-    uc.execute(dto, outputPort);
+    uc.execute(baseDto, outputPort);
 
     expect(onError).toHaveBeenCalledWith({ message: 'contact_form.errors.validation_failed' });
     expect(onSuccess).not.toHaveBeenCalled();
   });
-});
 
+  it('maps captcha_failed by error_code', () => {
+    const gateway: ContactGateway = {
+      postMessage: () =>
+        throwError(() => ({
+          status: 422,
+          error: {
+            errors: ['Turnstile failure: invalid-input-response'],
+            error_code: 'captcha_failed'
+          }
+        }))
+    };
+    const onError = vi.fn();
+    const uc = new SendContactMessageUseCase(gateway);
+    uc.execute(baseDto, { onSuccess: vi.fn(), onError });
+
+    expect(onError).toHaveBeenCalledWith({ message: 'contact_form.errors.captcha_failed' });
+  });
+
+  it('maps captcha_unavailable by error_code', () => {
+    const gateway: ContactGateway = {
+      postMessage: () =>
+        throwError(() => ({
+          status: 503,
+          error: {
+            errors: ['CAPTCHA is not configured'],
+            error_code: 'captcha_unavailable'
+          }
+        }))
+    };
+    const onError = vi.fn();
+    const uc = new SendContactMessageUseCase(gateway);
+    uc.execute(baseDto, { onSuccess: vi.fn(), onError });
+
+    expect(onError).toHaveBeenCalledWith({ message: 'contact_form.errors.captcha_unavailable' });
+  });
+
+  it('maps 429 to send_failed', () => {
+    const gateway: ContactGateway = {
+      postMessage: () =>
+        throwError(() => ({
+          status: 429,
+          error: { errors: ['rate_limit'] }
+        }))
+    };
+    const onError = vi.fn();
+    const uc = new SendContactMessageUseCase(gateway);
+    uc.execute(baseDto, { onSuccess: vi.fn(), onError });
+
+    expect(onError).toHaveBeenCalledWith({ message: 'contact_form.errors.send_failed' });
+  });
+});

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   verifyContactShellContractQuoting,
-  verifyRecaptchaContractMockSetup,
+  verifyCaptchaContractMockSetup,
 } from './run-rust-contract-contact-shell-lib.mjs';
 
 const REPO_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -16,6 +16,6 @@ test('contact fail-closed shell contract keeps valid JSON through host bash quot
 });
 
 test('reCAPTCHA contract mock is wired for docker contract runtime', () => {
-  const result = verifyRecaptchaContractMockSetup(REPO_ROOT);
+  const result = verifyCaptchaContractMockSetup(REPO_ROOT);
   assert.equal(result.ok, true, result.errors.join('\n'));
 });

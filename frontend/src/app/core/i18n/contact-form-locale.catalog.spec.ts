@@ -22,14 +22,18 @@ const CONTACT_FORM_KEYS = [
   'contact_form.submit',
   'contact_form.success.message',
   'contact_form.success.toast',
+  'contact_form.captcha.aria_label',
   'contact_form.errors.send_failed',
   'contact_form.errors.validation_failed',
+  'contact_form.errors.captcha_failed',
+  'contact_form.errors.captcha_unavailable',
   'contact_form.validation.message_required',
   'contact_form.validation.message_too_long',
   'contact_form.validation.name_too_long',
   'contact_form.validation.subject_too_long',
   'contact_form.validation.email_required',
-  'contact_form.validation.email_invalid'
+  'contact_form.validation.email_invalid',
+  'contact_form.validation.captcha_required'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

@@ -27,6 +27,7 @@ export class ContactFormPresenter implements SendContactMessageOutputPort {
 
   onSuccess(_dto: SendContactMessageSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    this.view.resetCaptchaWidget();
     this.view.control = {
       ...this.view.control,
       sending: false,
@@ -38,6 +39,7 @@ export class ContactFormPresenter implements SendContactMessageOutputPort {
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    this.view.resetCaptchaWidget();
     const messageKey = dto.message?.trim() ? dto.message : 'contact_form.errors.send_failed';
     this.view.control = {
       ...this.view.control,

@@ -226,9 +226,14 @@
       "message": "Your inquiry has been received.",
       "toast": "Thank you for contacting us."
     },
+    "captcha": {
+      "aria_label": "Security check"
+    },
     "errors": {
       "send_failed": "Failed to send your message.",
-      "validation_failed": "Please check your input."
+      "validation_failed": "Please check your input.",
+      "captcha_failed": "Security verification failed. Please try again.",
+      "captcha_unavailable": "Security verification is unavailable. Please try again later."
     },
     "validation": {
       "message_required": "Message is required.",
@@ -236,7 +241,8 @@
       "name_too_long": "Name must be 255 characters or fewer.",
       "subject_too_long": "Subject must be 255 characters or fewer.",
       "email_required": "Email is required.",
-      "email_invalid": "Email format is invalid."
+      "email_invalid": "Email format is invalid.",
+      "captcha_required": "Please complete the security check."
     }
   },
   "work": {
