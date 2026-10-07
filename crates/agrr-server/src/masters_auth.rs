@@ -96,14 +96,14 @@ pub fn resolve_masters_user_id(
 fn scope_denied() -> (StatusCode, axum::Json<serde_json::Value>) {
     (
         StatusCode::FORBIDDEN,
-        axum::Json(serde_json::json!({"errors": ["forbidden"], "error_code": "insufficient_scope"})),
+        axum::Json(single_failure_with_code("forbidden", "insufficient_scope")),
     )
 }
 
 fn unauthorized() -> (StatusCode, axum::Json<serde_json::Value>) {
     (
         StatusCode::UNAUTHORIZED,
-        axum::Json(serde_json::json!({"errors": ["unauthorized"]})),
+        axum::Json(single_failure("unauthorized")),
     )
 }
 
