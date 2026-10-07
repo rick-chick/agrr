@@ -1,8 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { apiErrorMessage } from '../../core/api-error-message';
 
 export function extractGanttPlanHttpErrorMessage(error: HttpErrorResponse): string | undefined {
-  if (error?.error?.message) {
-    return String(error.error.message);
-  }
-  return error.message;
+  return apiErrorMessage(error);
 }

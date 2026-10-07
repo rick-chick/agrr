@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { CreatePesticideInputDto } from './create-pesticide.dtos';
 import { CreatePesticideInputPort } from './create-pesticide.input-port';
 import {
@@ -31,7 +32,7 @@ export class CreatePesticideUseCase implements CreatePesticideInputPort {
         },
         error: (err: Error & { error?: { errors?: string[] } }) =>
           this.outputPort.onError({
-            message: err.error?.errors?.join(', ') ?? err?.message ?? 'Unknown error'
+            message: apiErrorMessage(err)
           })
       });
   }

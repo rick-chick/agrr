@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { CreatePublicPlanInputDto } from './create-public-plan.dtos';
 import { CreatePublicPlanInputPort } from './create-public-plan.input-port';
 import {
@@ -31,14 +32,8 @@ export class CreatePublicPlanUseCase implements CreatePublicPlanInputPort {
           this.outputPort.onSuccess(response);
           dto.onSuccess?.(response);
         },
-        error: (err: Error & { error?: { error?: string; errors?: string[] } }) =>
-          this.outputPort.onError({
-            message:
-              err.error?.errors?.join(', ') ??
-              err.error?.error ??
-              err?.message ??
-              'Unknown error'
-          })
+        error: (err: unknown) =>
+          this.outputPort.onError({ message: apiErrorMessage(err) })
       });
   }
 }

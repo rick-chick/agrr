@@ -89,7 +89,7 @@ describe('LoadEntryScheduleCropsUseCase', () => {
         () =>
           new HttpErrorResponse({
             status: 503,
-            error: { error: 'prediction_payload_missing' }
+            error: { errors: ['prediction_payload_missing'] }
           })
       )
     );
@@ -110,7 +110,7 @@ describe('LoadEntryScheduleCropsUseCase', () => {
         () =>
           new HttpErrorResponse({
             status: 422,
-            error: { error: 'weather_location_required' }
+            error: { errors: ['weather_location_required'] }
           })
       )
     );

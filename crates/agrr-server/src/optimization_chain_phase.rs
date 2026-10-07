@@ -30,16 +30,55 @@ impl CultivationPlanPhaseBroadcastPort for CablePhaseBroadcast {
     }
 }
 
-pub(crate) fn plan_still_optimizing(pool: &agrr_adapters_sqlite::SqlitePool, plan_id: i64) -> bool {
-    pool.with_read(|conn| {
-        let status: String = conn.query_row(
+/// Whether the optimization job chain may run steps for this plan.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum PlanOptimizationGuard {
+    StillOptimizing,
+    Stopped { status: Option<String> },
+}
+
+/// Row missing or status not `optimizing` is a normal stop (not an error).
+pub(crate) fn plan_optimization_guard(
+    pool: &agrr_adapters_sqlite::SqlitePool,
+    plan_id: i64,
+) -> Result<PlanOptimizationGuard, String> {
+    pool.with_read(|conn| -> rusqlite::Result<PlanOptimizationGuard> {
+        match conn.query_row(
             "SELECT status FROM cultivation_plans WHERE id = ?1",
             params![plan_id],
-            |row| row.get(0),
-        )?;
-        Ok(status == "optimizing")
+            |row| row.get::<_, String>(0),
+        ) {
+            Ok(status) if status == "optimizing" => Ok(PlanOptimizationGuard::StillOptimizing),
+            Ok(status) => Ok(PlanOptimizationGuard::Stopped {
+                status: Some(status),
+            }),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(PlanOptimizationGuard::Stopped {
+                status: None,
+            }),
+            Err(err) => Err(err),
+        }
     })
-    .unwrap_or(false)
+    .map_err(|e| e.to_string())
+}
+
+pub(crate) fn plan_still_optimizing(pool: &agrr_adapters_sqlite::SqlitePool, plan_id: i64) -> bool {
+    matches!(
+        plan_optimization_guard(pool, plan_id),
+        Ok(PlanOptimizationGuard::StillOptimizing)
+    )
+}
+
+pub(crate) fn ensure_plan_still_optimizing(
+    pool: &agrr_adapters_sqlite::SqlitePool,
+    plan_id: i64,
+) -> Result<(), String> {
+    match plan_optimization_guard(pool, plan_id)? {
+        PlanOptimizationGuard::StillOptimizing => Ok(()),
+        PlanOptimizationGuard::Stopped { status } => Err(format!(
+            "plan is no longer optimizing (status={})",
+            status.as_deref().unwrap_or("missing")
+        )),
+    }
 }
 
 /// Runs `step` when the plan is still optimizing. On failure, optionally advances to `failed`.
@@ -54,8 +93,46 @@ pub(crate) fn run_guarded_optimization_step(
     step: impl FnOnce() -> Result<(), String>,
 ) -> bool {
     let pool = state.sqlite.clone();
-    if !plan_still_optimizing(&pool, plan_id) {
-        return false;
+    match plan_optimization_guard(&pool, plan_id) {
+        Ok(PlanOptimizationGuard::StillOptimizing) => {}
+        Ok(PlanOptimizationGuard::Stopped { status }) => {
+            tracing::info!(
+                plan_id,
+                status = status.as_deref().unwrap_or("missing"),
+                step = step_name,
+                "optimization chain: skipping step because plan is not optimizing"
+            );
+            return false;
+        }
+        Err(err) => {
+            error!(
+                plan_id,
+                step = step_name,
+                error = %err,
+                "optimization chain: failed to read plan status"
+            );
+            if let Some(chain_step) = orchestration_step {
+                notify_orchestration_on_failure(state, plan_id, chain_step, &err);
+            }
+            if let Some(subphase) = failure_subphase {
+                if let Err(phase_err) = advance_phase(
+                    state,
+                    plan_id,
+                    channel,
+                    CultivationPlanPhaseName::PhaseFailed,
+                    Some(subphase),
+                ) {
+                    error!(
+                        plan_id,
+                        step = step_name,
+                        subphase,
+                        error = %phase_err,
+                        "optimization chain: failed to persist failed phase after status read error"
+                    );
+                }
+            }
+            return false;
+        }
     }
     let timer = StepTimer::start(plan_id, step_name);
     let _step_span = crate::telemetry::optimization_step_span(plan_id, step_name).entered();
@@ -296,9 +373,8 @@ mod tests {
         assert!(!plan_still_optimizing(&pool, 1));
     }
 
-    // Locks DB error swallowing (docs/spec-defects/06 item 4) until plan_still_optimizing returns Result.
     #[test]
-    fn plan_still_optimizing_returns_false_when_status_query_fails() {
+    fn plan_optimization_guard_err_when_status_query_fails() {
         let db = test_pool_with_plan(1);
         let pool = db.pool.clone();
         pool.with_write(|conn| {
@@ -307,8 +383,8 @@ mod tests {
         })
         .expect("drop cultivation_plans");
         assert!(
-            !plan_still_optimizing(&pool, 1),
-            "DB errors must not be treated as optimizing"
+            plan_optimization_guard(&pool, 1).is_err(),
+            "DB errors must propagate"
         );
     }
 

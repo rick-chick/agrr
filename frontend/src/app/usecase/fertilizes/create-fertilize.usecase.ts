@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { CreateFertilizeInputDto } from './create-fertilize.dtos';
 import { CreateFertilizeInputPort } from './create-fertilize.input-port';
 import {
@@ -32,7 +33,7 @@ export class CreateFertilizeUseCase implements CreateFertilizeInputPort {
         },
         error: (err: Error & { error?: { errors?: string[] } }) =>
           this.outputPort.onError({
-            message: err.error?.errors?.join(', ') ?? err?.message ?? 'Unknown error'
+            message: apiErrorMessage(err)
           })
       });
   }

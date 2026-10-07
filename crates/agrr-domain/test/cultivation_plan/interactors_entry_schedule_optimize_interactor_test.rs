@@ -2,7 +2,6 @@
 
     use crate::crop::entities::CropCultivationMethod;
     use crate::cultivation_plan::interactors::entry_schedule::crop_stage_snapshot::CropStageSnapshot;
-    use crate::cultivation_plan::interactors::entry_schedule::temperature_requirement_snapshot::TemperatureRequirementSnapshot;
     use crate::cultivation_plan::normalizers::entry_schedule_weather_preparer;
     use crate::weather_data::dtos::WeatherLocation;
 
@@ -299,24 +298,16 @@
     }
 
     fn sowing_transplant_stages() -> Vec<CropStageSnapshot> {
-        let tr = TemperatureRequirementSnapshot {
-            frost_threshold: Some(0.0),
-            optimal_min: Some(10.0),
-            optimal_max: Some(30.0),
-            base_temperature: None,
-        };
         vec![
             CropStageSnapshot {
                 id: 1,
                 name: "播種".into(),
                 order: 1,
-                temperature_requirement: Some(tr.clone()),
             },
             CropStageSnapshot {
                 id: 2,
                 name: "定植".into(),
                 order: 2,
-                temperature_requirement: Some(tr),
             },
         ]
     }
@@ -421,24 +412,16 @@
     }
 
     fn us_transplant_stages() -> Vec<CropStageSnapshot> {
-        let tr = TemperatureRequirementSnapshot {
-            frost_threshold: Some(0.0),
-            optimal_min: Some(10.0),
-            optimal_max: Some(30.0),
-            base_temperature: None,
-        };
         vec![
             CropStageSnapshot {
                 id: 101,
                 name: "Seedling Stage".into(),
                 order: 1,
-                temperature_requirement: Some(tr.clone()),
             },
             CropStageSnapshot {
                 id: 102,
                 name: "Transplanting Stage".into(),
                 order: 2,
-                temperature_requirement: Some(tr),
             },
         ]
     }
@@ -478,19 +461,12 @@
 
     #[test]
     fn returns_missing_transplant_stage_when_transplant_method_has_only_one_stage() {
-        let tr = TemperatureRequirementSnapshot {
-            frost_threshold: Some(0.0),
-            optimal_min: Some(10.0),
-            optimal_max: Some(30.0),
-            base_temperature: None,
-        };
         let crop = test_crop(1, "Bell Peppers", None, Some(CropCultivationMethod::Transplant));
         let crop_gateway = StubCropGateway {
             rows: vec![CropStageSnapshot {
                 id: 101,
                 name: "Seedling Stage".into(),
                 order: 1,
-                temperature_requirement: Some(tr),
             }],
         };
         let optimization_gateway = StubOptimizationGateway {
@@ -686,24 +662,16 @@
     }
 
     fn direct_sow_stages() -> Vec<CropStageSnapshot> {
-        let tr = TemperatureRequirementSnapshot {
-            frost_threshold: Some(0.0),
-            optimal_min: Some(10.0),
-            optimal_max: Some(30.0),
-            base_temperature: None,
-        };
         vec![
             CropStageSnapshot {
                 id: 11,
                 name: "播種〜発芽".into(),
                 order: 1,
-                temperature_requirement: Some(tr.clone()),
             },
             CropStageSnapshot {
                 id: 12,
                 name: "発芽〜生育".into(),
                 order: 2,
-                temperature_requirement: Some(tr),
             },
         ]
     }

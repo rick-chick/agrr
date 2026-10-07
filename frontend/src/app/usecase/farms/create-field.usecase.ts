@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { CreateFieldInputPort } from './create-field.input-port';
 import { CreateFieldOutputPort, CREATE_FIELD_OUTPUT_PORT } from './create-field.output-port';
 import { FARM_GATEWAY, FarmGateway } from './farm-gateway';
@@ -14,7 +15,7 @@ export class CreateFieldUseCase implements CreateFieldInputPort {
   execute(dto: CreateFieldInputDto): void {
     this.farmGateway.createField(dto.farmId, dto.payload).subscribe({
       next: (field) => this.outputPort.present({ field, farmId: dto.farmId }),
-      error: (err) => this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      error: (err: unknown) => this.outputPort.onError({ message: apiErrorMessage(err) })
     });
   }
 }

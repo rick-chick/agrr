@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { UpdateInteractionRuleInputPort } from './update-interaction-rule.input-port';
 import { UpdateInteractionRuleOutputPort, UPDATE_INTERACTION_RULE_OUTPUT_PORT } from './update-interaction-rule.output-port';
 import { INTERACTION_RULE_GATEWAY, InteractionRuleGateway } from './interaction-rule-gateway';
@@ -27,7 +28,7 @@ export class UpdateInteractionRuleUseCase implements UpdateInteractionRuleInputP
         this.outputPort.present({ interactionRule });
         dto.onSuccess?.(interactionRule);
       },
-      error: (err) => this.outputPort.onError({ message: err.message })
+      error: (err: unknown) => this.outputPort.onError({ message: apiErrorMessage(err) })
     });
   }
 }

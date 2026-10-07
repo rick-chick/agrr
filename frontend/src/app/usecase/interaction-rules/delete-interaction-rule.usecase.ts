@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorMessage } from '../../core/api-error-message';
 import { DeleteInteractionRuleInputPort } from './delete-interaction-rule.input-port';
 import { DeleteInteractionRuleOutputPort, DELETE_INTERACTION_RULE_OUTPUT_PORT } from './delete-interaction-rule.output-port';
 import { INTERACTION_RULE_GATEWAY, InteractionRuleGateway } from './interaction-rule-gateway';
@@ -21,7 +22,7 @@ export class DeleteInteractionRuleUseCase implements DeleteInteractionRuleInputP
         });
         dto.onSuccess?.();
       },
-      error: (err) => this.outputPort.onError({ message: err.message })
+      error: (err: unknown) => this.outputPort.onError({ message: apiErrorMessage(err) })
     });
   }
 }

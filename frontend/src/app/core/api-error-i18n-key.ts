@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { apiErrorBodyHasMessage } from './api-error-body';
 import {
   backendWarmupI18nKey,
   isBackendWarmupHttpError,
@@ -10,13 +11,7 @@ function entryScheduleWeatherApiErrorI18nKey(error: HttpErrorResponse): string |
     return null;
   }
 
-  const body = error.error;
-  const code =
-    body != null && typeof body === 'object'
-      ? (body as { error?: string }).error
-      : undefined;
-
-  if (error.status === 422 && code === 'weather_location_required') {
+  if (error.status === 422 && apiErrorBodyHasMessage(error.error, 'weather_location_required')) {
     return 'api.entry_schedule.errors.weather_location_required';
   }
 
