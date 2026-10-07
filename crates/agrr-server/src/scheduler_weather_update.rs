@@ -181,7 +181,7 @@ impl SchedulerWeatherUpdateTriggerOutputPort for SchedulerWeatherUpdateTriggerAp
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(serde_json::json!({
                     "success": false,
-                    "error": failure_dto.message,
+                    "errors": [failure_dto.message],
                 })),
             )
                 .into_response(),
@@ -202,7 +202,7 @@ pub fn trigger_scheduler_weather_update(state: &AppState) -> Response {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(serde_json::json!({
                     "success": false,
-                    "error": "No response from presenter",
+                    "errors": ["No response from presenter"],
                 })),
             )
                 .into_response()

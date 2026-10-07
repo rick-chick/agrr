@@ -62,7 +62,7 @@ impl PublicPlanSaveFromSessionOutputPort for SavePresenter {
             _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string()),
         };
         self.status = status;
-        self.body = json!({"success": false, "error": error});
+        self.body = json!({"success": false, "errors": [error]});
     }
 }
 
@@ -76,7 +76,7 @@ async fn save_plan(
         Err(status) => {
             return (
                 status,
-                Json(json!({"success": false, "error": "unauthorized"})),
+                Json(json!({"success": false, "errors": ["unauthorized"]})),
             );
         }
     };
@@ -91,7 +91,7 @@ async fn save_plan(
     let translator = PassthroughTranslator;
     let mut presenter = SavePresenter {
         status: StatusCode::INTERNAL_SERVER_ERROR,
-        body: json!({"success": false, "error": "no response"}),
+        body: json!({"success": false, "errors": ["no response"]}),
     };
     let input = PublicPlanSaveInput {
         plan_id: body.plan_id,
@@ -112,7 +112,7 @@ async fn save_plan(
     if interactor.call(&input).is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"success": false, "error": "internal"})),
+            Json(json!({"success": false, "errors": ["internal"]})),
         );
     }
     (presenter.status, Json(presenter.body))

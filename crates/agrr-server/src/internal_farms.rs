@@ -57,7 +57,7 @@ async fn ensure_internal_env() -> Result<(), (StatusCode, Json<Value>)> {
         let message = translator.t("api.errors.common.env_only", &Default::default());
         Err((
             StatusCode::FORBIDDEN,
-            Json(json!({ "error": message })),
+            Json(json!({ "errors": [message]})),
         ))
     }
 }
@@ -76,7 +76,7 @@ async fn fetch_weather_data(
         Err(e) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": e.to_string() })),
+                Json(json!({ "errors": [e.to_string()]})),
             )
                 .into_response();
         }
@@ -112,7 +112,7 @@ async fn weather_status(
         Err(e) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": e.to_string() })),
+                Json(json!({ "errors": [e.to_string()]})),
             )
                 .into_response();
         }
@@ -140,7 +140,7 @@ async fn get_weather_data(
         Err(e) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": e.to_string() })),
+                Json(json!({ "errors": [e.to_string()]})),
             )
                 .into_response();
         }
@@ -188,7 +188,7 @@ impl InternalWeatherFetchStartOutputPort for FetchStartPresenter {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
         };
-        self.body = Some((status, json!({ "error": dto.message })));
+        self.body = Some((status, json!({ "errors": [dto.message]})));
     }
 }
 
@@ -198,7 +198,7 @@ impl FetchStartPresenter {
             Some((status, json)) => (status, Json(json)).into_response(),
             None => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": "internal" })),
+                Json(json!({ "errors": ["internal"] })),
             )
                 .into_response(),
         }
@@ -234,7 +234,7 @@ impl InternalFarmWeatherStatusOutputPort for WeatherStatusPresenter {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
         };
-        self.body = Some((status, json!({ "error": dto.message })));
+        self.body = Some((status, json!({ "errors": [dto.message]})));
     }
 }
 
@@ -244,7 +244,7 @@ impl WeatherStatusPresenter {
             Some((status, json)) => (status, Json(json)).into_response(),
             None => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": "internal" })),
+                Json(json!({ "errors": ["internal"] })),
             )
                 .into_response(),
         }
@@ -277,7 +277,7 @@ impl InternalFarmWeatherDataListOutputPort for WeatherDataListPresenter {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
         };
-        self.body = Some((status, json!({ "error": dto.message })));
+        self.body = Some((status, json!({ "errors": [dto.message]})));
     }
 }
 
@@ -287,7 +287,7 @@ impl WeatherDataListPresenter {
             Some((status, json)) => (status, Json(json)).into_response(),
             None => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": "internal" })),
+                Json(json!({ "errors": ["internal"] })),
             )
                 .into_response(),
         }

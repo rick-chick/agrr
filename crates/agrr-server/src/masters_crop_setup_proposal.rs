@@ -49,7 +49,7 @@ async fn setup_proposal(
             return Err((
                 StatusCode::UNPROCESSABLE_ENTITY,
                 Json(json!({
-                    "error": "mode must be dry_run or apply"
+                    "errors": ["mode must be dry_run or apply"]
                 })),
             ));
         }
@@ -115,7 +115,7 @@ async fn setup_proposal(
         fn on_crop_not_found(&mut self) {
             self.resp = Some(Err((
                 StatusCode::NOT_FOUND,
-                Json(json!({ "error": "crop not found" })),
+                Json(json!({ "errors": ["crop not found"] })),
             )));
         }
     }

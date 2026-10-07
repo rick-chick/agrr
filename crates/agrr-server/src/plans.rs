@@ -129,7 +129,7 @@ async fn list_plans(
     let user_id = user_id_from_session(&state, &jar).map_err(|status| {
         (
             status,
-            Json(serde_json::json!({"error": "unauthorized"})),
+            Json(serde_json::json!({"errors": ["unauthorized"]})),
         )
     })?;
     let pool = state.sqlite.clone();
@@ -150,7 +150,7 @@ async fn list_plans(
     interactor.call().map_err(|_| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "internal"})),
+            Json(serde_json::json!({"errors": ["internal"]})),
         )
     })?;
 
@@ -158,11 +158,11 @@ async fn list_plans(
         Some(Ok(items)) => Ok(Json(items)),
         Some(Err((msg, _))) => Err((
             axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-            Json(serde_json::json!({"error": msg})),
+            Json(serde_json::json!({"errors": [msg]})),
         )),
         None => Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "no response"})),
+            Json(serde_json::json!({"errors": ["no response"]})),
         )),
     }
 }
@@ -175,7 +175,7 @@ async fn show_plan(
     let user_id = user_id_from_session(&state, &jar).map_err(|status| {
         (
             status,
-            Json(serde_json::json!({"error": "unauthorized"})),
+            Json(serde_json::json!({"errors": ["unauthorized"]})),
         )
     })?;
     let pool = state.sqlite.clone();
@@ -202,7 +202,7 @@ async fn show_plan(
     interactor.call_catch_all(id).map_err(|_| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "internal"})),
+            Json(serde_json::json!({"errors": ["internal"]})),
         )
     })?;
 
@@ -210,15 +210,15 @@ async fn show_plan(
         Some(ShowOutcome::Success(item)) => Ok(Json(item)),
         Some(ShowOutcome::NotFound) => Err((
             axum::http::StatusCode::NOT_FOUND,
-            Json(serde_json::json!({"error": "Plan not found"})),
+            Json(serde_json::json!({"errors": ["Plan not found"]})),
         )),
         Some(ShowOutcome::Failure(msg)) => Err((
             axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-            Json(serde_json::json!({"error": msg})),
+            Json(serde_json::json!({"errors": [msg]})),
         )),
         None => Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "no response"})),
+            Json(serde_json::json!({"errors": ["no response"]})),
         )),
     }
 }
@@ -353,7 +353,7 @@ async fn create_plan(
     Json(body): Json<CreatePlanBody>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = user_id_from_session(&state, &jar)
-        .map_err(|status| (status, Json(json!({"error": "unauthorized"}))))?;
+        .map_err(|status| (status, Json(json!({"errors": ["unauthorized"]}))))?;
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let farm_gateway = FarmSqliteGateway::new(pool.clone());
@@ -393,7 +393,7 @@ async fn create_plan(
     interactor.call(&input).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": e.to_string()})),
+            Json(json!({"errors": [e.to_string()]})),
         )
     })?;
     match presenter.body {
@@ -413,18 +413,18 @@ async fn create_plan(
                         .to_string();
                     return Err((
                         StatusCode::UNPROCESSABLE_ENTITY,
-                        Json(json!({"error": message})),
+                        Json(json!({"errors": [message]})),
                     ));
                 }
             }
             Ok((StatusCode::CREATED, Json(json!({"id": id}))))
         }
         Some(CreateOutcome::Failure { status, message }) => {
-            Err((status, Json(json!({"error": message}))))
+            Err((status, Json(json!({"errors": [message]}))))
         }
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "no response"})),
+            Json(json!({"errors": ["no response"]})),
         )),
     }
 }
@@ -482,7 +482,7 @@ async fn destroy_plan(
     Path(id): Path<i64>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = user_id_from_session(&state, &jar)
-        .map_err(|status| (status, Json(json!({"error": "unauthorized"}))))?;
+        .map_err(|status| (status, Json(json!({"errors": ["unauthorized"]}))))?;
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool.clone());
@@ -500,17 +500,17 @@ async fn destroy_plan(
     interactor.call(id).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": e.to_string()})),
+            Json(json!({"errors": [e.to_string()]})),
         )
     })?;
     match presenter.body {
         Some(DestroyOutcome::Success(body)) => Ok(Json(body)),
         Some(DestroyOutcome::Failure { status, message }) => {
-            Err((status, Json(json!({"error": message}))))
+            Err((status, Json(json!({"errors": [message]}))))
         }
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": "no response"})),
+            Json(json!({"errors": ["no response"]})),
         )),
     }
 }

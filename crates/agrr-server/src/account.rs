@@ -43,7 +43,7 @@ impl UserDataExportOutputPort for ExportPresenter {
     fn on_failure(&mut self, failure: agrr_domain::user_account::dtos::UserDataExportFailure) {
         *self.body.lock().unwrap() = Some(Err((
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(serde_json::json!({ "error": failure.message })),
+            Json(serde_json::json!({ "errors": [failure.message]})),
         )));
     }
 }
@@ -61,7 +61,9 @@ impl UserAccountDeleteOutputPort for DeletePresenter {
     fn on_not_confirmed(&mut self) {
         *self.body.lock().unwrap() = Some((
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(serde_json::json!({ "error": "confirmation_required", "message": "Set confirm to true" })),
+            Json(serde_json::json!({
+                "errors": ["confirmation_required", "Set confirm to true"]
+            })),
             false,
         ));
     }
@@ -72,7 +74,7 @@ impl UserAccountDeleteOutputPort for DeletePresenter {
         } else {
             StatusCode::INTERNAL_SERVER_ERROR
         };
-        *self.body.lock().unwrap() = Some((status, Json(serde_json::json!({ "error": message })), false));
+        *self.body.lock().unwrap() = Some((status, Json(serde_json::json!({ "errors": [message]})), false));
     }
 }
 
@@ -90,7 +92,7 @@ async fn export_data(
     let user_id = user_id_from_session(&state, &jar).map_err(|status| {
         (
             status,
-            Json(serde_json::json!({"error": "unauthorized"})),
+            Json(serde_json::json!({"errors": ["unauthorized"]})),
         )
     })?;
     let gateway = UserAccountSqliteGateway::new(state.sqlite.clone());
@@ -100,13 +102,13 @@ async fn export_data(
     interactor.call(user_id).map_err(|_| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "internal"})),
+            Json(serde_json::json!({"errors": ["internal"]})),
         )
     })?;
     let result = body.lock().unwrap().take();
     result.unwrap_or(Err((
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(serde_json::json!({"error": "internal"})),
+        Json(serde_json::json!({"errors": ["internal"]})),
     )))
 }
 
@@ -122,7 +124,7 @@ async fn delete_account(
                 jar,
                 (
                     status,
-                    Json(serde_json::json!({"error": "unauthorized"})),
+                    Json(serde_json::json!({"errors": ["unauthorized"]})),
                 ),
             )
                 .into_response();
@@ -154,7 +156,7 @@ async fn delete_account(
             jar,
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "internal"})),
+                Json(serde_json::json!({"errors": ["internal"]})),
             ),
         )
             .into_response();
@@ -165,7 +167,7 @@ async fn delete_account(
             jar,
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "internal"})),
+                Json(serde_json::json!({"errors": ["internal"]})),
             ),
         )
             .into_response();

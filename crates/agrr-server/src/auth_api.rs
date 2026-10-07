@@ -79,14 +79,14 @@ async fn auth_me(
     let user_id = user_id_from_session(&state, &jar).map_err(|status| {
         (
             status,
-            Json(serde_json::json!({"error": "unauthorized"})),
+            Json(serde_json::json!({"errors": ["unauthorized"]})),
         )
     })?;
     let gateway = SessionUserReadSqliteGateway::new(state.sqlite.clone());
     let row = gateway.find_by_id(user_id).map_err(|_| {
         (
             StatusCode::UNAUTHORIZED,
-            Json(serde_json::json!({"error": "unauthorized"})),
+            Json(serde_json::json!({"errors": ["unauthorized"]})),
         )
     })?;
     Ok(Json(MeResponse {
