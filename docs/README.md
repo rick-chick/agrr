@@ -5,6 +5,7 @@
 - **ADR（Architecture Decision Records）**: [`adr/`](adr/)
   - [ADR-001: 生成は外・計算は agrr デーモン（内蔵 AI 廃止方針）](adr/ADR-001-external-skill-generation-agrr-daemon-calculation.md) — 親 [#316](https://github.com/rick-chick/agrr/issues/316)
   - [ADR-002: Organization モデル（B2B マルチテナンシー土台）](adr/ADR-002-organization-multi-tenancy.md) — 親 [#604](https://github.com/rick-chick/agrr/issues/604)
+  - [ADR-003: Organization 共有の縮小（Plan は所有者のみ、Farm / Crop の編集は所有者のみ）](adr/ADR-003-organization-sharing-owner-only.md) — [#1358](https://github.com/rick-chick/agrr/issues/1358)
 - **設計メモ**: [`design/`](design/)
   - [Organization データモデル案](design/organization-data-model.md) — 親 [#604](https://github.com/rick-chick/agrr/issues/604)
 - **コア API / 最適化 SLI・SLO・アラート**: [`ops/core-api-optimization-sli-slo.md`](ops/core-api-optimization-sli-slo.md)

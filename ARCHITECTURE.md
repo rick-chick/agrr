@@ -87,8 +87,9 @@ i18n: `@ngx-translate` (`frontend/src/assets/i18n/{ja,en}.json`). Production rou
 
 ## Resource Limits
 
-- **Farm:** max 4 non-reference farms per user (`is_reference: false`)
-- **Crop:** max 20 non-reference crops per user
+- **Farm:** max 4 non-reference farms per organization, shared by all its members (`is_reference: false`)
+- **Crop:** max 20 non-reference crops per organization, shared by all its members
+- Counted in the organization the record is created in. Users who belong to several organizations are out of scope (creation target and quota are unspecified).
 - **Reference data:** `is_reference: true` excluded from limits
 
 Enforced in **domain policies**; DB constraints are safety net only.
