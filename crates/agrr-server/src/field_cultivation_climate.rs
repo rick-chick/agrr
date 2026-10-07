@@ -1,6 +1,9 @@
 //! `GET .../field_cultivations/:id/climate_data` — domain interactor wiring.
 
-use crate::adapters::{NoopLogger, PassthroughTranslator, SystemClock};
+use crate::adapters::{PassthroughTranslator, StderrLogger, SystemClock};
+use agrr_domain::field_cultivation::dtos::{
+    FieldCultivationClimateFailure, FieldCultivationClimateFailureReason,
+};
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use agrr_adapters_agrr::FieldCultivationClimateAgrrGateway;
@@ -42,6 +45,7 @@ struct ClimatePresenter {
 enum ClimateOutcome {
     Success(FieldCultivationClimateDataOutput),
     Error(String),
+    Failure(FieldCultivationClimateFailure),
 }
 
 impl FieldCultivationClimateDataOutputPort for ClimatePresenter {
@@ -52,6 +56,45 @@ impl FieldCultivationClimateDataOutputPort for ClimatePresenter {
     fn on_error(&mut self, error: Error) {
         self.body = Some(ClimateOutcome::Error(error.message));
     }
+
+    fn on_failure(&mut self, failure: FieldCultivationClimateFailure) {
+        self.body = Some(ClimateOutcome::Failure(failure));
+    }
+}
+
+fn climate_failure_response(
+    failure: FieldCultivationClimateFailure,
+) -> (StatusCode, Json<Value>) {
+    let (status, error_key, error_code) = match failure.reason {
+        FieldCultivationClimateFailureReason::ProgressDaemonUnavailable => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            "api.errors.climate_progress_daemon_unavailable",
+            "progress_daemon_unavailable",
+        ),
+        FieldCultivationClimateFailureReason::ProgressExecutionFailed => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api.errors.climate_progress_execution_failed",
+            "progress_execution_failed",
+        ),
+        FieldCultivationClimateFailureReason::ProgressResultInvalid => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api.errors.climate_progress_result_invalid",
+            "progress_result_invalid",
+        ),
+        FieldCultivationClimateFailureReason::CropRequirementIncomplete => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "api.errors.climate_crop_requirement_incomplete",
+            "crop_requirement_incomplete",
+        ),
+    };
+    (
+        status,
+        Json(json!({
+            "success": false,
+            "errors": [error_key],
+            "error_code": error_code,
+        })),
+    )
 }
 
 struct FixedAnchors;
@@ -188,7 +231,7 @@ async fn run_climate_data(
     );
     let agrr = FieldCultivationClimateAgrrGateway::from_env();
     let user_lookup = UserLookupSqliteGateway::new(pool);
-    let logger = NoopLogger;
+    let logger = StderrLogger;
     let translator = PassthroughTranslator;
     let clock = SystemClock;
     let anchors = FixedAnchors;
@@ -237,6 +280,7 @@ async fn run_climate_data(
             status_for_message(&msg),
             Json(json!({"success": false, "message": msg})),
         )),
+        Some(ClimateOutcome::Failure(failure)) => Err(climate_failure_response(failure)),
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"success": false, "message": "no response"})),

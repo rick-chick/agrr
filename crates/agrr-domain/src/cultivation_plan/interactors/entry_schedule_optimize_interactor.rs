@@ -79,7 +79,13 @@ where
             return self.failed_result("insufficient_weather");
         };
 
-        let requirement = self.crop_agrr_requirement_builder.build_from(self.crop);
+        let requirement = match self.crop_agrr_requirement_builder.build_from(self.crop) {
+            Ok(value) => value,
+            Err(err) => {
+                self.log_error(&err.to_string());
+                return self.failed_result("crop_requirement_error");
+            }
+        };
         let crop_requirement = entry_schedule_stage_gdd_scaler::call(&requirement, None, None);
 
         match self.entry_schedule_optimization_gateway.optimize_period(

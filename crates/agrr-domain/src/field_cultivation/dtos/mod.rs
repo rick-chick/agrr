@@ -9,6 +9,7 @@ pub(crate) mod field_cultivation_api_update_output_snapshot;
 pub(crate) mod field_cultivation_climate_context_snapshot;
 pub(crate) mod field_cultivation_climate_data_input;
 pub(crate) mod field_cultivation_climate_data_output;
+pub(crate) mod field_cultivation_climate_failure;
 pub(crate) mod field_cultivation_climate_observed_merge_range_decision;
 pub(crate) mod field_cultivation_climate_source_snapshot;
 pub(crate) mod field_cultivation_plan_access_snapshot;
@@ -37,6 +38,9 @@ pub use field_cultivation_api_update_output_snapshot::FieldCultivationApiUpdateO
 pub use field_cultivation_climate_context_snapshot::FieldCultivationClimateContextSnapshot;
 pub use field_cultivation_climate_data_input::FieldCultivationClimateDataInput;
 pub use field_cultivation_climate_data_output::FieldCultivationClimateDataOutput;
+pub use field_cultivation_climate_failure::{
+    FieldCultivationClimateFailure, FieldCultivationClimateFailureReason,
+};
 pub use field_cultivation_climate_observed_merge_range_decision::FieldCultivationClimateObservedMergeRangeDecision;
 pub use field_cultivation_climate_source_snapshot::FieldCultivationClimateSourceSnapshot;
 pub use field_cultivation_plan_access_snapshot::FieldCultivationPlanAccessSnapshot;

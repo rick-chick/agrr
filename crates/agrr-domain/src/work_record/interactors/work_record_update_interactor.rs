@@ -16,6 +16,7 @@ use crate::work_record::gateways::{
     WorkRecordClimatePersistFields, WorkRecordClimateSnapshotGateway, WorkRecordGateway,
 };
 use crate::work_record::interactors::private_plan_access;
+use crate::work_record::errors::WorkRecordClimateSnapshotUnavailableError;
 use crate::work_record::ports::WorkRecordUpdateOutputPort;
 
 pub struct WorkRecordUpdateInteractor<'a, O, P, G, C, S, Cl> {
@@ -77,16 +78,18 @@ where
         }
         let existing = self.gateway.find_for_plan(plan_id, record_id)?;
         let climate = if input.actual_date.is_some_and(|d| d != existing.actual_date) {
-            existing.field_cultivation_id.and_then(|fc_id| {
+            if let Some(fc_id) = existing.field_cultivation_id {
                 let new_date = input.actual_date.unwrap_or(existing.actual_date);
-                self.climate_snapshot_gateway
-                    .lookup(fc_id, new_date)
-                    .ok()
-                    .map(|snapshot| WorkRecordClimatePersistFields {
-                        gdd_at_actual: snapshot.gdd_at_actual,
-                        weather_snapshot: snapshot.weather_snapshot,
-                    })
-            })
+                let snapshot = self
+                    .climate_snapshot_gateway
+                    .lookup(fc_id, new_date)?;
+                Some(WorkRecordClimatePersistFields {
+                    gdd_at_actual: snapshot.gdd_at_actual,
+                    weather_snapshot: snapshot.weather_snapshot,
+                })
+            } else {
+                None
+            }
         } else {
             None
         };
@@ -122,6 +125,19 @@ where
             }
             Err(err) if err.downcast_ref::<RecordStaleUpdateError>().is_some() => {
                 self.output_port.on_stale_update();
+                Ok(())
+            }
+            Err(err)
+                if err
+                    .downcast_ref::<WorkRecordClimateSnapshotUnavailableError>()
+                    .is_some() =>
+            {
+                let failure = err
+                    .downcast_ref::<WorkRecordClimateSnapshotUnavailableError>()
+                    .unwrap()
+                    .failure
+                    .clone();
+                self.output_port.on_climate_snapshot_unavailable(failure);
                 Ok(())
             }
             Err(err) => Err(err),

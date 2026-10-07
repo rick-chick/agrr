@@ -16,10 +16,8 @@ pub fn build_output(
     let final_cumulative_gdd_required = final_cumulative_gdd_required_from_stages(&context.stages);
     let (daily_gdd, baseline_gdd, filtered_records, progress_records) = build_daily_gdd(
         progress_result,
-        weather_records,
         context.start_date,
         context.completion_date,
-        base_temp,
         final_cumulative_gdd_required,
     );
 
@@ -63,7 +61,6 @@ pub fn build_output(
             "baseline_gdd": baseline_gdd,
             "progress_records_count": progress_records.len(),
             "filtered_records_count": filtered_records.len(),
-            "using_agrr_progress": !progress_records.is_empty(),
             "sample_raw_data": progress_records.iter().take(3).collect::<Vec<_>>(),
         }),
     }
@@ -173,83 +170,72 @@ fn truncate_daily_gdd_at_requirement(
 
 fn build_daily_gdd(
     progress_result: &Value,
-    weather_data_records: &[Value],
     start_date: Date,
     completion_date: Date,
-    base_temp: f64,
     final_cumulative_gdd_required: Option<f64>,
 ) -> (Vec<Value>, f64, Vec<Value>, Vec<Value>) {
     let progress_records = to_array_value(progress_result.get("progress_records"));
     let mut baseline_gdd = 0.0;
-    let mut filtered_records: Vec<Value> = Vec::new();
-    let mut daily_gdd: Vec<Value>;
 
-    if progress_records.is_empty() {
-        daily_gdd = calculate_gdd_manually(weather_data_records, base_temp);
+    let filtered_records: Vec<Value> = progress_records
+        .iter()
+        .filter(|record| {
+            let Some(date_str) = record.get("date").and_then(|v| v.as_str()) else {
+                return false;
+            };
+            let Some(record_date) = parse_iso_date(date_str) else {
+                return false;
+            };
+            record_date >= start_date && record_date <= completion_date
+        })
+        .cloned()
+        .collect();
+
+    let start_index = progress_records.iter().position(|record| {
+        record
+            .get("date")
+            .and_then(|v| v.as_str())
+            .and_then(parse_iso_date)
+            == Some(start_date)
+    });
+
+    baseline_gdd = if let Some(idx) = start_index {
+        if idx > 0 {
+            progress_records[idx - 1]
+                .get("cumulative_gdd")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0)
+        } else {
+            0.0
+        }
     } else {
-        filtered_records = progress_records
-            .iter()
-            .filter(|record| {
-                let Some(date_str) = record.get("date").and_then(|v| v.as_str()) else {
-                    return false;
-                };
-                let Some(record_date) = parse_iso_date(date_str) else {
-                    return false;
-                };
-                record_date >= start_date && record_date <= completion_date
-            })
-            .cloned()
-            .collect();
+        0.0
+    };
 
-        let start_index = progress_records.iter().position(|record| {
-            record
-                .get("date")
-                .and_then(|v| v.as_str())
-                .and_then(|s| {
-                    parse_iso_date(s)
-                })
-                == Some(start_date)
-        });
-
-        baseline_gdd = if let Some(idx) = start_index {
-            if idx > 0 {
-                progress_records[idx - 1]
-                    .get("cumulative_gdd")
-                    .and_then(|v| v.as_f64())
-                    .unwrap_or(0.0)
-            } else {
-                0.0
-            }
+    let mut daily_gdd = Vec::new();
+    for (index, day) in filtered_records.iter().enumerate() {
+        let current_cumulative_raw = day
+            .get("cumulative_gdd")
+            .and_then(|v| v.as_f64())
+            .expect("progress validated before build_output");
+        let current_cumulative = current_cumulative_raw - baseline_gdd;
+        let prev_cumulative = if index > 0 {
+            filtered_records[index - 1]
+                .get("cumulative_gdd")
+                .and_then(|v| v.as_f64())
+                .expect("progress validated before build_output")
+                - baseline_gdd
         } else {
             0.0
         };
-
-        let mut built = Vec::new();
-        for (index, day) in filtered_records.iter().enumerate() {
-            let current_cumulative_raw = day
-                .get("cumulative_gdd")
-                .and_then(|v| v.as_f64())
-                .unwrap_or(0.0);
-            let current_cumulative = current_cumulative_raw - baseline_gdd;
-            let prev_cumulative = if index > 0 {
-                filtered_records[index - 1]
-                    .get("cumulative_gdd")
-                    .and_then(|v| v.as_f64())
-                    .unwrap_or(0.0)
-                    - baseline_gdd
-            } else {
-                0.0
-            };
-            let daily_gdd_value = current_cumulative - prev_cumulative;
-            built.push(json!({
-                "date": day.get("date").cloned().unwrap_or(Value::Null),
-                "gdd": (daily_gdd_value * 100.0).round() / 100.0,
-                "cumulative_gdd": (current_cumulative * 100.0).round() / 100.0,
-                "temperature": Value::Null,
-                "current_stage": day.get("stage_name").cloned().unwrap_or(Value::Null),
-            }));
-        }
-        daily_gdd = built;
+        let daily_gdd_value = current_cumulative - prev_cumulative;
+        daily_gdd.push(json!({
+            "date": day.get("date").cloned().unwrap_or(Value::Null),
+            "gdd": (daily_gdd_value * 100.0).round() / 100.0,
+            "cumulative_gdd": (current_cumulative * 100.0).round() / 100.0,
+            "temperature": Value::Null,
+            "current_stage": day.get("stage_name").cloned().unwrap_or(Value::Null),
+        }));
     }
 
     truncate_daily_gdd_at_requirement(&mut daily_gdd, final_cumulative_gdd_required);
@@ -260,36 +246,6 @@ fn build_daily_gdd(
         filtered_records,
         progress_records,
     )
-}
-
-fn calculate_gdd_manually(weather_data_records: &[Value], base_temp: f64) -> Vec<Value> {
-    let mut daily_gdd = Vec::new();
-    let mut cumulative_gdd = 0.0;
-
-    for datum in weather_data_records {
-        let avg_temp = datum
-            .get("temperature_mean")
-            .and_then(|v| v.as_f64())
-            .or_else(|| {
-                let max = datum.get("temperature_max").and_then(|v| v.as_f64())?;
-                let min = datum.get("temperature_min").and_then(|v| v.as_f64())?;
-                Some((max + min) / 2.0)
-            });
-        let Some(avg_temp) = avg_temp else {
-            continue;
-        };
-        let gdd_value = (avg_temp - base_temp).max(0.0);
-        cumulative_gdd += gdd_value;
-        daily_gdd.push(json!({
-            "date": datum.get("date").cloned().unwrap_or(Value::Null),
-            "gdd": (gdd_value * 100.0).round() / 100.0,
-            "cumulative_gdd": (cumulative_gdd * 100.0).round() / 100.0,
-            "temperature": (avg_temp * 100.0).round() / 100.0,
-            "current_stage": Value::Null,
-        }));
-    }
-
-    daily_gdd
 }
 
 #[cfg(test)]

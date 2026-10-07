@@ -1,6 +1,7 @@
 //! agrr daemon: progress + predict for field cultivation climate.
 
 
+use agrr_domain::field_cultivation::errors::ClimateProgressGatewayError;
 use agrr_domain::field_cultivation::gateways::{
     FieldCultivationClimateProgressGateway, FieldCultivationPredictionGateway,
 };
@@ -9,7 +10,7 @@ use time::Date;
 
 use crate::agrr_daemon_debug_dump::{copy_temp_file_to_debug, write_json_value_to_debug};
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
-use crate::daemon_unavailable::map_agrr_daemon_error;
+use crate::daemon_unavailable::is_daemon_not_running;
 use crate::daemon_response::{
     ensure_daemon_command_success, parse_daemon_json_payload, read_daemon_output_json_file,
 };
@@ -69,7 +70,14 @@ impl FieldCultivationClimateProgressGateway for FieldCultivationClimateAgrrGatew
         weather_payload: &Value,
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
         self.calculate_progress_result(crop_requirement, start_date, weather_payload)
-            .map_err(map_agrr_daemon_error)
+            .map_err(|err| {
+                if is_daemon_not_running(&err) {
+                    Box::new(ClimateProgressGatewayError::DaemonUnavailable)
+                        as Box<dyn std::error::Error + Send + Sync>
+                } else {
+                    Box::new(ClimateProgressGatewayError::ExecutionFailed(err.to_string()))
+                }
+            })
     }
 }
 
