@@ -4,6 +4,7 @@ import { join, relative } from 'node:path';
 const DOMAIN_SRC = 'crates/agrr-domain/src';
 const DOMAIN_CARGO = 'crates/agrr-domain/Cargo.toml';
 const SERVER_SRC = 'crates/agrr-server/src';
+const SERVER_FAILURE_LEGACY_EXEMPT = new Set(['backdoor/routes.rs']);
 const FE_COMPONENTS = 'frontend/src/app/components';
 const FE_DOMAIN = 'frontend/src/app/domain';
 
@@ -219,6 +220,46 @@ function checkFrontendImports(rootDir, relDir, ruleId, forbiddenPattern) {
   return violations;
 }
 
+function checkServerFailureLegacyKeys(rootDir) {
+  const violations = [];
+  const absDir = join(rootDir, SERVER_SRC);
+  for (const absPath of walkFiles(absDir, (name) => name.endsWith('.rs'))) {
+    const rel = relPath(absDir, absPath);
+    if (SERVER_FAILURE_LEGACY_EXEMPT.has(rel)) {
+      continue;
+    }
+    const lines = readFileSync(absPath, 'utf8').split('\n');
+    lines.forEach((line, index) => {
+      if (/\berror_code\b/.test(line)) {
+        return;
+      }
+      if (/\berror_key\b/.test(line)) {
+        return;
+      }
+      if (/"error"\s*:/.test(line)) {
+        violations.push({
+          ruleId: 'S-T6',
+          file: join(SERVER_SRC, rel).replace(/\\/g, '/'),
+          message: `legacy failure key "error" at line ${index + 1}`,
+        });
+      }
+      if (
+        /"message"\s*:/.test(line) &&
+        lines
+          .slice(Math.max(0, index - 5), index + 1)
+          .some((prev) => /"success"\s*:\s*false/.test(prev))
+      ) {
+        violations.push({
+          ruleId: 'S-T6',
+          file: join(SERVER_SRC, rel).replace(/\\/g, '/'),
+          message: `legacy failure key "message" near success:false at line ${index + 1}`,
+        });
+      }
+    });
+  }
+  return violations;
+}
+
 export function runArchitectureGuard(rootDir) {
   const violations = [
     ...checkDomainImports(rootDir),
@@ -226,6 +267,7 @@ export function runArchitectureGuard(rootDir) {
     ...checkGatewayDefault(rootDir),
     ...checkPresenters(rootDir),
     ...checkRouteHandlers(rootDir),
+    ...checkServerFailureLegacyKeys(rootDir),
     ...checkFrontendImports(
       rootDir,
       FE_COMPONENTS,

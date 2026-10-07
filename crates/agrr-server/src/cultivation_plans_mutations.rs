@@ -157,7 +157,7 @@ pub(crate) fn map_add_crop_outcome(
             StatusCode::SERVICE_UNAVAILABLE,
             Json(json!({
                 "success": false,
-                "message": "plans.errors.prediction_data_incomplete",
+                "errors": ["plans.errors.prediction_data_incomplete"],
                 "technical_details": details
             })),
         )),
@@ -175,7 +175,7 @@ pub(crate) fn map_add_crop_outcome(
                 status,
                 Json(json!({
                     "success": false,
-                    "message": "plans.gantt.adjust_failed",
+                    "errors": ["plans.gantt.adjust_failed"],
                     "technical_details": technical_details
                 })),
             ))
