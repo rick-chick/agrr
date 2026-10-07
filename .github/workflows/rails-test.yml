@@ -25,6 +25,8 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           driver: docker
+          # docker-compose build uses bake; network: host in docker-compose.yml needs entitlement on Docker 28+
+          buildkitd-flags: --allow-insecure-entitlement=network.host
 
       - name: Cache migrated test DBs
         uses: actions/cache@v4
@@ -35,7 +37,7 @@ jobs:
             test-db-
 
       - name: Build test image
-        run: docker compose --profile test build test
+        run: docker compose --profile test build --allow=network.host test
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
