@@ -1,4 +1,4 @@
-// Tests for `calculators/fields_allocation.rs` (fail-closed characterization per docs/spec-defects/06).
+// Tests for `calculators/fields_allocation.rs` (fail-closed per docs/spec-defects/06 item 5).
 
     use crate::cultivation_plan::calculators::fields_allocation::FieldsAllocation;
     use crate::cultivation_plan::dtos::CultivationPlanInitCrop;
@@ -14,29 +14,24 @@
     }
 
     #[test]
-    fn allocate_uses_default_crop_and_minimum_area_when_crops_empty() {
-        let allocations = FieldsAllocation::new(30.0, &[]).allocate();
-        assert_eq!(allocations.len(), 1);
-        assert_eq!(allocations[0].crop.id, 0);
-        assert_eq!(allocations[0].crop.name, "デフォルト作物");
-        assert_eq!(allocations[0].area, 100.0);
+    fn allocate_err_when_crops_empty() {
+        let err = FieldsAllocation::new(30.0, &[])
+            .allocate()
+            .expect_err("empty crops");
+        assert_eq!(err, "no_crops");
     }
 
     #[test]
-    fn allocate_uses_max_of_total_area_and_100_when_total_area_non_positive() {
+    fn allocate_err_when_total_area_non_positive() {
         let crops = [crop(1, "Tomato", 10.0)];
-        let allocations = FieldsAllocation::new(0.0, &crops).allocate();
-        assert_eq!(allocations.len(), 1);
-        assert_eq!(allocations[0].crop.id, 1);
-        assert_eq!(allocations[0].area, 100.0);
-    }
-
-    #[test]
-    fn allocate_uses_minimum_area_of_100_when_total_area_is_negative() {
-        let crops = [crop(1, "Tomato", 10.0)];
-        let allocations = FieldsAllocation::new(-25.0, &crops).allocate();
-        assert_eq!(allocations.len(), 1);
-        assert_eq!(allocations[0].area, 100.0);
+        assert_eq!(
+            FieldsAllocation::new(0.0, &crops).allocate().unwrap_err(),
+            "invalid_total_area"
+        );
+        assert_eq!(
+            FieldsAllocation::new(-25.0, &crops).allocate().unwrap_err(),
+            "invalid_total_area"
+        );
     }
 
     #[test]
@@ -45,7 +40,9 @@
             crop(1, "Small plot crop", 10.0),
             crop(2, "Large plot crop", 20.0),
         ];
-        let allocations = FieldsAllocation::new(250.0, &crops).allocate();
+        let allocations = FieldsAllocation::new(250.0, &crops)
+            .allocate()
+            .expect("valid allocation");
         assert_eq!(allocations.len(), 2);
         assert_eq!(allocations[0].crop.id, 2);
         assert_eq!(allocations[1].crop.id, 1);

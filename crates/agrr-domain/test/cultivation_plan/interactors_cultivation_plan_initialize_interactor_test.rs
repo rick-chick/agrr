@@ -256,9 +256,8 @@ total_area: 100.0,
         assert!(*field_count.lock().unwrap() >= 1);
     }
 
-    // Characterizes fail-open FieldsAllocation path (docs/spec-defects/06 §3.5) until invalid input is rejected.
     #[test]
-    fn creates_default_field_without_plan_crops_when_crop_list_is_empty() {
+    fn fails_when_crop_list_is_empty() {
         let in_txn = Arc::new(Mutex::new(false));
         let crop_created = Arc::new(Mutex::new(false));
         let field_count = Arc::new(Mutex::new(0));
@@ -291,9 +290,8 @@ total_area: 100.0,
         );
 
         let result = interactor.call().unwrap();
-        assert!(result.is_success());
-        assert!(*in_txn.lock().unwrap());
+        assert!(!result.is_success());
+        assert!(!*in_txn.lock().unwrap());
         assert!(!*crop_created.lock().unwrap());
-        assert_eq!(*field_count.lock().unwrap(), 1);
-        assert_eq!(field_areas.lock().unwrap().as_slice(), &[100.0]);
+        assert_eq!(*field_count.lock().unwrap(), 0);
     }

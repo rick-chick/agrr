@@ -546,10 +546,6 @@
         let clock = FixedClock(date!(2026 - 10 - 01));
         let translator = StubTranslator;
         let weather_data = UnreachableWeatherDataGateway;
-        let weather_prediction = UnreachableWeatherPredictionGateway;
-        let prediction = UnreachablePredictionGateway;
-        let plan_predicted = UnreachablePlanPredictedWeatherGateway;
-        let anchors = FixedAnchors;
 
         let mut interactor = FieldCultivationClimateDataInteractor::new(
             &mut output,
@@ -559,11 +555,7 @@
             &climate_source,
             &crop_gateway,
             &weather_data,
-            &weather_prediction,
-            &prediction,
-            &plan_predicted,
             &store,
-            &anchors,
             progress.as_ref(),
             &clock,
             &translator,
@@ -661,11 +653,7 @@
             &climate_source,
             &crop_gateway,
             &weather_data,
-            &weather_prediction,
-            &prediction,
-            &plan_predicted,
             &store,
-            &anchors,
             progress.as_ref(),
             &clock,
             &translator,
@@ -1220,11 +1208,7 @@
             &climate_source,
             &crop_gateway,
             &weather_data,
-            &weather_prediction,
-            &prediction,
-            &plan_predicted,
             &store,
-            &anchors,
             progress.as_ref(),
             &clock,
             &translator,
@@ -1292,25 +1276,23 @@
             &climate_source,
             &crop_gateway,
             &weather_data,
-            &weather_prediction,
-            &prediction,
-            &plan_predicted,
             &store,
-            &anchors,
             progress.as_ref(),
             &clock,
             &translator,
         );
-        let err = interactor
+        interactor
             .call(FieldCultivationClimateDataInput {
                 field_cultivation_id: 1,
                 display_start_date: None,
                 display_end_date: None,
             })
-            .expect_err("missing cached prediction should fail closed");
-        assert!(err.downcast_ref::<WeatherPayloadInvalidError>().is_some());
+            .expect("missing cached prediction should fail closed via output port");
         assert!(output.success.is_none());
-        assert!(output.failure.is_none());
+        assert_eq!(
+            output.failure.unwrap().message,
+            "Field cultivation climate data not found"
+        );
     }
 
     #[test]
@@ -1366,25 +1348,23 @@
             &climate_source,
             &crop_gateway,
             &weather_data,
-            &weather_prediction,
-            &prediction,
-            &plan_predicted,
             &store,
-            &anchors,
             progress.as_ref(),
             &clock,
             &translator,
         );
-        let err = interactor
+        interactor
             .call(FieldCultivationClimateDataInput {
                 field_cultivation_id: 1,
                 display_start_date: None,
                 display_end_date: None,
             })
-            .expect_err("invalid cached weather payload should fail closed");
-        assert!(err.downcast_ref::<WeatherPayloadInvalidError>().is_some());
+            .expect("invalid cached weather payload should fail closed via output port");
         assert!(output.success.is_none());
-        assert!(output.failure.is_none());
+        assert_eq!(
+            output.failure.unwrap().message,
+            "Field cultivation climate data not found"
+        );
     }
 
     #[test]
@@ -1440,11 +1420,7 @@
             &climate_source,
             &crop_gateway,
             &weather_data,
-            &weather_prediction,
-            &prediction,
-            &plan_predicted,
             &store,
-            &anchors,
             progress.as_ref(),
             &clock,
             &translator,
@@ -1495,7 +1471,7 @@
 
     // Locks on-the-fly prediction path (docs/spec-defects/06 item 3) before fallback removal.
     #[test]
-    fn invokes_plan_prediction_when_plan_has_no_cached_metadata() {
+    fn fails_when_plan_has_no_cached_metadata() {
         let source = sample_source_without_plan_metadata(
             Some(1),
             Some(date!(2027 - 01 - 01)),
@@ -1535,11 +1511,7 @@
             &climate_source,
             &crop_gateway,
             &weather_data,
-            &weather_prediction,
-            &prediction,
-            &plan_predicted,
             &store,
-            &FixedAnchors,
             &FailingProgressGateway,
             &FixedClock(date!(2026 - 10 - 01)),
             &StubTranslator,
@@ -1551,7 +1523,7 @@
                 display_end_date: None,
             })
             .expect("interactor call");
-        assert_eq!(weather_prediction.calls.load(Ordering::SeqCst), 1);
+        assert_eq!(weather_prediction.calls.load(Ordering::SeqCst), 0);
         assert!(output.success.is_none());
         assert_eq!(
             output.failure.unwrap().message,
@@ -1560,7 +1532,7 @@
     }
 
     #[test]
-    fn presents_climate_via_observed_fallback_when_plan_has_no_cached_metadata() {
+    fn fails_when_observed_fallback_would_have_run_without_cached_metadata() {
         let source = sample_source_without_plan_metadata(
             Some(1),
             Some(date!(2025 - 06 - 01)),
@@ -1607,11 +1579,7 @@
             &climate_source,
             &crop_gateway,
             &weather_data,
-            &weather_prediction,
-            &prediction,
-            &plan_predicted,
             &store,
-            &FixedAnchors,
             progress.as_ref(),
             &FixedClock(date!(2026 - 10 - 01)),
             &StubTranslator,
@@ -1623,9 +1591,11 @@
                 display_end_date: None,
             })
             .expect("interactor call");
-        assert_eq!(weather_prediction.calls.load(Ordering::SeqCst), 1);
-        assert_eq!(plan_predicted.persist_calls.load(Ordering::SeqCst), 1);
-        let dto = output.success.expect("climate data presented via fallback");
-        assert_eq!(dto.weather_data.len(), 1);
-        assert!(!dto.gdd_data.is_empty());
+        assert_eq!(weather_prediction.calls.load(Ordering::SeqCst), 0);
+        assert_eq!(plan_predicted.persist_calls.load(Ordering::SeqCst), 0);
+        assert!(output.success.is_none());
+        assert_eq!(
+            output.failure.unwrap().message,
+            "Field cultivation climate data not found"
+        );
     }
