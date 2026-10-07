@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { LoadPublicPlanResultsInputDto } from './load-public-plan-results.dtos';
 import { LoadPublicPlanResultsInputPort } from './load-public-plan-results.input-port';

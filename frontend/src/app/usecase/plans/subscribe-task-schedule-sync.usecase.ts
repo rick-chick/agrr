@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { SubscribeTaskScheduleSyncInputDto } from './subscribe-task-schedule-sync.dtos';
 import { SubscribeTaskScheduleSyncInputPort } from './subscribe-task-schedule-sync.input-port';
 import {

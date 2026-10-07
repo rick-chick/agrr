@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { LoadInteractionRuleForEditInputPort } from './load-interaction-rule-for-edit.input-port';
 import { LoadInteractionRuleForEditOutputPort, LOAD_INTERACTION_RULE_FOR_EDIT_OUTPUT_PORT } from './load-interaction-rule-for-edit.output-port';
 import { INTERACTION_RULE_GATEWAY, InteractionRuleGateway } from './interaction-rule-gateway';

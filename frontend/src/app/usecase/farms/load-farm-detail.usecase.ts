@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { forkJoin } from 'rxjs';
 import { LoadFarmDetailInputDto } from './load-farm-detail.dtos';
 import { LoadFarmDetailInputPort } from './load-farm-detail.input-port';

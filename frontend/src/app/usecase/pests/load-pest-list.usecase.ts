@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { LoadPestListInputPort } from './load-pest-list.input-port';
 import { LoadPestListOutputPort, LOAD_PEST_LIST_OUTPUT_PORT } from './load-pest-list.output-port';
 import { PEST_GATEWAY, PestGateway } from './pest-gateway';

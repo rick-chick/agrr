@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { SubscribeFarmWeatherInputDto } from './subscribe-farm-weather.dtos';
 import { SubscribeFarmWeatherInputPort } from './subscribe-farm-weather.input-port';
 import {

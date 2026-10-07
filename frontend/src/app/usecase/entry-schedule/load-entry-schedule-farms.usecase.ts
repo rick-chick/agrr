@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { catchError, EMPTY, timeout } from 'rxjs';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { LoadEntryScheduleFarmsInputDto } from './load-entry-schedule-farms.dtos';

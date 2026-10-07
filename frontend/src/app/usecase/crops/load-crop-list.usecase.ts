@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { LoadCropListInputPort } from './load-crop-list.input-port';
 import { LoadCropListOutputPort, LOAD_CROP_LIST_OUTPUT_PORT } from './load-crop-list.output-port';
 import { CROP_GATEWAY, CropGateway } from './crop-gateway';

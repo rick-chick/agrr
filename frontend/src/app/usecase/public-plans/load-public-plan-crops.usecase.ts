@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { TranslateService } from '@ngx-translate/core';
 import { LoadPublicPlanCropsInputDto } from './load-public-plan-crops.dtos';
 import { LoadPublicPlanCropsInputPort } from './load-public-plan-crops.input-port';

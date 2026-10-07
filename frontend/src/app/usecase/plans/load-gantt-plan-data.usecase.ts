@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { GANTT_PLAN_GATEWAY, GanttPlanGateway } from './gantt-plan-gateway';
 import { LoadGanttPlanDataInputDto } from './load-gantt-plan-data.dtos';

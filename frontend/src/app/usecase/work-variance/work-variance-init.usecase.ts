@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { switchMap, map } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { buildVariancePortfolioSummaryStats } from '../../domain/work-variance-portfolio/build-variance-portfolio-summary-stats';

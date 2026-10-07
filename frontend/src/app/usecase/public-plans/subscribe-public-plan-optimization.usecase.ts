@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { SubscribePublicPlanOptimizationInputDto } from './subscribe-public-plan-optimization.dtos';
 import { SubscribePublicPlanOptimizationInputPort } from './subscribe-public-plan-optimization.input-port';
 import {

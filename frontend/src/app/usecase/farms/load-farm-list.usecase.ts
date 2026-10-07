@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { LoadFarmListInputPort } from './load-farm-list.input-port';
 import { LoadFarmListOutputPort, LOAD_FARM_LIST_OUTPUT_PORT } from './load-farm-list.output-port';
 import { FARM_GATEWAY, FarmGateway } from './farm-gateway';

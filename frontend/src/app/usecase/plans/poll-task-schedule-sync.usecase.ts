@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { apiErrorMessage } from '../../core/api-error-message';
 import { Subscription, timer } from 'rxjs';
 import { last, map, switchMap, take, takeWhile } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
