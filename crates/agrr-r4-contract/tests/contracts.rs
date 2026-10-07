@@ -3046,6 +3046,67 @@ fn masters_api_key_read_scope_allows_get_and_denies_post() {
 }
 
 #[test]
+fn masters_api_key_after_regenerate_denies_post_without_scope_override() {
+    let client = ContractClient::from_env();
+    let session_id = researcher_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let _seed = seed_masters_crop(user_id);
+
+    let api_key = regenerate_api_key(&client, &session_id);
+
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {api_key}"));
+
+    let (post_status, post_body) = status_and_body(client.post(
+        "/api/v1/masters/crops",
+        None,
+        &headers,
+        Some(serde_json::json!({ "crop": { "name": "default-scope-deny-crop" } })),
+    ));
+    assert_eq!(403, post_status, "{post_body}");
+    let post_json: serde_json::Value = serde_json::from_str(&post_body).expect("forbidden JSON");
+    assert_eq!(
+        Some("insufficient_scope"),
+        post_json["error_code"].as_str(),
+        "{post_body}"
+    );
+}
+
+#[test]
+fn masters_api_key_regenerate_demotes_write_scope_to_read_only() {
+    let client = ContractClient::from_env();
+    let session_id = farmer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+
+    set_user_api_key_scopes(user_id, r#"["masters:read","masters:write"]"#);
+    let api_key = regenerate_api_key(&client, &session_id);
+
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {api_key}"));
+
+    let (post_status, post_body) = status_and_body(client.post(
+        "/api/v1/masters/crops",
+        None,
+        &headers,
+        Some(serde_json::json!({ "crop": { "name": "regenerate-demote-crop" } })),
+    ));
+    assert_eq!(403, post_status, "{post_body}");
+
+    let conn = rusqlite::Connection::open(
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH"),
+    )
+    .expect("open sqlite");
+    let scopes: String = conn
+        .query_row(
+            "SELECT api_key_scopes FROM users WHERE id = ?1",
+            rusqlite::params![user_id],
+            |row| row.get(0),
+        )
+        .expect("api_key_scopes");
+    assert_eq!(r#"["masters:read"]"#, scopes);
+}
+
+#[test]
 fn masters_api_key_write_scope_allows_post() {
     let client = ContractClient::from_env();
     let session_id = farmer_session_id(&client);

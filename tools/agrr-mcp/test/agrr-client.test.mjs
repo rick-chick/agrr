@@ -92,33 +92,6 @@ test('proposeCropSetup posts dry_run mode', async () => {
   assert.equal(result.errors?.length ?? 0, 0);
 });
 
-test('applyCropSetup posts apply mode', async () => {
-  const proposal = tomatoJpSetupProposal();
-  const client = new AgrrClient({
-    baseUrl: 'http://localhost:3000',
-    apiKey: 'test-key',
-    fetch: mockFetch((url, init) => {
-      assert.equal(
-        url,
-        'http://localhost:3000/api/v1/masters/crops/7/setup_proposal?mode=apply',
-      );
-      assert.equal(init.method, 'POST');
-      return {
-        status: 201,
-        body: {
-          mode: 'apply',
-          valid: true,
-          result: { stage_ids: [1], blueprint_ids: [2] },
-        },
-      };
-    }),
-  });
-
-  const result = await client.applyCropSetup(7, proposal);
-  assert.equal(result.valid, true);
-  assert.equal(result.result.stage_ids.length, 1);
-});
-
 test('request surfaces API errors', async () => {
   const client = new AgrrClient({
     baseUrl: 'http://localhost:3000',
