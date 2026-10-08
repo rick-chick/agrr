@@ -269,7 +269,10 @@ pub fn enqueue_task_schedule_regen_debounced(state: &AppState, plan_id: i64) {
 mod tests {
     use super::*;
     use crate::cable::CableHub;
-    use crate::test_support::{test_app_state, test_pool_with_optimizing_plan, test_pool_with_sync_plan};
+    use crate::test_support::{
+        test_app_state, test_pool_with_optimizing_plan, test_pool_with_plan,
+        test_pool_with_sync_plan,
+    };
     use agrr_adapters_sqlite::{SqlitePool, TaskScheduleSyncStateSqliteGateway};
     use agrr_domain::agricultural_task::constants::task_schedule_sync_states as sync_state;
     use agrr_domain::agricultural_task::gateways::TaskScheduleSyncStateGateway;
@@ -413,6 +416,33 @@ mod tests {
             generation_after_immediate > generation_before_immediate,
             "immediate regen must invalidate pending debounce generation"
         );
+    }
+
+    #[test]
+    fn run_task_schedule_generation_step_err_when_plan_not_optimizing() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+        let err = run_task_schedule_generation_step(&state, 1, "test")
+            .expect_err("non-optimizing plan must not run chain generation");
+        assert!(
+            err.contains("no longer optimizing"),
+            "unexpected error: {err}"
+        );
+    }
+
+    #[test]
+    fn run_task_schedule_generation_step_err_when_status_query_fails() {
+        let db = test_pool_with_optimizing_plan(1);
+        let pool = db.pool.clone();
+        pool.with_write(|conn| {
+            conn.execute("DROP TABLE cultivation_plans", [])?;
+            Ok(())
+        })
+        .expect("drop cultivation_plans");
+        let state = test_app_state(pool);
+        let err = run_task_schedule_generation_step(&state, 1, "test")
+            .expect_err("DB errors must propagate from ensure_plan_still_optimizing");
+        assert!(!err.is_empty());
     }
 
     #[test]

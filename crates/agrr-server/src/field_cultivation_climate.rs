@@ -226,3 +226,69 @@ async fn run_climate_data(
         )),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::field_cultivation::dtos::{
+        FieldCultivationClimateFailure, FieldCultivationClimateFailureReason,
+    };
+
+    #[test]
+    fn climate_failure_response_maps_progress_daemon_unavailable_to_503() {
+        let (status, body) = climate_failure_response(FieldCultivationClimateFailure::new(
+            FieldCultivationClimateFailureReason::ProgressDaemonUnavailable,
+            "daemon down",
+        ));
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
+            Some("api.errors.climate_progress_daemon_unavailable")
+        );
+        assert_eq!(
+            body.get("error_code").and_then(|v| v.as_str()),
+            Some("progress_daemon_unavailable")
+        );
+        assert_eq!(body.get("success").and_then(|v| v.as_bool()), Some(false));
+    }
+
+    #[test]
+    fn climate_failure_response_maps_crop_requirement_incomplete_to_422() {
+        let (status, body) = climate_failure_response(FieldCultivationClimateFailure::new(
+            FieldCultivationClimateFailureReason::CropRequirementIncomplete,
+            "missing stages",
+        ));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
+            Some("api.errors.climate_crop_requirement_incomplete")
+        );
+        assert_eq!(
+            body.get("error_code").and_then(|v| v.as_str()),
+            Some("crop_requirement_incomplete")
+        );
+    }
+
+    #[test]
+    fn climate_failure_response_maps_progress_execution_failed_to_500() {
+        let (status, body) = climate_failure_response(FieldCultivationClimateFailure::new(
+            FieldCultivationClimateFailureReason::ProgressExecutionFailed,
+            "agrr failed",
+        ));
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            body.get("error_code").and_then(|v| v.as_str()),
+            Some("progress_execution_failed")
+        );
+    }
+
+    #[test]
+    fn climate_failure_response_omits_legacy_error_and_message_keys() {
+        let (_, body) = climate_failure_response(FieldCultivationClimateFailure::new(
+            FieldCultivationClimateFailureReason::ProgressResultInvalid,
+            "bad payload",
+        ));
+        assert!(body.get("error").is_none());
+        assert!(body.get("message").is_none());
+    }
+}

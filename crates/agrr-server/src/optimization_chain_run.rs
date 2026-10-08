@@ -486,7 +486,37 @@ pub fn run_plan_finalize_step(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::test_pool_with_plan;
+    use crate::cable::CableHub;
+    use crate::test_support::{test_app_state, test_pool_with_optimizing_plan, test_pool_with_plan};
+
+    #[test]
+    fn run_plan_finalize_step_err_when_plan_not_optimizing() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+        let hub = CableHub::default();
+        let err = run_plan_finalize_step(&state, 1, "test", &hub)
+            .expect_err("finalize must not run when plan left optimizing");
+        assert!(
+            err.contains("no longer optimizing"),
+            "unexpected error: {err}"
+        );
+    }
+
+    #[test]
+    fn run_plan_finalize_step_err_when_status_query_fails() {
+        let db = test_pool_with_optimizing_plan(1);
+        let pool = db.pool.clone();
+        pool.with_write(|conn| {
+            conn.execute("DROP TABLE cultivation_plans", [])?;
+            Ok(())
+        })
+        .expect("drop cultivation_plans");
+        let state = test_app_state(pool);
+        let hub = CableHub::default();
+        let err = run_plan_finalize_step(&state, 1, "test", &hub)
+            .expect_err("DB errors must propagate before finalize side effects");
+        assert!(!err.is_empty());
+    }
 
     #[test]
     fn load_chain_context_returns_none_when_plan_missing() {
