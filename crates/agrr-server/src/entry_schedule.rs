@@ -991,6 +991,51 @@ mod tests {
         );
     }
 
+    // Locks fail-open at call site (docs/spec-defects/06 item D): entry_schedule swallows crop list Err.
+    #[test]
+    fn reference_crop_list_is_empty_when_is_reference_query_fails() {
+        let (pool, _file) = crop_test_pool();
+        pool.with_write(|conn| {
+            conn.execute("DROP TABLE crops", [])?;
+            Ok(())
+        })
+        .expect("drop crops");
+        let gateway = CropSqliteGateway::new(pool);
+        let crops = gateway
+            .list_by_is_reference(true, Some("jp"))
+            .unwrap_or_default();
+        assert!(
+            crops.is_empty(),
+            "unwrap_or_default must not surface DB errors as HTTP failures"
+        );
+    }
+
+    #[test]
+    fn load_farm_maps_db_read_failure_to_not_found_response() {
+        use crate::test_support::test_pool_with_plan;
+        use agrr_adapters_sqlite::FarmSqliteGateway;
+        use axum::http::StatusCode;
+
+        let db = test_pool_with_plan(1);
+        db.pool
+            .with_write(|conn| {
+                conn.execute("DROP TABLE farms", [])?;
+                Ok(())
+            })
+            .expect("drop farms");
+        let mapped = FarmSqliteGateway::new(db.pool)
+            .find_by_id(1)
+            .map_err(|_| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(json!({"errors": ["farm not found"]})),
+                )
+            });
+        let (status, Json(body)) = mapped.expect_err("load_farm must map DB errors to 404");
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "farm not found");
+    }
+
     // Locks fail-open behavior (docs/spec-defects/06 item D) until stage list errors propagate.
     #[test]
     fn stage_rows_returns_empty_when_crop_stages_query_fails() {

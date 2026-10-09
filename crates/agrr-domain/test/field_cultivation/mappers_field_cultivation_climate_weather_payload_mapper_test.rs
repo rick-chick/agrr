@@ -35,3 +35,16 @@ use serde_json::json;
         let merged = merge_cached_with_observed(&cached, &json!({ "data": [] }));
         assert_eq!(merged, cached);
     }
+
+    // Locks docs/spec-defects/06 item C: empty cached payload still yields 200 when observed fills `data`.
+    #[test]
+    fn merge_cached_with_observed_uses_observed_when_cached_has_no_data() {
+        let cached = json!({});
+        let observed = json!({
+            "data": [{ "time": "2024-06-01", "temperature_2m_mean": 18.0 }]
+        });
+        let merged = merge_cached_with_observed(&cached, &observed);
+        let data = merged.get("data").unwrap().as_array().unwrap();
+        assert_eq!(data.len(), 1);
+        assert_eq!(data[0]["temperature_2m_mean"], 18.0);
+    }
