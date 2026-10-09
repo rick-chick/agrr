@@ -271,3 +271,76 @@ async fn preview_weather_reschedule_proposal(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::cultivation_plan::dtos::{
+        WeatherRescheduleProposalAllocationSnapshot, WeatherRescheduleProposalPreviewRead,
+        WeatherRescheduleProposalRead, WeatherRescheduleTriggerType,
+    };
+    use axum::http::StatusCode;
+
+    #[test]
+    fn proposals_to_json_serializes_empty_list() {
+        let json = proposals_to_json(vec![]).expect("serialize empty proposals");
+        assert_eq!(json, serde_json::json!([]));
+    }
+
+    #[test]
+    fn proposals_to_json_round_trips_proposal_fields() {
+        let proposals = vec![WeatherRescheduleProposalRead {
+            id: "prop-1".into(),
+            trigger_type: WeatherRescheduleTriggerType::FrostForecast,
+            severity: "high".into(),
+            rationale: json!({ "summary": "frost risk" }),
+            moves: vec![json!({ "field_id": 1 })],
+        }];
+        let json = proposals_to_json(proposals).expect("serialize proposals");
+        let first = json.as_array().expect("array").first().expect("one proposal");
+        assert_eq!(first["id"], "prop-1");
+        assert_eq!(first["severity"], "high");
+        assert_eq!(first["trigger_type"], "frost_forecast");
+    }
+
+    #[test]
+    fn preview_failure_status_maps_known_kinds() {
+        assert_eq!(
+            preview_failure_status(PlanAllocationAdjustFailure::KIND_NOT_FOUND),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            preview_failure_status(PlanAllocationAdjustFailure::KIND_INVALID_DATE),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            preview_failure_status("unexpected_kind"),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+    }
+
+    #[test]
+    fn preview_to_json_serializes_preview_body() {
+        let proposal = WeatherRescheduleProposalRead {
+            id: "prop-2".into(),
+            trigger_type: WeatherRescheduleTriggerType::GddTrajectoryDelay,
+            severity: "medium".into(),
+            rationale: json!({}),
+            moves: vec![],
+        };
+        let preview = WeatherRescheduleProposalPreviewRead {
+            proposal_id: "prop-2".into(),
+            proposal,
+            moves: vec![],
+            before: WeatherRescheduleProposalAllocationSnapshot {
+                field_schedules: vec![],
+            },
+            after: WeatherRescheduleProposalAllocationSnapshot {
+                field_schedules: vec![],
+            },
+        };
+        let json = preview_to_json(preview).expect("serialize preview");
+        assert_eq!(json["proposal_id"], "prop-2");
+        assert_eq!(json["proposal"]["id"], "prop-2");
+    }
+}

@@ -606,3 +606,15 @@ fn delete_crop_stage_unassigns_linked_blueprints() {
     assert_eq!(stage_name, None);
 }
 
+#[test]
+fn list_by_is_reference_returns_err_when_crops_table_missing() {
+    let pool = crop_test_pool();
+    pool.with_write(|conn| conn.execute("DROP TABLE crops", []))
+        .expect("drop crops");
+    let gw = CropSqliteGateway::new(pool);
+    assert!(
+        gw.list_by_is_reference(true, Some("jp")).is_err(),
+        "DB read errors must propagate from list_by_is_reference"
+    );
+}
+
