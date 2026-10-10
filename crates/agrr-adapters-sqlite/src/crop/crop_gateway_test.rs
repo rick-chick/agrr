@@ -618,3 +618,16 @@ fn list_by_is_reference_returns_err_when_crops_table_missing() {
     );
 }
 
+#[test]
+fn list_by_crop_id_returns_err_when_crop_stages_table_missing() {
+    let pool = crop_test_pool();
+    let crop_id = insert_crop(&pool, 1, "Tomato", false);
+    pool.with_write(|conn| conn.execute("DROP TABLE crop_stages", []))
+        .expect("drop crop_stages");
+    let gw = CropSqliteGateway::new(pool);
+    assert!(
+        gw.list_by_crop_id(crop_id).is_err(),
+        "DB read errors must propagate from list_by_crop_id (contrast with masters_crops unwrap_or_default)"
+    );
+}
+

@@ -48,3 +48,32 @@ use serde_json::json;
         assert_eq!(data.len(), 1);
         assert_eq!(data[0]["temperature_2m_mean"], 18.0);
     }
+
+    // Locks docs/spec-defects/06 H4: missing timezone becomes Asia/Tokyo until fail-closed fix.
+    #[test]
+    fn weather_location_meta_from_source_defaults_timezone_when_missing() {
+        use crate::field_cultivation::dtos::field_cultivation_climate_source_snapshot::FieldCultivationClimateSourceSnapshot;
+
+        let source = FieldCultivationClimateSourceSnapshot {
+            field_cultivation_id: 1,
+            field_name: "Field".into(),
+            crop_name: "Crop".into(),
+            start_date: None,
+            completion_date: None,
+            farm_id: 1,
+            farm_name: "Farm".into(),
+            farm_latitude: 35.0,
+            farm_longitude: 139.0,
+            weather_location_id: Some(1),
+            weather_location_timezone: None,
+            plan_id: 1,
+            plan_type_public: true,
+            prediction_target_end_date: None,
+            calculated_planning_end_date: None,
+            plan_metadata: None,
+            plan_crop_crop_id: None,
+        };
+        let meta = weather_location_meta_from_source(&source);
+        assert_eq!(meta.timezone, "Asia/Tokyo");
+        assert_eq!(meta.latitude, 35.0);
+    }

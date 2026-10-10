@@ -1037,6 +1037,76 @@ mod tests {
     }
 
     // Locks fail-open behavior (docs/spec-defects/06 item D) until stage list errors propagate.
+    // Locks docs/spec-defects/06 item D: DB errors on crop resolve are swallowed via `.ok()` → 404-shaped path.
+    #[test]
+    fn entry_schedule_crop_resolve_leaves_crop_none_when_find_returns_db_error() {
+        let (pool, _file) = crop_test_pool();
+        pool.with_write(|conn| {
+            conn.execute("DROP TABLE crops", [])?;
+            Ok(())
+        })
+        .expect("drop crops");
+        let crop_gateway = CropSqliteGateway::new(pool);
+        let mut resolve = CropResolveOut {
+            crop: None,
+            failed: false,
+        };
+        CropFindReferenceForEntryScheduleInteractor::new(&mut resolve, &crop_gateway, &NoopLogger)
+            .call(CropFindReferenceForEntryScheduleInput {
+                region: Some("jp".into()),
+                crop_id: 1,
+            })
+            .ok();
+        assert!(
+            resolve.crop.is_none(),
+            "handler treats swallowed Err like crop not found"
+        );
+    }
+
+    #[test]
+    fn load_crop_entity_for_optimize_db_read_failure_returns_crop_load_failed() {
+        let (pool, _file) = crop_test_pool();
+        insert_crop_with_method(&pool, 2, "Tomato", "transplant");
+        pool.with_write(|conn| {
+            conn.execute("DROP TABLE crops", [])?;
+            Ok(())
+        })
+        .expect("drop crops");
+        let runner = OptimizeRunner {
+            pool,
+            optimization: EntryScheduleOptimizationAgrrDaemonGateway::from_env(),
+            agrr_enabled: false,
+        };
+        let show_crop = StubShowCrop {
+            id: 2,
+            name: "Tomato",
+        };
+        let farm = FarmWrap(FarmEntity {
+            id: 1,
+            name: "Farm".into(),
+            latitude: Some(35.0),
+            longitude: Some(139.0),
+            region: Some("jp".into()),
+            user_id: None,
+            organization_id: None,
+            created_at: None,
+            updated_at: None,
+            is_reference: false,
+            weather_data_status: None,
+            weather_data_fetched_years: None,
+            weather_data_total_years: None,
+            weather_data_last_error: None,
+            weather_location_id: Some(1),
+            last_broadcast_at: None,
+        });
+        let result = runner.call(&show_crop, &BTreeMap::new(), &farm);
+        assert!(!result.eligible);
+        assert_eq!(
+            result.reason_parts.get("error").and_then(|v| v.as_str()),
+            Some("crop_load_failed")
+        );
+    }
+
     #[test]
     fn stage_rows_returns_empty_when_crop_stages_query_fails() {
         let (pool, _file) = crop_test_pool();

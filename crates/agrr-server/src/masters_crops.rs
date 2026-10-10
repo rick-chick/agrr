@@ -383,3 +383,53 @@ fn internal_error() -> (StatusCode, Json<Value>) {
         Json(json!({"errors": ["internal"]})),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_adapters_sqlite::{CropSqliteGateway, SqlitePool};
+    use tempfile::NamedTempFile;
+
+    fn crop_test_pool() -> (SqlitePool, NamedTempFile) {
+        let file = NamedTempFile::new().expect("temp db");
+        let path = file.path().to_str().expect("utf8 path");
+        let pool = SqlitePool::new(path);
+        pool.with_write(|conn| {
+            conn.execute_batch(
+                "CREATE TABLE crops (
+                  id INTEGER PRIMARY KEY, user_id INTEGER, organization_id INTEGER, name TEXT NOT NULL, variety TEXT,
+                  is_reference INTEGER NOT NULL DEFAULT 0, area_per_unit REAL, revenue_per_area REAL,
+                  region TEXT, groups TEXT, cultivation_method TEXT, created_at TEXT, updated_at TEXT
+                );
+                CREATE TABLE crop_stages (
+                  id INTEGER PRIMARY KEY, crop_id INTEGER NOT NULL, name TEXT, \"order\" INTEGER,
+                  created_at TEXT, updated_at TEXT
+                );",
+            )?;
+            Ok(())
+        })
+        .expect("schema");
+        (pool, file)
+    }
+
+    // Locks fail-open at show_crop (docs/spec-defects/06 item D): stages list Err → empty stages in JSON.
+    #[test]
+    fn show_crop_stages_empty_when_list_by_crop_id_fails() {
+        let (pool, _file) = crop_test_pool();
+        pool.with_write(|conn| {
+            conn.execute(
+                "INSERT INTO crops (id, name, is_reference) VALUES (1, 'Tomato', 0)",
+                [],
+            )?;
+            conn.execute("DROP TABLE crop_stages", [])?;
+            Ok(())
+        })
+        .expect("seed crop and drop stages");
+        let gateway = CropSqliteGateway::new(pool);
+        let stages = gateway.list_by_crop_id(1).unwrap_or_default();
+        assert!(
+            stages.is_empty(),
+            "unwrap_or_default must hide stage list DB errors from crop detail responses"
+        );
+    }
+}
