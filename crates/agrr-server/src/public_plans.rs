@@ -349,6 +349,17 @@ struct SqlitePlanInitializer<'a> {
     logger: &'a NoopLogger,
 }
 
+/// Maps crop DB row into plan-init DTO (fail-open NULL economics until H3 fix).
+fn cultivation_plan_init_crop_from_entity(entity: &CropEntity) -> CultivationPlanInitCrop {
+    CultivationPlanInitCrop {
+        id: entity.id,
+        name: entity.name.clone(),
+        variety: entity.variety.clone(),
+        area_per_unit: entity.area_per_unit.unwrap_or(0.0),
+        revenue_per_area: entity.revenue_per_area.unwrap_or(0.0),
+    }
+}
+
 impl PlanInitializerPort for SqlitePlanInitializer<'_> {
     fn call(
         &self,
@@ -368,13 +379,7 @@ impl PlanInitializerPort for SqlitePlanInitializer<'_> {
                     .crop_gateway
                     .find_by_id(c.id)
                     .map_err(|e| e.to_string())?;
-                Ok(CultivationPlanInitCrop {
-                    id: entity.id,
-                    name: entity.name,
-                    variety: entity.variety,
-                    area_per_unit: entity.area_per_unit.unwrap_or(0.0),
-                    revenue_per_area: entity.revenue_per_area.unwrap_or(0.0),
-                })
+                Ok(cultivation_plan_init_crop_from_entity(&entity))
             })
             .collect();
         let init_crops = match init_crops {
@@ -639,4 +644,34 @@ async fn public_adjust_plan(
         body,
     )
     .await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::cultivation_plan_init_crop_from_entity;
+    use agrr_domain::crop::entities::CropEntity;
+
+    // Locks docs/spec-defects/06 H3: NULL crop economics become 0.0 in public plan init.
+    #[test]
+    fn cultivation_plan_init_crop_maps_null_economics_to_zero() {
+        let entity = CropEntity {
+            id: 7,
+            user_id: None,
+            organization_id: None,
+            name: "Test".into(),
+            variety: Some("v".into()),
+            is_reference: true,
+            area_per_unit: None,
+            revenue_per_area: None,
+            region: None,
+            groups: vec![],
+            cultivation_method: None,
+            created_at: None,
+            updated_at: None,
+        };
+        let init = cultivation_plan_init_crop_from_entity(&entity);
+        assert_eq!(init.id, 7);
+        assert!((init.area_per_unit - 0.0).abs() < f64::EPSILON);
+        assert!((init.revenue_per_area - 0.0).abs() < f64::EPSILON);
+    }
 }

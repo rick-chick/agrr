@@ -546,6 +546,26 @@ mod tests {
         assert_eq!(best.start_date, "2026-06-15");
     }
 
+    // Locks fail-open profit comparison: missing profit fields count as 0.0.
+    #[test]
+    fn select_best_candidate_prefers_explicit_profit_over_missing_profit_field() {
+        let logger = StderrLogger;
+        let lower = d(2026, 1, 1);
+        let candidates = vec![
+            serde_json::json!({
+                "field_id": 1,
+                "start_date": "2026-06-01",
+            }),
+            serde_json::json!({
+                "field_id": 2,
+                "start_date": "2026-06-01",
+                "profit": 25.0
+            }),
+        ];
+        let best = select_best_candidate(&candidates, "", lower, &logger).unwrap();
+        assert_eq!(best.field_id, "2");
+    }
+
     #[test]
     fn planning_window_reads_rails_symbol_style_display_date_keys() {
         let mut display_range: HashMap<String, Value> = HashMap::new();

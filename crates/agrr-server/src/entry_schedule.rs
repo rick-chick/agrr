@@ -723,6 +723,32 @@ mod tests {
         .expect("insert crop");
     }
 
+    // Locks docs/spec-defects/06 H4: NULL farm coordinates become 0.0 on entry-schedule show path.
+    #[test]
+    fn farm_wrap_maps_null_coordinates_to_zero_and_default_region() {
+        let farm = FarmWrap(FarmEntity {
+            id: 1,
+            name: "Farm".into(),
+            latitude: None,
+            longitude: None,
+            region: None,
+            user_id: None,
+            organization_id: None,
+            created_at: None,
+            updated_at: None,
+            is_reference: false,
+            weather_data_status: None,
+            weather_data_fetched_years: None,
+            weather_data_total_years: None,
+            weather_data_last_error: None,
+            weather_location_id: Some(1),
+            last_broadcast_at: None,
+        });
+        assert!((farm.latitude() - 0.0).abs() < f64::EPSILON);
+        assert!((farm.longitude() - 0.0).abs() < f64::EPSILON);
+        assert_eq!(farm.region(), "jp");
+    }
+
     #[test]
     fn map_weather_prediction_error_maps_location_required() {
         let err = map_weather_prediction_error(WeatherPredictionError::WeatherLocationRequired);
