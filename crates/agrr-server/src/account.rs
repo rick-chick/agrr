@@ -180,3 +180,63 @@ async fn delete_account(
     };
     (jar, (status, json)).into_response()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::user_account::dtos::{UserDataExport, UserDataExportFailure, UserExportSnapshot};
+    use agrr_domain::user_account::ports::UserDataExportOutputPort;
+
+    fn sample_export() -> UserDataExport {
+        UserDataExport {
+            exported_at: "2026-01-01T00:00:00Z".into(),
+            user: UserExportSnapshot {
+                id: 42,
+                email: Some("user@example.com".into()),
+                name: Some("Test User".into()),
+                created_at: None,
+            },
+            farms: vec![serde_json::json!({ "id": 1, "name": "Farm" })],
+            crops: vec![],
+            cultivation_plans: vec![],
+        }
+    }
+
+    // Locks docs/spec-defects/06 S3/G: export success must not collapse to `{}` on serialize.
+    #[test]
+    fn export_presenter_on_success_includes_export_payload_without_legacy_keys() {
+        let body = Arc::new(Mutex::new(None));
+        let mut presenter = ExportPresenter { body: body.clone() };
+        presenter.on_success(sample_export());
+
+        let json = body
+            .lock()
+            .unwrap()
+            .take()
+            .expect("presenter wrote body")
+            .expect("success status");
+        assert_eq!(json["user"]["id"], 42);
+        assert_eq!(json["exported_at"], "2026-01-01T00:00:00Z");
+        assert_eq!(json["farms"].as_array().expect("farms").len(), 1);
+        assert!(json.get("error").is_none());
+        assert!(json.get("message").is_none());
+    }
+
+    #[test]
+    fn export_presenter_on_failure_uses_errors_array() {
+        let body = Arc::new(Mutex::new(None));
+        let mut presenter = ExportPresenter { body: body.clone() };
+        presenter.on_failure(UserDataExportFailure::new("export_denied"));
+
+        let (status, Json(err_body)) = body
+            .lock()
+            .unwrap()
+            .take()
+            .expect("presenter wrote body")
+            .expect_err("failure status");
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(err_body["errors"][0], "export_denied");
+        assert!(err_body.get("error").is_none());
+        assert!(err_body.get("message").is_none());
+    }
+}

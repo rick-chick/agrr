@@ -536,5 +536,50 @@ mod tests {
         assert!((ctx.longitude - 139.0).abs() < f64::EPSILON);
         assert!(ctx.latest_weather_date.is_none());
     }
+
+    fn plan_optimization_phase(
+        pool: &agrr_adapters_sqlite::SqlitePool,
+        plan_id: i64,
+    ) -> Option<String> {
+        pool.with_read(|conn| {
+            conn.query_row(
+                "SELECT optimization_phase FROM cultivation_plans WHERE id = ?1",
+                rusqlite::params![plan_id],
+                |row| row.get(0),
+            )
+        })
+        .ok()
+    }
+
+    // Locks docs/spec-defects/06 H5: finalize rejection attempts failed phase (errors discarded).
+    #[test]
+    fn run_plan_finalize_step_rejects_incomplete_field_cultivations_and_marks_failed_phase() {
+        let db = test_pool_with_optimizing_plan(1);
+        db.pool
+            .with_write(|conn| {
+                conn.execute(
+                    "INSERT INTO field_cultivations \
+                     (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, status) \
+                     VALUES (1, 1, 1, 1, 10.0, 'pending')",
+                    [],
+                )?;
+                Ok(())
+            })
+            .expect("seed field cultivation");
+
+        let state = test_app_state(db.pool.clone());
+        let hub = CableHub::default();
+        let err = run_plan_finalize_step(&state, 1, "PlansOptimizationChannel", &hub)
+            .expect_err("incomplete cultivations must block finalize");
+        assert!(
+            err.contains("cannot finalize"),
+            "unexpected error: {err}"
+        );
+        assert_eq!(
+            plan_optimization_phase(&state.sqlite, 1).as_deref(),
+            Some("failed"),
+            "finalize rejection should advance optimization phase to failed"
+        );
+    }
 }
 
