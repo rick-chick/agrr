@@ -131,6 +131,28 @@
         }
     }
 
+    struct DateCapturingInitializer {
+        result: PlanInitializerResult,
+        planning_end_date: Mutex<Option<Date>>,
+    }
+
+    impl PlanInitializerPort for DateCapturingInitializer {
+        fn call(
+            &self,
+            _farm: &PublicPlanFarm,
+            _total_area: i64,
+            _crops: &[PublicPlanCrop],
+            _user_id: Option<i64>,
+            _session_id: &str,
+            _plan_type: &str,
+            _planning_start_date: Date,
+            planning_end_date: Date,
+        ) -> PlanInitializerResult {
+            *self.planning_end_date.lock().expect("lock") = Some(planning_end_date);
+            self.result.clone()
+        }
+    }
+
     struct FakeJobChain {
         calls: Mutex<Vec<(i64, String, Option<String>)>>,
         events: Arc<Mutex<Vec<&'static str>>>,
@@ -186,6 +208,48 @@
             today: Date::from_calendar_date(2025, Month::April, 1).unwrap(),
         };
         assert!(validate_clock(&clock).is_ok());
+    }
+
+    // Locks docs/spec-defects/06 S6: public wizard uses Dec 31 of clock year as planning end.
+    #[test]
+    fn uses_december_31_of_clock_year_as_planning_end_date() {
+        let mut output = RecordingOutput {
+            success: None,
+            failure: None,
+            no_crops: None,
+            events: Arc::new(Mutex::new(vec![])),
+        };
+        let logger = CapturingLogger {
+            lines: Mutex::new(vec![]),
+        };
+        let today = Date::from_calendar_date(2025, Month::April, 1).unwrap();
+        let clock = FixedClock { today };
+        let captured_end = Mutex::new(None);
+        let initializer = DateCapturingInitializer {
+            result: PlanInitializerResult::success(99),
+            planning_end_date: captured_end,
+        };
+        let gateway = standard_gateway();
+        let crop_gateway = FakeCropGateway {
+            crops: vec![],
+            error: false,
+        };
+        let mut interactor = PublicPlanCreateInteractor::new(
+            &mut output,
+            &gateway,
+            &crop_gateway,
+            &initializer,
+            &logger,
+            &clock,
+            None,
+        );
+        interactor.call(standard_input());
+
+        let end = *initializer.planning_end_date.lock().expect("lock");
+        assert_eq!(
+            end,
+            Some(Date::from_calendar_date(2025, Month::December, 31).unwrap())
+        );
     }
 
     // Ruby: test "calls on_success with the created plan_id when initialization succeeds"
