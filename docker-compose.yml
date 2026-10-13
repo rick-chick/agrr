@@ -38,6 +38,7 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - SCHEDULER_AUTH_TOKEN=${SCHEDULER_AUTH_TOKEN:-}
       - AGRR_BACKDOOR_TOKEN=${AGRR_BACKDOOR_TOKEN:-4d2522cd0f306acaca381256ea73cdb2288d12759a318b8b8988975b78ba2a32}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-1x0000000000000000000000000000000AA}
       - GCS_BUCKET_DEV=${GCS_BUCKET_DEV:-}
     entrypoint: ["bash", "/app/dev-docker-entrypoints/docker-entrypoint-dev-rust-stack.sh"]
     healthcheck:

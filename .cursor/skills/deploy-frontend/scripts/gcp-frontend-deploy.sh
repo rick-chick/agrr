@@ -13,6 +13,7 @@
 #   DRY_RUN=1               # set to "1" to print commands instead of executing
 #   GOOGLE_ADS_CONVERSION_ID   # optional AW-… for gtag config (injected into index.html)
 #   GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO # optional AW-…/label — login conversion ping
+#   TURNSTILE_SITE_KEY         # optional Cloudflare Turnstile site key (contact form; injected into index.html)
 #
 set -eu
 
@@ -69,6 +70,7 @@ set +a
 # Optional Google Ads conversion (see env.example GOOGLE_ADS_*)
 GOOGLE_ADS_CONVERSION_ID="${GOOGLE_ADS_CONVERSION_ID:-}"
 GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO="${GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO:-}"
+TURNSTILE_SITE_KEY="${TURNSTILE_SITE_KEY:-}"
 # Static path prefix for assets (used in deploy-url)
 STATIC_PATH_PREFIX="${STATIC_PATH_PREFIX:-static}"
 # URL_MAP_NAME is optional, used for CDN invalidation
@@ -218,6 +220,10 @@ fi
 if [ -n "${GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO:-}" ]; then
   ADS_SEND_JSON=$(escape_for_head_inject "$GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO")
   ADS_ASSIGN="${ADS_ASSIGN}window.GOOGLE_ADS_LOGIN_CONVERSION_SEND_TO=${ADS_SEND_JSON};"
+fi
+if [ -n "${TURNSTILE_SITE_KEY:-}" ]; then
+  TURNSTILE_JSON=$(escape_for_head_inject "$TURNSTILE_SITE_KEY")
+  ADS_ASSIGN="${ADS_ASSIGN}window.TURNSTILE_SITE_KEY=${TURNSTILE_JSON};"
 fi
 
 INJECT_SNIPPET="<script>window.API_BASE_URL = $API_JSON; window.STATIC_PATH_PREFIX = $STATIC_JSON; ${ADS_ASSIGN}</script>"
