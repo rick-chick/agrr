@@ -20,6 +20,8 @@ PROJECT_ID=agrr-475323
 BUCKET_NAME=agrr-frontend-prod
 API_BASE_URL=https://agrr.net
 URL_MAP_NAME=agrr-frontend-url-map-simple
+# Optional: Cloudflare Turnstile site key for /contact (injected as window.TURNSTILE_SITE_KEY)
+TURNSTILE_SITE_KEY=
 ```
 
 ## デプロイ手順
