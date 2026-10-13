@@ -857,3 +857,133 @@
         );
         assert_eq!(err.to_string(), "GCS HTTP 503: backend timeout");
     }
+
+    struct ErrMetadataGateway;
+
+    impl PredictedWeatherMetadataGateway for ErrMetadataGateway {
+        fn find(
+            &self,
+            _: PredictedWeatherScope,
+            _: i64,
+        ) -> Result<Option<PredictedWeatherMetadata>, Box<dyn std::error::Error + Send + Sync>>
+        {
+            Err("metadata read failed".into())
+        }
+
+        fn upsert(
+            &self,
+            _: &PredictedWeatherMetadata,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+
+        fn copy_plan_metadata(
+            &self,
+            _: i64,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+    }
+
+    struct ErrStoreGateway;
+
+    impl PredictedWeatherStoreGateway for ErrStoreGateway {
+        fn read_payload(
+            &self,
+            _: PredictedWeatherScope,
+            _: i64,
+        ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+            Err("payload read failed".into())
+        }
+
+        fn write_payload(
+            &self,
+            _: PredictedWeatherScope,
+            _: i64,
+            _: &Value,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+
+        fn copy_plan_payload(
+            &self,
+            _: i64,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+    }
+
+    // Locks fail-open behavior (docs/spec-defects/06 H10): metadata lookup errors are treated as cache miss.
+    #[test]
+    fn get_existing_prediction_returns_none_when_metadata_lookup_errors() {
+        let weather_gateway = FakeWeatherDataGateway {
+            period_data: vec![],
+        };
+        let clock = fixed_clock();
+        let store_gateway = FakeStoreGateway {
+            payloads: Arc::new(Mutex::new(HashMap::new())),
+        };
+        let interactor = WeatherPredictionInteractor::new(
+            weather_location_dto(),
+            &ErrMetadataGateway,
+            &store_gateway,
+            &weather_gateway,
+            &NoopPredictionGateway,
+            &NoopLogger,
+            &clock,
+            &FakeAnchors,
+        )
+        .expect("valid");
+
+        let target = Date::from_calendar_date(2025, Month::December, 31).expect("valid");
+        assert!(
+            interactor
+                .get_existing_prediction(Some(target), None)
+                .is_none(),
+            "metadata Err must not surface; lookup_cached treats it as cache miss"
+        );
+    }
+
+    // Locks fail-open behavior (docs/spec-defects/06 H10): payload read errors are treated as cache miss.
+    #[test]
+    fn get_existing_prediction_returns_none_when_cached_payload_read_errors() {
+        let target = Date::from_calendar_date(2025, Month::December, 31).expect("valid");
+        let metadata = Arc::new(Mutex::new(HashMap::from([(
+            (PredictedWeatherScope::Location, 1_i64),
+            PredictedWeatherMetadata {
+                scope: PredictedWeatherScope::Location,
+                scope_id: 1,
+                prediction_start_date: Date::from_calendar_date(2025, Month::January, 1)
+                    .expect("valid"),
+                prediction_end_date: target,
+                target_end_date: target,
+                data_end_date: target,
+                generated_at: "1".into(),
+            },
+        )])));
+        let meta_gateway = FakeMetadataGateway { metadata };
+        let weather_gateway = FakeWeatherDataGateway {
+            period_data: vec![],
+        };
+        let clock = fixed_clock();
+        let interactor = WeatherPredictionInteractor::new(
+            weather_location_dto(),
+            &meta_gateway,
+            &ErrStoreGateway,
+            &weather_gateway,
+            &NoopPredictionGateway,
+            &NoopLogger,
+            &clock,
+            &FakeAnchors,
+        )
+        .expect("valid");
+
+        assert!(
+            interactor
+                .get_existing_prediction(Some(target), None)
+                .is_none(),
+            "payload Err must not surface; lookup_cached treats it as cache miss"
+        );
+    }
