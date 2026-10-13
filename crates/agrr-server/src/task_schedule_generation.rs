@@ -271,7 +271,7 @@ mod tests {
     use crate::cable::CableHub;
     use crate::test_support::{
         test_app_state, test_pool_with_optimizing_plan, test_pool_with_plan,
-        test_pool_with_sync_plan,
+        test_pool_with_sync_plan, test_pool_without_optimization_phase_column,
     };
     use agrr_adapters_sqlite::{SqlitePool, TaskScheduleSyncStateSqliteGateway};
     use agrr_domain::agricultural_task::constants::task_schedule_sync_states as sync_state;
@@ -540,5 +540,28 @@ mod tests {
             !tokens.contains_key(&7),
             "completed debounced regen should clear token entry"
         );
+    }
+
+    // Locks docs/spec-defects/06 H6: advance_phase errors are discarded; generation still runs.
+    #[test]
+    fn run_task_schedule_generation_step_continues_when_advance_phase_cannot_persist() {
+        let db = test_pool_without_optimization_phase_column(1);
+        db.pool
+            .with_write(|conn| {
+                conn.execute(
+                    "UPDATE cultivation_plans SET status = 'optimizing' WHERE id = 1",
+                    [],
+                )?;
+                Ok(())
+            })
+            .expect("set optimizing");
+        let state = test_app_state(db.pool);
+        let result = run_task_schedule_generation_step(&state, 1, "test");
+        if let Err(err) = result {
+            assert!(
+                !err.contains("no longer optimizing"),
+                "step must not fail early from discarded advance_phase error: {err}"
+            );
+        }
     }
 }
