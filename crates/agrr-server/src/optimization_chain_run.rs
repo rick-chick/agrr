@@ -487,7 +487,10 @@ pub fn run_plan_finalize_step(
 mod tests {
     use super::*;
     use crate::cable::CableHub;
-    use crate::test_support::{test_app_state, test_pool_with_optimizing_plan, test_pool_with_plan};
+    use crate::test_support::{
+        test_app_state, test_pool_with_optimizing_plan, test_pool_with_plan,
+        test_pool_without_optimization_phase_column,
+    };
 
     #[test]
     fn run_plan_finalize_step_err_when_plan_not_optimizing() {
@@ -549,6 +552,29 @@ mod tests {
             )
         })
         .ok()
+    }
+
+    // Locks docs/spec-defects/06 H5: fetch-weather chain advance_phase errors are discarded (`let _ =`).
+    #[test]
+    fn chain_fetch_advance_ignores_phase_persistence_errors() {
+        let db = test_pool_without_optimization_phase_column(1);
+        db.pool
+            .with_write(|conn| {
+                conn.execute(
+                    "UPDATE cultivation_plans SET status = 'optimizing' WHERE id = 1",
+                    [],
+                )?;
+                Ok(())
+            })
+            .expect("set optimizing");
+        let state = test_app_state(db.pool.clone());
+        let advance = ChainFetchAdvance { state: &state };
+        advance.call(1, FetchWeatherPhase::FetchingWeather, "test");
+        assert_eq!(
+            plan_optimization_phase(&db.pool, 1),
+            None,
+            "advance_phase Err must be swallowed; phase column missing so nothing persisted"
+        );
     }
 
     // Locks docs/spec-defects/06 H5: finalize rejection attempts failed phase (errors discarded).
