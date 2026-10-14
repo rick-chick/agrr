@@ -542,6 +542,26 @@ mod tests {
         );
     }
 
+    // Locks docs/spec-defects/06 H6: Failed generation outcome is not propagated as Err (regen jobs keep going).
+    #[test]
+    fn run_task_schedule_generation_inner_returns_ok_when_sync_state_is_failed() {
+        let db = test_pool_with_sync_plan(42);
+        let state = test_app_state(db.pool.clone());
+        let result = run_task_schedule_generation_inner(&state, 42);
+        assert!(
+            result.is_ok(),
+            "inner wrapper must swallow Failed outcome (H6); got Err: {:?}",
+            result.err()
+        );
+        let final_state = sync_state(&db.pool, 42);
+        if final_state == sync_state::FAILED {
+            assert!(
+                result.is_ok(),
+                "when generation marks sync failed, caller must still see Ok(())"
+            );
+        }
+    }
+
     // Locks docs/spec-defects/06 H6: advance_phase errors are discarded; generation still runs.
     #[test]
     fn run_task_schedule_generation_step_continues_when_advance_phase_cannot_persist() {
