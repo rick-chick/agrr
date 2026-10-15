@@ -513,3 +513,199 @@ mod list_historical_weather_rows_tests {
         });
     }
 }
+
+#[cfg(test)]
+mod adjust_read_fail_open_tests {
+    use super::*;
+    use crate::weather_data::WeatherDataSqliteGateway;
+    use agrr_domain::cultivation_plan::gateways::PlanAllocationAdjustReadGateway;
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::sync::Arc;
+
+    const ADJUST_READ_FAIL_OPEN_DDL: &str = "
+CREATE TABLE farms (
+  id INTEGER PRIMARY KEY,
+  name TEXT,
+  latitude REAL,
+  longitude REAL,
+  weather_location_id INTEGER
+);
+CREATE TABLE weather_locations (
+  id INTEGER PRIMARY KEY,
+  latitude REAL NOT NULL,
+  longitude REAL NOT NULL,
+  elevation REAL,
+  timezone TEXT
+);
+CREATE TABLE cultivation_plans (
+  id INTEGER PRIMARY KEY,
+  farm_id INTEGER NOT NULL,
+  planning_start_date TEXT,
+  planning_end_date TEXT
+);
+CREATE TABLE cultivation_plan_fields (
+  id INTEGER PRIMARY KEY,
+  cultivation_plan_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  area REAL,
+  daily_fixed_cost REAL
+);
+CREATE TABLE crops (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  variety TEXT,
+  area_per_unit REAL,
+  revenue_per_area REAL,
+  groups TEXT
+);
+CREATE TABLE crop_stages (
+  id INTEGER PRIMARY KEY,
+  crop_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  \"order\" INTEGER NOT NULL
+);
+CREATE TABLE cultivation_plan_crops (
+  id INTEGER PRIMARY KEY,
+  cultivation_plan_id INTEGER NOT NULL,
+  crop_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  variety TEXT
+);
+CREATE TABLE field_cultivations (
+  id INTEGER PRIMARY KEY,
+  cultivation_plan_id INTEGER NOT NULL,
+  cultivation_plan_field_id INTEGER NOT NULL,
+  cultivation_plan_crop_id INTEGER NOT NULL,
+  area REAL,
+  start_date TEXT,
+  completion_date TEXT,
+  cultivation_days INTEGER,
+  estimated_cost REAL,
+  optimization_result TEXT
+);
+CREATE TABLE predicted_weather_metadata (
+  scope TEXT NOT NULL,
+  scope_id INTEGER NOT NULL,
+  prediction_start_date TEXT NOT NULL,
+  prediction_end_date TEXT NOT NULL,
+  target_end_date TEXT NOT NULL,
+  data_end_date TEXT NOT NULL,
+  generated_at TEXT NOT NULL,
+  PRIMARY KEY (scope, scope_id)
+);
+";
+
+    fn adjust_read_test_pool() -> SqlitePool {
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        let n = COUNTER.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!("agrr_adjust_read_fail_open_{n}.sqlite3"));
+        let _ = std::fs::remove_file(&path);
+        let pool = SqlitePool::new(path.to_string_lossy());
+        pool.with_write(|conn| conn.execute_batch(ADJUST_READ_FAIL_OPEN_DDL))
+            .expect("schema");
+        pool.with_write(|conn| {
+            conn.execute_batch(
+                "INSERT INTO farms (id, name, latitude, longitude) VALUES (1, 'Farm', 35.0, 139.0);
+                 INSERT INTO cultivation_plans (id, farm_id, planning_start_date, planning_end_date)
+                 VALUES (1, 1, '2024-01-01', '2024-12-31');
+                 INSERT INTO cultivation_plan_fields (id, cultivation_plan_id, name, area, daily_fixed_cost)
+                 VALUES (1, 1, 'Field A', 100.0, 0.0);
+                 INSERT INTO crops (id, name, groups) VALUES (1, 'Tomato', 'not-json');
+                 INSERT INTO cultivation_plan_crops (id, cultivation_plan_id, crop_id, name)
+                 VALUES (1, 1, 1, 'Tomato');",
+            )?;
+            Ok(())
+        })
+        .expect("seed base");
+        pool
+    }
+
+    fn gateway_for(pool: SqlitePool) -> PlanAllocationAdjustReadSqliteGateway {
+        let weather = Arc::new(WeatherDataSqliteGateway::new(pool.clone()));
+        let metadata = Arc::new(crate::weather_data::PredictedWeatherMetadataSqliteGateway::new(
+            pool.clone(),
+        ));
+        PlanAllocationAdjustReadSqliteGateway::new(pool, weather, metadata)
+    }
+
+    // Locks docs/spec-defects/06 H2: invalid cultivation dates are dropped silently from adjust snapshots.
+    #[test]
+    fn find_adjust_read_snapshot_skips_field_cultivation_with_unparseable_dates() {
+        let pool = adjust_read_test_pool();
+        pool.with_write(|conn| {
+            conn.execute_batch(
+                "INSERT INTO field_cultivations
+                 (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, start_date, completion_date)
+                 VALUES
+                 (1, 1, 1, 1, 10.0, '2024-03-01', '2024-06-01'),
+                 (2, 1, 1, 1, 10.0, 'not-a-date', '2024-06-01');",
+            )?;
+            Ok(())
+        })
+        .expect("seed cultivations");
+
+        let snapshot = gateway_for(pool)
+            .find_adjust_read_snapshot_by_plan_id(1)
+            .expect("snapshot");
+        let cultivations = &snapshot.field_source_snapshots[0].cultivations;
+        assert_eq!(
+            cultivations.len(),
+            1,
+            "invalid date rows must be excluded without error"
+        );
+        assert_eq!(cultivations[0].field_cultivation_id, 1);
+    }
+
+    // Locks docs/spec-defects/06 H2: malformed optimization_result JSON becomes None instead of Err.
+    #[test]
+    fn find_adjust_read_snapshot_swallows_malformed_optimization_result_json() {
+        let pool = adjust_read_test_pool();
+        pool.with_write(|conn| {
+            conn.execute(
+                "INSERT INTO field_cultivations
+                 (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, start_date, completion_date, optimization_result)
+                 VALUES (1, 1, 1, 1, 10.0, '2024-03-01', '2024-06-01', '{not-json')",
+                [],
+            )?;
+            Ok(())
+        })
+        .expect("seed cultivation");
+
+        let snapshot = gateway_for(pool)
+            .find_adjust_read_snapshot_by_plan_id(1)
+            .expect("snapshot");
+        let cultivations = &snapshot.field_source_snapshots[0].cultivations;
+        assert_eq!(cultivations.len(), 1);
+        assert_eq!(
+            cultivations[0].accumulated_gdd,
+            0.0,
+            "invalid optimization_result must be treated as absent (no accumulated GDD)"
+        );
+    }
+
+    // Locks docs/spec-defects/06 H2: malformed crop groups JSON becomes an empty array.
+    #[test]
+    fn find_adjust_read_snapshot_swallows_malformed_crop_groups_json() {
+        let pool = adjust_read_test_pool();
+        pool.with_write(|conn| {
+            conn.execute(
+                "INSERT INTO field_cultivations
+                 (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, start_date, completion_date)
+                 VALUES (1, 1, 1, 1, 10.0, '2024-03-01', '2024-06-01')",
+                [],
+            )?;
+            Ok(())
+        })
+        .expect("seed cultivation");
+
+        let snapshot = gateway_for(pool)
+            .find_adjust_read_snapshot_by_plan_id(1)
+            .expect("snapshot");
+        assert_eq!(snapshot.plan_crop_snapshots.len(), 1);
+        assert_eq!(
+            snapshot.plan_crop_snapshots[0].groups,
+            json!([]),
+            "invalid groups must become empty array"
+        );
+    }
+}
