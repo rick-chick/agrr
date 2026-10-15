@@ -577,6 +577,26 @@ mod tests {
         );
     }
 
+    // Locks docs/spec-defects/06 H5: finalize requires a concrete plan status (no `unwrap_or("optimizing")`).
+    #[test]
+    fn run_plan_finalize_step_err_when_plan_status_missing() {
+        let db = test_pool_with_optimizing_plan(1);
+        db.pool
+            .with_write(|conn| {
+                conn.execute("UPDATE cultivation_plans SET status = NULL WHERE id = 1", [])?;
+                Ok(())
+            })
+            .expect("clear status");
+        let state = test_app_state(db.pool.clone());
+        let hub = CableHub::default();
+        let err = run_plan_finalize_step(&state, 1, "PlansOptimizationChannel", &hub)
+            .expect_err("missing status must block finalize");
+        assert!(
+            err.contains("status"),
+            "finalize must not proceed when plan status is NULL in DB: {err}"
+        );
+    }
+
     // Locks docs/spec-defects/06 H5: finalize rejection attempts failed phase (errors discarded).
     #[test]
     fn run_plan_finalize_step_rejects_incomplete_field_cultivations_and_marks_failed_phase() {
