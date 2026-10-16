@@ -249,6 +249,21 @@ is_reference: false,
         }
     }
 
+    fn master_field_without_area(name: &str) -> FieldEntity {
+        FieldEntity {
+            id: 1,
+            farm_id: 1,
+            user_id: Some(1),
+            name: name.into(),
+            description: None,
+            created_at: None,
+            updated_at: None,
+            area: None,
+            daily_fixed_cost: Some(10.0),
+            region: Some("jp".into()),
+        }
+    }
+
     fn plan_entity(id: i64, user_id: i64) -> CultivationPlanEntity {
         CultivationPlanEntity {
             id,
@@ -271,6 +286,70 @@ total_area: 1.0,
             created_at: None,
             updated_at: None,
         }
+    }
+
+    // Locks docs/spec-defects/06 §2.4: NULL-area master fields are filtered out; all-null farms fail like empty.
+    #[test]
+    fn on_failure_unprocessable_when_all_master_fields_have_null_area() {
+        let success = Arc::new(Mutex::new(Vec::new()));
+        let failures = Arc::new(Mutex::new(Vec::new()));
+        let mut output = SpyOutput {
+            success: Arc::clone(&success),
+            failures: Arc::clone(&failures),
+        };
+        let session_gen = StubSessionGen;
+        let job_chain = SpyJobChain {
+            enqueued: Arc::new(Mutex::new(Vec::new())),
+            fail: false,
+        };
+        let existing_gateway = StubExistingGateway { existing: None };
+        let farm_gateway = StubFarmGateway {
+            farm: Ok(owned_farm(1)),
+        };
+        let field_gateway = StubFieldGateway {
+            fields: vec![
+                master_field_without_area("North"),
+                master_field_without_area("South"),
+            ],
+        };
+        let initializer = SpyInitializer {
+            result: CultivationPlanInitializeResult::success(plan_entity(42, 1)),
+            received_fields: Arc::new(Mutex::new(Vec::new())),
+        };
+        let logger = FakeLogger;
+        let translator = FakeTranslator;
+        let clock = FakeClock;
+        let readiness_gateway = StubReadinessGateway { crops_ready: true };
+        let mut interactor = PrivatePlanInitializeFromSelectionInteractor::new(
+            &mut output,
+            &existing_gateway,
+            &farm_gateway,
+            &field_gateway,
+            &initializer,
+            &logger,
+            &translator,
+            &clock,
+            &session_gen,
+            &job_chain,
+            &readiness_gateway,
+        );
+
+        let input = PrivatePlanInitializeFromSelectionInput {
+            farm_id: 1,
+            user: user(1),
+            plan_name: None,
+        };
+        interactor.call(&input).unwrap();
+
+        let f = failures.lock().unwrap();
+        assert_eq!(f.len(), 1);
+        assert_eq!(
+            f[0].http_status,
+            PrivatePlanInitializeFromSelectionFailure::HTTP_UNPROCESSABLE_ENTITY
+        );
+        assert_eq!(f[0].message, "plans.errors.no_fields_in_farm");
+        assert!(success.lock().unwrap().is_empty());
+        assert!(initializer.received_fields.lock().unwrap().is_empty());
     }
 
     #[test]
