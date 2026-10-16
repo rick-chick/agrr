@@ -628,6 +628,35 @@ CREATE TABLE predicted_weather_metadata (
         PlanAllocationAdjustReadSqliteGateway::new(pool, weather, metadata)
     }
 
+    // Locks docs/spec-defects/06 H2: NULL cultivation dates are dropped silently from adjust snapshots.
+    #[test]
+    fn find_adjust_read_snapshot_skips_field_cultivation_with_null_dates() {
+        let pool = adjust_read_test_pool();
+        pool.with_write(|conn| {
+            conn.execute_batch(
+                "INSERT INTO field_cultivations
+                 (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, start_date, completion_date)
+                 VALUES
+                 (1, 1, 1, 1, 10.0, '2024-03-01', '2024-06-01'),
+                 (2, 1, 1, 1, 10.0, NULL, '2024-06-01'),
+                 (3, 1, 1, 1, 10.0, '2024-03-01', NULL);",
+            )?;
+            Ok(())
+        })
+        .expect("seed cultivations");
+
+        let snapshot = gateway_for(pool)
+            .find_adjust_read_snapshot_by_plan_id(1)
+            .expect("snapshot");
+        let cultivations = &snapshot.field_source_snapshots[0].cultivations;
+        assert_eq!(
+            cultivations.len(),
+            1,
+            "NULL date rows must be excluded without error"
+        );
+        assert_eq!(cultivations[0].field_cultivation_id, 1);
+    }
+
     // Locks docs/spec-defects/06 H2: invalid cultivation dates are dropped silently from adjust snapshots.
     #[test]
     fn find_adjust_read_snapshot_skips_field_cultivation_with_unparseable_dates() {

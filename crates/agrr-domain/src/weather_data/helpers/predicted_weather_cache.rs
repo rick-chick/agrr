@@ -156,3 +156,12 @@ fn latest_payload_date(data_array: Option<&Vec<Value>>) -> Option<Date> {
 fn compute_prediction_days(prediction_start: Date, prediction_end: Date) -> i64 {
     (prediction_end - prediction_start).whole_days() + 1
 }
+
+#[cfg(test)]
+mod helpers_predicted_weather_cache_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/weather_data/helpers_predicted_weather_cache_test.rs"
+    ));
+}
