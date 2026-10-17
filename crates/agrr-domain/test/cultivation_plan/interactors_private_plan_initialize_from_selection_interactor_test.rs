@@ -288,6 +288,68 @@ total_area: 1.0,
         }
     }
 
+    // Locks docs/spec-defects/06 §2.4: NULL-area master fields are dropped; valid areas still initialize.
+    #[test]
+    fn on_success_omits_null_area_master_fields_but_keeps_valid_ones() {
+        let success = Arc::new(Mutex::new(Vec::new()));
+        let failures = Arc::new(Mutex::new(Vec::new()));
+        let mut output = SpyOutput {
+            success: Arc::clone(&success),
+            failures: Arc::clone(&failures),
+        };
+        let enqueued = Arc::new(Mutex::new(Vec::new()));
+        let job_chain = SpyJobChain {
+            enqueued: Arc::clone(&enqueued),
+            fail: false,
+        };
+        let field_gateway = StubFieldGateway {
+            fields: vec![
+                master_field_without_area("NoArea"),
+                master_field("Valid", 75.0),
+            ],
+        };
+        let received_fields = Arc::new(Mutex::new(Vec::new()));
+        let initializer = SpyInitializer {
+            result: CultivationPlanInitializeResult::success(plan_entity(42, 1)),
+            received_fields: Arc::clone(&received_fields),
+        };
+        let existing_gateway = StubExistingGateway { existing: None };
+        let farm_gateway = StubFarmGateway {
+            farm: Ok(owned_farm(1)),
+        };
+        let logger = FakeLogger;
+        let translator = FakeTranslator;
+        let clock = FakeClock;
+        let session_gen = StubSessionGen;
+        let readiness_gateway = StubReadinessGateway { crops_ready: true };
+        let mut interactor = PrivatePlanInitializeFromSelectionInteractor::new(
+            &mut output,
+            &existing_gateway,
+            &farm_gateway,
+            &field_gateway,
+            &initializer,
+            &logger,
+            &translator,
+            &clock,
+            &session_gen,
+            &job_chain,
+            &readiness_gateway,
+        );
+
+        let input = PrivatePlanInitializeFromSelectionInput {
+            farm_id: 1,
+            user: user(1),
+            plan_name: Some("P".into()),
+        };
+        interactor.call(&input).unwrap();
+
+        assert_eq!(*success.lock().unwrap(), vec![42]);
+        let seeds = received_fields.lock().unwrap();
+        assert_eq!(seeds.len(), 1);
+        assert_eq!(seeds[0].name, "Valid");
+        assert!((seeds[0].area - 75.0).abs() < f64::EPSILON);
+    }
+
     // Locks docs/spec-defects/06 §2.4: NULL-area master fields are filtered out; all-null farms fail like empty.
     #[test]
     fn on_failure_unprocessable_when_all_master_fields_have_null_area() {
