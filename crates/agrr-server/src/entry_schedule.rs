@@ -723,6 +723,33 @@ mod tests {
         .expect("insert crop");
     }
 
+    // Locks docs/spec-defects/06 H4: list JSON keeps null coords while FarmWrap maps them to 0.0 (show/optimize).
+    #[test]
+    fn list_farm_json_preserves_null_coordinates_while_farm_wrap_maps_to_zero() {
+        let farm = FarmEntity {
+            id: 9,
+            name: "Farm".into(),
+            latitude: None,
+            longitude: None,
+            region: None,
+            user_id: None,
+            organization_id: None,
+            created_at: None,
+            updated_at: None,
+            is_reference: false,
+            weather_data_status: None,
+            weather_data_fetched_years: None,
+            weather_data_total_years: None,
+            weather_data_last_error: None,
+            weather_location_id: Some(1),
+            last_broadcast_at: None,
+        };
+        assert!(farm.latitude.is_none() && farm.longitude.is_none());
+        let wrap = FarmWrap(farm.clone());
+        assert!((wrap.latitude() - 0.0).abs() < f64::EPSILON);
+        assert!((wrap.longitude() - 0.0).abs() < f64::EPSILON);
+    }
+
     // Locks docs/spec-defects/06 H4: NULL farm coordinates become 0.0 on entry-schedule show path.
     #[test]
     fn farm_wrap_maps_null_coordinates_to_zero_and_default_region() {

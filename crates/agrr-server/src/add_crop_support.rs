@@ -211,3 +211,33 @@ impl AddCropAdjustResultSink for AddCropAdjustResultCollector {
             .unwrap_or_else(|| AddCropAdjustResult::failure("no adjust response", Some(500)))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::to_snapshot;
+    use agrr_domain::crop::entities::CropEntity;
+
+    // Locks docs/spec-defects/06 H3 (add_crop path): NULL crop economics become 0.0 in plan snapshots.
+    #[test]
+    fn to_snapshot_maps_null_economics_to_zero() {
+        let entity = CropEntity {
+            id: 3,
+            user_id: Some(1),
+            organization_id: None,
+            name: "Carrot".into(),
+            variety: None,
+            is_reference: false,
+            area_per_unit: None,
+            revenue_per_area: None,
+            region: None,
+            groups: vec![],
+            cultivation_method: None,
+            created_at: None,
+            updated_at: None,
+        };
+        let snap = to_snapshot(&entity);
+        assert_eq!(snap.id, 3);
+        assert!((snap.area_per_unit - 0.0).abs() < f64::EPSILON);
+        assert!((snap.revenue_per_area - 0.0).abs() < f64::EPSILON);
+    }
+}

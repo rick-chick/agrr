@@ -96,6 +96,7 @@ fn omits_stages_missing_temperature_or_thermal_requirements() {
     assert_eq!(req["stage_requirements"][0]["stage"]["name"], "ok");
 }
 
+// Locks docs/spec-defects/06 §2.4: missing crop economics default to 0.25 / 5000.0 in climate agrr payloads.
 #[test]
 fn applies_default_crop_fields_when_optional_attributes_are_absent() {
     let entity = ClimateCropEntity {
