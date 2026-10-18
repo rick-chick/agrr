@@ -863,6 +863,64 @@ mod tests {
         );
     }
 
+    // Locks docs/spec-defects/06 item D: weather_locations DB errors map to WeatherLocationMissingError (same as row missing).
+    #[test]
+    fn entry_schedule_weather_loader_maps_weather_location_db_failure_to_missing_error() {
+        use crate::test_support::test_app_state;
+        use time::macros::date;
+
+        let file = NamedTempFile::new().expect("temp db");
+        let pool = SqlitePool::new(file.path().to_str().expect("utf8 path"));
+        pool.with_write(|conn| {
+            conn.execute_batch(
+                "CREATE TABLE weather_locations (
+                   id INTEGER PRIMARY KEY,
+                   latitude REAL NOT NULL,
+                   longitude REAL NOT NULL,
+                   elevation REAL,
+                   timezone TEXT
+                 );
+                 INSERT INTO weather_locations (id, latitude, longitude, timezone)
+                 VALUES (1, 35.0, 139.0, 'Asia/Tokyo');",
+            )?;
+            Ok(())
+        })
+        .expect("schema");
+        pool.with_write(|conn| {
+            conn.execute("DROP TABLE weather_locations", [])?;
+            Ok(())
+        })
+        .expect("drop weather_locations");
+
+        let state = test_app_state(pool);
+        let farm = FarmWrap(FarmEntity {
+            id: 1,
+            name: "Farm".into(),
+            latitude: Some(35.0),
+            longitude: Some(139.0),
+            region: Some("jp".into()),
+            user_id: None,
+            organization_id: None,
+            created_at: None,
+            updated_at: None,
+            is_reference: false,
+            weather_data_status: None,
+            weather_data_fetched_years: None,
+            weather_data_total_years: None,
+            weather_data_last_error: None,
+            weather_location_id: Some(1),
+            last_broadcast_at: None,
+        });
+        let loader = EntryScheduleWeatherLoader { state: &state };
+        let err = loader
+            .load_prediction_payload(&farm, None, date!(2026-06-01))
+            .expect_err("weather location read must fail");
+        assert!(
+            err.downcast_ref::<WeatherLocationMissingError>().is_some(),
+            "DB read errors must not surface as distinct 500-class prediction failures"
+        );
+    }
+
     #[test]
     fn entry_schedule_crops_weather_error_maps_location_required_to_422() {
         let err = Box::new(WeatherLocationMissingError);

@@ -648,8 +648,33 @@ async fn public_adjust_plan(
 
 #[cfg(test)]
 mod tests {
-    use super::cultivation_plan_init_crop_from_entity;
+    use super::{cultivation_plan_init_crop_from_entity, CreatePlanBody};
     use agrr_domain::crop::entities::CropEntity;
+
+    // Locks docs/spec-defects/06 §2.4: omitted crop_ids become empty before wizard create (unwrap_or_default).
+    #[test]
+    fn create_plan_body_omitted_crop_ids_default_to_empty_vec() {
+        let body: CreatePlanBody = serde_json::from_str(
+            r#"{"farm_id":1,"farm_size_id":"small"}"#,
+        )
+        .expect("deserialize");
+        assert!(body.crop_ids.unwrap_or_default().is_empty());
+    }
+
+    #[test]
+    fn wizard_create_plan_crop_id_normalization_dedupes_ids() {
+        use std::collections::HashSet;
+
+        let crop_ids: Vec<i64> = Some(vec![3, 3, 2, 2])
+            .unwrap_or_default()
+            .into_iter()
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
+        assert_eq!(crop_ids.len(), 2);
+        assert!(crop_ids.contains(&2));
+        assert!(crop_ids.contains(&3));
+    }
 
     // Locks docs/spec-defects/06 H3: NULL crop economics become 0.0 in public plan init.
     #[test]
