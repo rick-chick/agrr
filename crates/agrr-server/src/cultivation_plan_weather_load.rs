@@ -242,6 +242,19 @@ mod tests {
         assert!(err.contains("Query returned no rows") || err.contains("no rows"));
     }
 
+    // Locks docs/spec-defects/06 item D: weather_locations read failures are plain SQL errors (not typed missing-row).
+    #[test]
+    fn load_weather_location_by_id_errors_when_table_unavailable() {
+        let (pool, _file) = weather_test_pool();
+        pool.with_write(|conn| {
+            conn.execute("DROP TABLE weather_locations", [])?;
+            Ok(())
+        })
+        .expect("drop weather_locations");
+        let err = load_weather_location_by_id(&pool, 7).expect_err("db error");
+        assert!(!err.is_empty());
+    }
+
     #[test]
     fn load_weather_location_joins_plan_farm_and_location() {
         let (pool, _file) = weather_test_pool();

@@ -712,6 +712,44 @@ CREATE TABLE predicted_weather_metadata (
         );
     }
 
+    // Locks docs/spec-defects/06 H1: stages without temperature/thermal rows still yield has_growth_stages with no agrr_requirement.
+    #[test]
+    fn find_adjust_read_snapshot_keeps_crop_with_stages_but_no_agrr_requirement() {
+        let pool = adjust_read_test_pool();
+        pool.with_write(|conn| {
+            conn.execute_batch(
+                "CREATE TABLE temperature_requirements (
+                   crop_stage_id INTEGER,
+                   base_temperature REAL,
+                   optimal_min REAL,
+                   optimal_max REAL,
+                   low_stress_threshold REAL,
+                   high_stress_threshold REAL,
+                   frost_threshold REAL,
+                   max_temperature REAL
+                 );
+                 CREATE TABLE thermal_requirements (
+                   crop_stage_id INTEGER,
+                   required_gdd REAL
+                 );
+                 INSERT INTO crop_stages (id, crop_id, name, \"order\") VALUES (1, 1, 'Growth', 1);",
+            )?;
+            Ok(())
+        })
+        .expect("seed stage without requirements");
+
+        let snapshot = gateway_for(pool)
+            .find_adjust_read_snapshot_by_plan_id(1)
+            .expect("snapshot");
+        assert_eq!(snapshot.plan_crop_snapshots.len(), 1);
+        let crop = &snapshot.plan_crop_snapshots[0];
+        assert!(crop.has_growth_stages);
+        assert!(
+            crop.agrr_requirement.is_none(),
+            "incomplete stage requirements must not produce agrr JSON"
+        );
+    }
+
     // Locks docs/spec-defects/06 H2: malformed crop groups JSON becomes an empty array.
     #[test]
     fn find_adjust_read_snapshot_swallows_malformed_crop_groups_json() {

@@ -789,7 +789,8 @@ pub(crate) fn map_remove_field_outcome(
 
 #[cfg(test)]
 mod add_crop_body_tests {
-    use super::AddCropBody;
+    use super::{value_to_string, AddCropBody};
+    use serde_json::json;
 
     #[test]
     fn deserializes_without_field_id() {
@@ -801,5 +802,23 @@ mod add_crop_body_tests {
     fn deserializes_with_field_id() {
         let body: AddCropBody = serde_json::from_str(r#"{"crop_id":1,"field_id":2}"#).unwrap();
         assert_eq!(body.field_id.as_ref().unwrap().as_i64(), Some(2));
+    }
+
+    // Locks docs/spec-defects/06 §2.4: omitted field_id becomes empty string for add_crop (not Option::None at interactor).
+    #[test]
+    fn add_crop_field_id_defaults_to_empty_string_when_omitted() {
+        let body: AddCropBody = serde_json::from_str(r#"{"crop_id":1}"#).unwrap();
+        let field_id = body
+            .field_id
+            .as_ref()
+            .map(value_to_string)
+            .unwrap_or_default();
+        assert_eq!(field_id, "");
+    }
+
+    #[test]
+    fn value_to_string_formats_numeric_field_id() {
+        assert_eq!(value_to_string(&json!(42)), "42");
+        assert_eq!(value_to_string(&json!("field-7")), "field-7");
     }
 }
