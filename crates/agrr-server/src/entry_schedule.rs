@@ -1174,6 +1174,7 @@ mod tests {
         );
     }
 
+    // Locks docs/spec-defects/06 item 1: optimize runner surfaces crop_load_failed when crop re-read fails.
     #[test]
     fn load_crop_entity_for_optimize_db_read_failure_returns_crop_load_failed() {
         let (pool, _file) = crop_test_pool();

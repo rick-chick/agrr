@@ -105,3 +105,11 @@ impl PlanAllocationAdjustAgrrPayloadMapper {
         agrr_interaction_rules_calculator::build(&crop_groups, random_hex)
     }
 }
+
+#[cfg(test)]
+mod mappers_plan_allocation_adjust_agrr_payload_mapper_test_inline {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/mappers_plan_allocation_adjust_agrr_payload_mapper_test.rs"
+    ));
+}

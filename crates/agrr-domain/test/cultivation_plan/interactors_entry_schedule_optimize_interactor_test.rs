@@ -561,6 +561,7 @@
         );
     }
 
+    // Locks fail-open behavior (docs/spec-defects/06 item F): stage-name transplant inference when method is NULL.
     #[test]
     fn infers_transplant_cultivation_from_stage_names_when_method_missing() {
         let crop = test_crop(1, "トマト", None, None);
@@ -628,6 +629,7 @@
         assert_eq!(result.transplant_stage_id, None);
     }
 
+    // Locks fail-open behavior (docs/spec-defects/06 item F): stage-name direct-sow inference when method is NULL.
     #[test]
     fn infers_direct_sow_cultivation_from_stage_names_when_method_missing() {
         let crop = test_crop(1, "ほうれん草", None, None);
