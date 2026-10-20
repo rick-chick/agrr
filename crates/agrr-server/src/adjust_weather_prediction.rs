@@ -828,6 +828,65 @@ mod tests {
         }
     }
 
+    struct OkMetadataGateway {
+        metadata: PredictedWeatherMetadata,
+    }
+
+    impl PredictedWeatherMetadataGateway for OkMetadataGateway {
+        fn find(
+            &self,
+            _: PredictedWeatherScope,
+            _: i64,
+        ) -> Result<Option<PredictedWeatherMetadata>, Box<dyn std::error::Error + Send + Sync>>
+        {
+            Ok(Some(self.metadata.clone()))
+        }
+
+        fn upsert(
+            &self,
+            _: &PredictedWeatherMetadata,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+
+        fn copy_plan_metadata(
+            &self,
+            _: i64,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+    }
+
+    struct ErrStoreGateway;
+
+    impl PredictedWeatherStoreGateway for ErrStoreGateway {
+        fn read_payload(
+            &self,
+            _: PredictedWeatherScope,
+            _: i64,
+        ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+            Err("store read failed".into())
+        }
+
+        fn write_payload(
+            &self,
+            _: PredictedWeatherScope,
+            _: i64,
+            _: &Value,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+
+        fn copy_plan_payload(
+            &self,
+            _: i64,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+    }
+
     struct EmptyStoreGateway;
 
     impl PredictedWeatherStoreGateway for EmptyStoreGateway {
@@ -876,6 +935,38 @@ mod tests {
                 .get_existing_prediction(date!(2027-12-31), &plan_weather)
                 .is_none(),
             "metadata Err must not propagate from adjust prediction service"
+        );
+    }
+
+    // Locks docs/spec-defects/06 H10 (adjust path): cached payload read errors become `None` (cache miss).
+    #[test]
+    fn prediction_service_get_existing_prediction_returns_none_when_store_read_errors() {
+        let target = date!(2027-12-31);
+        let metadata = PredictedWeatherMetadata {
+            scope: PredictedWeatherScope::Location,
+            scope_id: 1,
+            prediction_start_date: date!(2026-01-01),
+            prediction_end_date: target,
+            target_end_date: target,
+            data_end_date: target,
+            generated_at: "test".into(),
+        };
+        let db = crate::test_support::test_pool_with_plan(1);
+        let gateway = SqliteAdjustWeatherPredictionGateway::new(
+            db.pool.clone(),
+            Arc::new(OkMetadataGateway { metadata }),
+            Arc::new(ErrStoreGateway),
+        );
+        let location =
+            WeatherLocation::new(1, 35.6895, 139.6917, Some(40.0), Some("Asia/Tokyo".into()));
+        let service = gateway.prediction_service(&location).expect("service");
+        let plan_weather = CultivationPlanWeather::new(1, None, None, None);
+
+        assert!(
+            service
+                .get_existing_prediction(target, &plan_weather)
+                .is_none(),
+            "store Err must not propagate from adjust prediction service"
         );
     }
 

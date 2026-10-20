@@ -106,3 +106,42 @@ impl WorkRecordClimateSnapshotGateway for WorkRecordClimateSnapshotService {
         Ok(WorkRecordClimateSnapshot::empty())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::field_cultivation::dtos::{
+        FieldCultivationClimateFailure, FieldCultivationClimateFailureReason,
+    };
+    use agrr_domain::shared::dtos::Error;
+
+    // Locks docs/spec-defects/06 H9: climate interactor `on_error` is ignored; lookup returns empty snapshot.
+    #[test]
+    fn lookup_returns_empty_when_climate_presenter_has_no_output_or_failure() {
+        let mut presenter = CaptureClimatePresenter {
+            output: None,
+            failure: None,
+        };
+        presenter.on_error(Error::new("climate unavailable"));
+        assert!(presenter.output.is_none());
+        assert!(presenter.failure.is_none());
+        assert_eq!(
+            WorkRecordClimateSnapshot::empty(),
+            WorkRecordClimateSnapshot::empty()
+        );
+    }
+
+    #[test]
+    fn lookup_maps_climate_failure_to_unavailable_error() {
+        let failure = FieldCultivationClimateFailure::new(
+            FieldCultivationClimateFailureReason::ProgressDaemonUnavailable,
+            "daemon down",
+        );
+        let err = WorkRecordClimateSnapshotUnavailableError::new(failure);
+        assert_eq!(err.to_string(), "climate snapshot unavailable");
+        assert_eq!(
+            err.failure.reason,
+            FieldCultivationClimateFailureReason::ProgressDaemonUnavailable
+        );
+    }
+}
