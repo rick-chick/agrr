@@ -547,6 +547,20 @@ mod tests {
     }
 
     // Locks fail-open profit comparison: missing profit fields count as 0.0.
+    // Locks docs/spec-defects/06 H1 (add_crop candidates path): mapper keeps crops with stages but no requirement.
+    #[test]
+    fn crops_config_includes_crop_id_only_when_requirement_missing_but_growth_stages_exist() {
+        use agrr_domain::cultivation_plan::dtos::PlanAllocationAdjustReadSnapshot;
+        use agrr_domain::cultivation_plan::mappers::PlanAllocationAdjustAgrrPayloadMapper;
+
+        let snapshot = PlanAllocationAdjustReadSnapshot::minimal_for_tests(2, "Pepper", true);
+        let crops = PlanAllocationAdjustAgrrPayloadMapper::to_crops_config(&snapshot, None);
+
+        assert_eq!(crops.len(), 1);
+        assert_eq!(crops[0]["crop"]["crop_id"], "1");
+        assert!(crops[0].get("stages").is_none());
+    }
+
     #[test]
     fn select_best_candidate_prefers_explicit_profit_over_missing_profit_field() {
         let logger = StderrLogger;

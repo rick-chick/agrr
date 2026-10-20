@@ -6,8 +6,8 @@
     };
     use crate::cultivation_plan::entities::CultivationPlanEntity;
     use crate::cultivation_plan::gateways::{
-        AdjustWeatherPredictionGateway, PlanAllocationAdjustDebugDumpNullGateway,
-        WeatherPredictionService,
+        AdjustWeatherPredictionGateway, PlanAllocationAdjustDebugDumpGateway,
+        PlanAllocationAdjustDebugDumpNullGateway, WeatherPredictionService,
     };
     use crate::field_cultivation::dtos::FieldCultivationSyncInput;
     use crate::field_cultivation::ports::FieldCultivationSyncInputPort;
@@ -305,6 +305,22 @@ total_area: 0.0,
         }
     }
 
+    struct SpyDebugDump {
+        crops: Arc<Mutex<Option<Vec<serde_json::Value>>>>,
+    }
+
+    impl PlanAllocationAdjustDebugDumpGateway for SpyDebugDump {
+        fn dump_payload(
+            &self,
+            _: &serde_json::Value,
+            _: &[serde_json::Value],
+            _: &[serde_json::Value],
+            crops: &[serde_json::Value],
+        ) {
+            *self.crops.lock().unwrap() = Some(crops.to_vec());
+        }
+    }
+
     struct StubEventsGateway;
     impl CultivationPlanOptimizationEventsGateway for StubEventsGateway {
         fn broadcast_field_added(
@@ -496,4 +512,71 @@ total_area: 0.0,
             PlanAllocationAdjustFailure::KIND_CROP_MISSING_GROWTH_STAGES
         );
         assert!(failure[0].message.contains("crop_name=X"));
+    }
+
+    // Locks docs/spec-defects/06 H1: adjust interactor forwards crops without requirement JSON to agrr payload.
+    #[test]
+    fn call_dump_payload_includes_crop_id_only_when_requirement_missing_but_growth_stages_exist() {
+        let success = Arc::new(Mutex::new(Vec::new()));
+        let failures = Arc::new(Mutex::new(Vec::new()));
+        let mut output = SpyOutput {
+            success: Arc::clone(&success),
+            failures: Arc::clone(&failures),
+        };
+        let captured_crops = Arc::new(Mutex::new(None));
+        let debug_dump = SpyDebugDump {
+            crops: Arc::clone(&captured_crops),
+        };
+        let logger = FakeLogger {
+            entries: Arc::new(Mutex::new(Vec::new())),
+        };
+        let plan_gateway = StubPlanGateway {
+            plan: owned_plan(),
+        };
+        let read_gateway = StubReadGateway {
+            snapshot: snapshot("Pepper", true),
+            called: Arc::new(Mutex::new(false)),
+        };
+        let events_gateway = StubEventsGateway;
+        let mut field_cultivation_sync = StubFieldCultivationSync;
+        let mut interactor = PlanAllocationAdjustInteractor::new(
+            &mut output,
+            &logger,
+            &FakeTranslator,
+            &FakeClock,
+            &plan_gateway,
+            &read_gateway,
+            &StubAdjustGateway,
+            &events_gateway,
+            &debug_dump,
+            &StubWeatherGateway,
+            &mut field_cultivation_sync,
+            "abcd1234",
+        );
+
+        interactor
+            .call(PlanAllocationAdjustInput {
+                plan_id: 2,
+                moves: vec![serde_json::json!({ "field_id": 1 })],
+                auth: Some(CultivationPlanRestAuth::private(1)),
+                dry_run: false,
+            })
+            .unwrap();
+
+        let crops = captured_crops
+            .lock()
+            .unwrap()
+            .clone()
+            .expect("dump_payload must run before weather-location failure");
+        assert_eq!(crops.len(), 1);
+        assert_eq!(crops[0]["crop"]["crop_id"], "1");
+        assert!(crops[0].get("stages").is_none());
+
+        assert!(success.lock().unwrap().is_empty());
+        let failure = failures.lock().unwrap();
+        assert_eq!(failure.len(), 1);
+        assert_eq!(
+            failure[0].kind,
+            PlanAllocationAdjustFailure::KIND_NO_WEATHER_LOCATION
+        );
     }
