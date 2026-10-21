@@ -295,3 +295,102 @@ total_area: 100.0,
         assert!(!*crop_created.lock().unwrap());
         assert_eq!(*field_count.lock().unwrap(), 0);
     }
+
+    // Locks docs/spec-defects/06 item 6: private plans require explicit planning dates (no clock.today default).
+    #[test]
+    fn fails_when_private_plan_missing_planning_dates() {
+        let in_txn = Arc::new(Mutex::new(false));
+        let plan_gateway = StubPlanGateway {
+            created_id: 99,
+            in_txn: Arc::clone(&in_txn),
+        };
+        let plan_crop_gateway = SpyPlanCropGateway {
+            created: Arc::new(Mutex::new(false)),
+        };
+        let field_gateway = SpyFieldMutationGateway {
+            create_count: Arc::new(Mutex::new(0)),
+            created_areas: Arc::new(Mutex::new(vec![])),
+        };
+        let interactor = CultivationPlanInitializeInteractor::new(
+            CultivationPlanInitFarm {
+                id: 1,
+                name: "Farm".into(),
+            },
+            100.0,
+            vec![CultivationPlanInitCrop {
+                id: 10,
+                name: "Crop".into(),
+                variety: Some("V".into()),
+                area_per_unit: 1.0,
+                revenue_per_area: 100.0,
+            }],
+            &plan_gateway,
+            &plan_crop_gateway,
+            &field_gateway,
+            &FakeClock,
+            &FakeLogger,
+        )
+        .with_private_planning(7, None, "private", Some(2026), Some("Private".into()), None, None);
+
+        let result = interactor.call().unwrap();
+        assert!(!result.is_success());
+        assert!(
+            result.errors[0].contains("計画期間"),
+            "expected explicit planning period failure, got: {}",
+            result.errors[0]
+        );
+        assert!(!*in_txn.lock().unwrap());
+    }
+
+    #[test]
+    fn creates_private_plan_when_planning_dates_are_set() {
+        let in_txn = Arc::new(Mutex::new(false));
+        let crop_created = Arc::new(Mutex::new(false));
+        let field_count = Arc::new(Mutex::new(0));
+        let plan_gateway = StubPlanGateway {
+            created_id: 42,
+            in_txn: Arc::clone(&in_txn),
+        };
+        let plan_crop_gateway = SpyPlanCropGateway {
+            created: Arc::clone(&crop_created),
+        };
+        let field_gateway = SpyFieldMutationGateway {
+            create_count: Arc::clone(&field_count),
+            created_areas: Arc::new(Mutex::new(vec![])),
+        };
+        let interactor = CultivationPlanInitializeInteractor::new(
+            CultivationPlanInitFarm {
+                id: 1,
+                name: "Farm".into(),
+            },
+            80.0,
+            vec![CultivationPlanInitCrop {
+                id: 10,
+                name: "Crop".into(),
+                variety: None,
+                area_per_unit: 1.0,
+                revenue_per_area: 100.0,
+            }],
+            &plan_gateway,
+            &plan_crop_gateway,
+            &field_gateway,
+            &FakeClock,
+            &FakeLogger,
+        )
+        .with_private_planning(
+            7,
+            None,
+            "private",
+            Some(2026),
+            Some("Private".into()),
+            Some(time::macros::date!(2026 - 04 - 01)),
+            Some(time::macros::date!(2026 - 10 - 31)),
+        );
+
+        let result = interactor.call().unwrap();
+        assert!(result.is_success());
+        assert_eq!(result.cultivation_plan.unwrap().id, 42);
+        assert!(*in_txn.lock().unwrap());
+        assert!(*crop_created.lock().unwrap());
+        assert!(*field_count.lock().unwrap() >= 1);
+    }

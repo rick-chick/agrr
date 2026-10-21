@@ -1225,6 +1225,71 @@
         assert!(output.failure.is_none());
     }
 
+    // Locks docs/spec-defects/06 item C: metadata + empty cached payload still succeeds when observed merge fills `data`.
+    #[test]
+    fn presents_climate_data_when_cached_payload_empty_but_observed_merge_fills_data() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2025 - 06 - 01)),
+            Some(date!(2025 - 06 - 15)),
+            true,
+            Some(2),
+        );
+        let access = FieldCultivationPlanAccessSnapshot::new(1, true, false, Some(99), None);
+        let climate_source = StubClimateSourceGateway {
+            access,
+            source,
+            missing_source_snapshot: false,
+            missing_plan_access_snapshot: false,
+        };
+        let crop_gateway = StubCropGateway {
+            crop: sample_crop(),
+        };
+        let store = StubWeatherStore {
+            payload: Some(json!({})),
+        };
+        let mut output = SpyClimateOutput {
+            success: None,
+            failure: None,
+            climate_failure: None,
+        };
+        let progress = Arc::new(OkProgressGateway {
+            result: json!({
+                "progress_records": [
+                    { "date": "2025-06-01", "cumulative_gdd": 5.0, "stage_name": "Stage1" }
+                ]
+            }),
+        });
+        let mut interactor = FieldCultivationClimateDataInteractor::new(
+            &mut output,
+            &NoopLogger,
+            None,
+            None,
+            &climate_source,
+            &crop_gateway,
+            &ObservedOnlyFallbackWeatherDataGateway,
+            &store,
+            progress.as_ref(),
+            &FixedClock(date!(2026 - 10 - 01)),
+            &StubTranslator,
+        );
+        interactor
+            .call(FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            })
+            .expect("empty cached payload with observed merge should succeed today");
+        let dto = output.success.expect("climate data presented");
+        assert!(
+            !dto.weather_data.is_empty(),
+            "observed rows should populate weather_data when cache payload lacks `data`"
+        );
+        assert_eq!(dto.weather_data[0]["date"], "2025-06-01");
+        assert!(output.failure.is_none());
+        assert!(output.climate_failure.is_none());
+    }
+
     #[test]
     fn returns_weather_payload_invalid_error_when_cached_plan_prediction_is_absent() {
         let source = sample_source(
