@@ -6,6 +6,8 @@ use crate::user_account::dtos::{
 use crate::user_account::gateways::UserAccountGateway;
 use crate::user_account::interactors::UserDataExportInteractor;
 use crate::user_account::ports::UserDataExportOutputPort;
+use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 
 struct StubGateway {
     result: Result<UserDataExport, String>,
@@ -124,4 +126,19 @@ fn emits_failure_when_gateway_errors() {
     assert!(port.success.is_none());
     let failure = port.failure.expect("expected failure");
     assert!(failure.message.contains("user not found"));
+}
+
+// Locks docs/spec-defects/06 S4: exported_at is RFC3339 on success (format failure would become empty string fail-open).
+#[test]
+fn exported_at_is_rfc3339_on_success() {
+    let gateway = StubGateway {
+        result: Ok(sample_export()),
+    };
+    let mut port = RecordingPort::default();
+    let mut interactor = UserDataExportInteractor::new(&mut port, &gateway);
+
+    interactor.call(1).unwrap();
+
+    let export = port.success.expect("expected success");
+    OffsetDateTime::parse(&export.exported_at, &Rfc3339).expect("exported_at must be RFC3339");
 }
