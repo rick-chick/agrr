@@ -1664,3 +1664,62 @@
             "Field cultivation climate data not found"
         );
     }
+
+    // Locks docs/spec-defects/06 item C (T3-2): metadata without store payload fails before observed merge.
+    #[test]
+    fn fails_when_plan_metadata_present_but_store_payload_is_none_for_past_cultivation() {
+        let source = sample_source(
+            Some(1),
+            Some(date!(2025 - 06 - 01)),
+            Some(date!(2025 - 06 - 15)),
+            true,
+            Some(2),
+        );
+        let access = FieldCultivationPlanAccessSnapshot::new(1, true, false, Some(99), None);
+        let climate_source = StubClimateSourceGateway {
+            access,
+            source,
+            missing_source_snapshot: false,
+            missing_plan_access_snapshot: false,
+        };
+        let crop_gateway = StubCropGateway {
+            crop: sample_crop(),
+        };
+        let store = StubWeatherStore { payload: None };
+        let mut output = SpyClimateOutput {
+            success: None,
+            failure: None,
+            climate_failure: None,
+        };
+        let weather_data = ObservedOnlyFallbackWeatherDataGateway;
+        let progress = Arc::new(OkProgressGateway {
+            result: json!({ "progress_records": [] }),
+        });
+
+        let mut interactor = FieldCultivationClimateDataInteractor::new(
+            &mut output,
+            &NoopLogger,
+            None,
+            None,
+            &climate_source,
+            &crop_gateway,
+            &weather_data,
+            &store,
+            progress.as_ref(),
+            &FixedClock(date!(2026 - 10 - 01)),
+            &StubTranslator,
+        );
+        interactor
+            .call(FieldCultivationClimateDataInput {
+                field_cultivation_id: 1,
+                display_start_date: None,
+                display_end_date: None,
+            })
+            .expect("missing store payload must fail closed via output port");
+        assert!(output.success.is_none());
+        assert_eq!(
+            output.failure.unwrap().message,
+            "Field cultivation climate data not found"
+        );
+        assert!(output.climate_failure.is_none());
+    }

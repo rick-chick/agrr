@@ -723,6 +723,27 @@ mod tests {
         .expect("insert crop");
     }
 
+    struct NoopCropRequirementSource;
+    impl CropAgrrRequirementSource for NoopCropRequirementSource {}
+
+    // Locks docs/spec-defects/06 item A (post fail-closed fix): missing stages do not become `{}` for agrr.
+    #[test]
+    fn agrr_crop_builder_err_when_crop_has_no_agrr_requirement() {
+        let (pool, _file) = crop_test_pool();
+        insert_crop_with_method(&pool, 8, "要件なし", "direct_sow");
+        let builder = AgrrCropBuilder {
+            pool,
+            crop_id: 8,
+        };
+        let err = builder
+            .build_from(&NoopCropRequirementSource)
+            .expect_err("crop without stages must not produce empty requirement JSON");
+        assert!(
+            err.to_string().contains("no agrr requirement"),
+            "unexpected error: {err}"
+        );
+    }
+
     // Locks docs/spec-defects/06 H4: list JSON keeps null coords while FarmWrap maps them to 0.0 (show/optimize).
     #[test]
     fn list_farm_json_preserves_null_coordinates_while_farm_wrap_maps_to_zero() {
