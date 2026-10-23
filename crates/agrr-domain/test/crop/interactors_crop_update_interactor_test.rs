@@ -3,7 +3,8 @@
     use crate::crop::entities::CropEntity;
     use crate::crop::gateways::CropGateway;
     use crate::crop::ports::{CropUpdateOutputPort, UpdateFailure};
-    use crate::shared::attr::AttrMap;
+    use crate::shared::attr::{AttrMap, AttrValue};
+    use std::sync::Mutex;
     use crate::shared::gateways::UserLookupGateway;
     use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 
@@ -123,4 +124,260 @@
         input.is_reference = Some(true);
         i.call(input).unwrap();
         assert!(matches!(out.failure, Some(UpdateFailure::ReferenceFlagChangeDenied(_))));
+    }
+
+    struct GroupsCapturingUpdateGw {
+        current: CropEntity,
+        updated: CropEntity,
+        captured_attrs: Mutex<Option<AttrMap>>,
+    }
+
+    impl CropGateway for GroupsCapturingUpdateGw {
+        fn list_by_is_reference(
+            &self,
+            _: bool,
+            _: Option<&str>,
+        ) -> Result<Vec<CropEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn find_by_id(&self, _: i64) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(self.current.clone())
+        }
+
+        fn update_for_user(
+            &self,
+            _: &User,
+            _: i64,
+            attrs: AttrMap,
+        ) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> {
+            *self.captured_attrs.lock().unwrap() = Some(attrs);
+            Ok(self.updated.clone())
+        }
+
+        fn list_index_for_filter(
+            &self,
+            _: &crate::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter,
+        ) -> Result<Vec<CropEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn find_crop_show_detail(
+            &self,
+            _: i64,
+        ) -> Result<crate::crop::dtos::CropShowDetail, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn find_crop_record_with_stages(
+            &self,
+            _: i64,
+        ) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn count_user_owned_non_reference_crops(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn count_non_reference_crops_for_organization(
+            &self,
+            _: i64,
+        ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(0)
+        }
+        fn create_for_user(
+            &self,
+            _: &User,
+            _: AttrMap,
+        ) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn find_delete_usage(
+            &self,
+            _: i64,
+        ) -> Result<crate::crop::dtos::CropDeleteUsage, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn soft_delete_with_undo(
+            &self,
+            _: &User,
+            _: i64,
+            _: i64,
+            _: &str,
+        ) -> Result<
+            crate::crop::gateways::SoftDeleteWithUndoOutcome,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+        fn list_by_crop_id(
+            &self,
+            _: i64,
+        ) -> Result<Vec<crate::crop::entities::CropStageEntity>, Box<dyn std::error::Error + Send + Sync>>
+        {
+            unimplemented!()
+        }
+        fn create_crop_stage(
+            &self,
+            _: crate::crop::dtos::CropStageCreateInput,
+        ) -> Result<crate::crop::entities::CropStageEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn update_crop_stage(
+            &self,
+            _: i64,
+            _: crate::crop::dtos::CropStageUpdateInput,
+        ) -> Result<crate::crop::entities::CropStageEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn delete_crop_stage(
+            &self,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn create_thermal_requirement(
+            &self,
+            _: i64,
+            _: crate::crop::dtos::ThermalRequirementUpdateInput,
+        ) -> Result<
+            crate::crop::entities::ThermalRequirementEntity,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+        fn update_thermal_requirement(
+            &self,
+            _: i64,
+            _: crate::crop::dtos::ThermalRequirementUpdateInput,
+        ) -> Result<
+            crate::crop::entities::ThermalRequirementEntity,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+        fn delete_thermal_requirement(
+            &self,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn create_temperature_requirement(
+            &self,
+            _: i64,
+            _: crate::crop::dtos::TemperatureRequirementUpdateInput,
+        ) -> Result<
+            crate::crop::entities::TemperatureRequirementEntity,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+        fn update_temperature_requirement(
+            &self,
+            _: i64,
+            _: crate::crop::dtos::TemperatureRequirementUpdateInput,
+        ) -> Result<
+            crate::crop::entities::TemperatureRequirementEntity,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+        fn delete_temperature_requirement(
+            &self,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn create_sunshine_requirement(
+            &self,
+            _: i64,
+            _: crate::crop::dtos::SunshineRequirementUpdateInput,
+        ) -> Result<
+            crate::crop::entities::SunshineRequirementEntity,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+        fn update_sunshine_requirement(
+            &self,
+            _: i64,
+            _: crate::crop::dtos::SunshineRequirementUpdateInput,
+        ) -> Result<
+            crate::crop::entities::SunshineRequirementEntity,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+        fn delete_sunshine_requirement(
+            &self,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn create_nutrient_requirement(
+            &self,
+            _: i64,
+            _: crate::crop::dtos::NutrientRequirementUpdateInput,
+        ) -> Result<
+            crate::crop::entities::NutrientRequirementEntity,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+        fn update_nutrient_requirement(
+            &self,
+            _: i64,
+            _: crate::crop::dtos::NutrientRequirementUpdateInput,
+        ) -> Result<
+            crate::crop::entities::NutrientRequirementEntity,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+        fn delete_nutrient_requirement(
+            &self,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+    }
+
+    // Locks docs/spec-defects/06 S5: groups are persisted as JSON on update (serialize failure would become `"[]"` fail-open).
+    #[test]
+    fn persists_groups_as_json_string_on_update() {
+        let current = crop(10);
+        let updated = crop(10);
+        let expected = updated.clone();
+        let gw = GroupsCapturingUpdateGw {
+            current,
+            updated,
+            captured_attrs: Mutex::new(None),
+        };
+        let mut out = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let user_lookup = StubLookup(User::new(10, false));
+        let mut i = CropUpdateInteractor::new(
+            &mut out,
+            10,
+            &gw,
+            &StubTranslator,
+            &user_lookup,
+            &EmptyScopeGateway,
+        );
+        let mut input = CropUpdateInput::new(5);
+        input.updated_at = Some("2026-06-12T10:00:00Z".into());
+        input.groups = Some(vec!["root".into(), "brassica".into()]);
+        i.call(input).unwrap();
+        assert_eq!(out.success, Some(expected));
+
+        let attrs = gw.captured_attrs.lock().unwrap().clone().expect("attrs");
+        let groups = attrs
+            .get("groups")
+            .expect("groups attr")
+            .as_str()
+            .expect("groups string");
+        assert_eq!(groups, r#"["root","brassica"]"#);
+        assert!(matches!(attrs.get("groups"), Some(AttrValue::Str(_))));
     }

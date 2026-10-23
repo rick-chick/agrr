@@ -1157,6 +1157,7 @@
         );
     }
 
+    // Locks docs/spec-defects/06 item C (T3-3): store read Err propagates (no silent `{}` merge).
     #[test]
     fn propagates_error_when_plan_prediction_store_read_fails() {
         let source = sample_source(
