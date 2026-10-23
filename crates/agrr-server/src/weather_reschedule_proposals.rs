@@ -281,6 +281,7 @@ mod tests {
     };
     use axum::http::StatusCode;
 
+    // Locks docs/spec-defects/06 item 8 / S1: list responses serialize proposals (no `unwrap_or` empty success).
     #[test]
     fn proposals_to_json_serializes_empty_list() {
         let json = proposals_to_json(vec![]).expect("serialize empty proposals");
@@ -319,6 +320,7 @@ mod tests {
         );
     }
 
+    // Locks docs/spec-defects/06 item 8 / S2: preview body serializes structurally (handler maps serialize Err to 500).
     #[test]
     fn preview_to_json_serializes_preview_body() {
         let proposal = WeatherRescheduleProposalRead {
