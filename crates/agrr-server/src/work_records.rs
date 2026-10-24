@@ -482,3 +482,44 @@ async fn destroy_work_record(
         None => Err(internal_error()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::field_cultivation::dtos::{
+        FieldCultivationClimateFailure, FieldCultivationClimateFailureReason,
+    };
+
+    // Locks docs/spec-defects/06 H9: work record create/update map typed climate failures to errors-array HTTP.
+    #[test]
+    fn climate_snapshot_unavailable_response_maps_progress_daemon_unavailable_to_503() {
+        let (status, body) = climate_snapshot_unavailable_response(
+            FieldCultivationClimateFailure::new(
+                FieldCultivationClimateFailureReason::ProgressDaemonUnavailable,
+                "daemon down",
+            ),
+        );
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
+            Some("api.errors.climate_progress_daemon_unavailable")
+        );
+        assert_eq!(
+            body.get("error_code").and_then(|v| v.as_str()),
+            Some("progress_daemon_unavailable")
+        );
+        assert_eq!(body.get("success").and_then(|v| v.as_bool()), Some(false));
+    }
+
+    #[test]
+    fn climate_snapshot_unavailable_response_omits_legacy_error_and_message_keys() {
+        let (_, body) = climate_snapshot_unavailable_response(
+            FieldCultivationClimateFailure::new(
+                FieldCultivationClimateFailureReason::CropRequirementIncomplete,
+                "missing stages",
+            ),
+        );
+        assert!(body.get("error").is_none());
+        assert!(body.get("message").is_none());
+    }
+}

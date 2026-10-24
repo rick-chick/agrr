@@ -453,6 +453,7 @@ fn create_fails_when_snapshot_lookup_returns_untyped_error() {
     assert!(events.lock().unwrap().is_empty());
 }
 
+// Locks docs/spec-defects/06 H9: typed climate snapshot failures surface via output port (no silent persist).
 #[test]
 fn create_notifies_climate_unavailable_when_snapshot_lookup_returns_typed_error() {
     let events = Arc::new(Mutex::new(Vec::new()));
