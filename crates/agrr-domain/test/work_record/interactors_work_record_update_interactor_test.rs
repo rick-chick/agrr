@@ -164,6 +164,25 @@ impl WorkRecordClimateSnapshotGateway for FailingClimateSnapshot {
     }
 }
 
+struct TypedFailingClimateSnapshot;
+
+impl WorkRecordClimateSnapshotGateway for TypedFailingClimateSnapshot {
+    fn lookup(
+        &self,
+        _: i64,
+        _: Date,
+    ) -> Result<WorkRecordClimateSnapshot, Box<dyn std::error::Error + Send + Sync>> {
+        Err(Box::new(
+            crate::work_record::errors::WorkRecordClimateSnapshotUnavailableError::new(
+                crate::field_cultivation::dtos::FieldCultivationClimateFailure::new(
+                    crate::field_cultivation::dtos::FieldCultivationClimateFailureReason::ProgressDaemonUnavailable,
+                    "daemon_unavailable",
+                ),
+            ),
+        ))
+    }
+}
+
 struct RecordingUpdateGateway {
     existing: WorkRecordRead,
     climate_at_update: Arc<Mutex<Option<Option<WorkRecordClimatePersistFields>>>>,
@@ -470,4 +489,48 @@ fn update_fails_when_snapshot_lookup_returns_untyped_error() {
     assert!(interactor.call_rescuing(1, 2, 10, &params).is_err());
     assert!(climate_slot.lock().unwrap().is_none());
     assert!(events.lock().unwrap().is_empty());
+}
+
+// Locks docs/spec-defects/06 H9: typed climate snapshot failures surface via output port (no silent persist).
+#[test]
+fn update_notifies_climate_unavailable_when_snapshot_lookup_returns_typed_error() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let mut output = SpyUpdateOutput {
+        events: Arc::clone(&events),
+        errors: Arc::new(Mutex::new(None)),
+    };
+    let clock = FakeClock {
+        today_val: date!(2026-06-12),
+        now_val: datetime!(2026-06-12 10:00 UTC),
+    };
+    let plan_gateway = StubPlanGateway {
+        plan: private_plan(1),
+    };
+    let climate_slot = Arc::new(Mutex::new(None));
+    let gateway = RecordingUpdateGateway {
+        existing: sample_existing_work_record(),
+        climate_at_update: Arc::clone(&climate_slot),
+    };
+    let mut interactor = WorkRecordUpdateInteractor::new(
+        &mut output,
+        &plan_gateway,
+        &gateway,
+        &TypedFailingClimateSnapshot,
+        &clock,
+        &EmptyScopeGateway,
+    );
+
+    let mut params = BTreeMap::new();
+    params.insert(
+        "actual_date".into(),
+        Value::String("2026-06-12".into()),
+    );
+    params.insert(
+        "updated_at".into(),
+        Value::String("2026-06-10T10:00:00Z".into()),
+    );
+
+    interactor.call_rescuing(1, 2, 10, &params).unwrap();
+    assert_eq!(&*events.lock().unwrap(), &["climate_unavailable".to_string()]);
+    assert!(climate_slot.lock().unwrap().is_none());
 }
