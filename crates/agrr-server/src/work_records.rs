@@ -298,6 +298,16 @@ fn work_record_to_json(record: WorkRecordRead, photos: Vec<Value>) -> Value {
     })
 }
 
+/// Update responses attach photos after persist; DB errors must not fail the mutation (fail-open).
+fn photos_for_mutation_response(
+    load: Result<BTreeMap<i64, Vec<Value>>, Box<dyn std::error::Error + Send + Sync>>,
+    record_id: i64,
+) -> Vec<Value> {
+    load.ok()
+        .and_then(|map| map.get(&record_id).cloned())
+        .unwrap_or_default()
+}
+
 fn map_mutation_outcome<T>(
     outcome: Option<MutationOutcome<T>>,
     success: impl FnOnce(T) -> Value,
@@ -434,10 +444,10 @@ async fn update_work_record(
         presenter.body,
         |record| {
             let photo_gateway = WorkRecordPhotoSqliteGateway::new(state.sqlite.clone());
-            let photos = load_photos_json_for_records(&photo_gateway, plan_id, &[record.id])
-                .ok()
-                .and_then(|map| map.get(&record.id).cloned())
-                .unwrap_or_default();
+            let photos = photos_for_mutation_response(
+                load_photos_json_for_records(&photo_gateway, plan_id, &[record.id]),
+                record.id,
+            );
             json!({"work_record": work_record_to_json(record, photos)})
         },
         StatusCode::OK,
@@ -521,5 +531,43 @@ mod tests {
         );
         assert!(body.get("error").is_none());
         assert!(body.get("message").is_none());
+    }
+
+    #[test]
+    fn map_mutation_outcome_maps_snapshot_unavailable_to_climate_http_response() {
+        let failure = FieldCultivationClimateFailure::new(
+            FieldCultivationClimateFailureReason::ProgressDaemonUnavailable,
+            "daemon down",
+        );
+        let result = map_mutation_outcome(
+            Some(MutationOutcome::<WorkRecordRead>::SnapshotUnavailable(failure)),
+            |_: WorkRecordRead| json!({"ignored": true}),
+            StatusCode::CREATED,
+        );
+        let err = result.expect_err("climate failure must not return success JSON");
+        assert_eq!(err.0, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(
+            err.1
+                .get("errors")
+                .and_then(|v| v.get(0))
+                .and_then(|v| v.as_str()),
+            Some("api.errors.climate_progress_daemon_unavailable")
+        );
+    }
+
+    // Locks docs/spec-defects/06 §2.4: work record update still returns 200 with empty photos when photo load fails.
+    #[test]
+    fn photos_for_mutation_response_empty_when_load_errors() {
+        let photos = photos_for_mutation_response(Err("db unavailable".into()), 42);
+        assert!(photos.is_empty());
+    }
+
+    #[test]
+    fn photos_for_mutation_response_returns_record_photos_on_success() {
+        let mut map = BTreeMap::new();
+        map.insert(42_i64, vec![json!({"id": 7})]);
+        let photos = photos_for_mutation_response(Ok(map), 42);
+        assert_eq!(photos.len(), 1);
+        assert_eq!(photos[0].get("id").and_then(|v| v.as_i64()), Some(7));
     }
 }
