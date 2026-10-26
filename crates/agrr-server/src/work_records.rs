@@ -570,4 +570,66 @@ mod tests {
         assert_eq!(photos.len(), 1);
         assert_eq!(photos[0].get("id").and_then(|v| v.as_i64()), Some(7));
     }
+
+    #[test]
+    fn photos_for_mutation_response_empty_when_record_missing_from_map() {
+        let photos = photos_for_mutation_response(Ok(BTreeMap::new()), 42);
+        assert!(photos.is_empty());
+    }
+
+    #[test]
+    fn map_mutation_outcome_maps_stale_to_409_stale_record() {
+        let result = map_mutation_outcome(
+            Some(MutationOutcome::<WorkRecordRead>::Stale),
+            |_: WorkRecordRead| json!({"ignored": true}),
+            StatusCode::OK,
+        );
+        let err = result.expect_err("stale update must not return success JSON");
+        assert_eq!(err.0, StatusCode::CONFLICT);
+        assert_eq!(
+            err.1
+                .get("errors")
+                .and_then(|v| v.get(0))
+                .and_then(|v| v.as_str()),
+            Some("stale_record")
+        );
+    }
+
+    #[test]
+    fn climate_snapshot_unavailable_response_maps_progress_execution_failed_to_500() {
+        let (status, body) = climate_snapshot_unavailable_response(
+            FieldCultivationClimateFailure::new(
+                FieldCultivationClimateFailureReason::ProgressExecutionFailed,
+                "agrr failed",
+            ),
+        );
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
+            Some("api.errors.climate_progress_execution_failed")
+        );
+        assert_eq!(
+            body.get("error_code").and_then(|v| v.as_str()),
+            Some("progress_execution_failed")
+        );
+    }
+
+    #[test]
+    fn climate_snapshot_unavailable_response_maps_crop_requirement_incomplete_to_422() {
+        let (status, body) = climate_snapshot_unavailable_response(
+            FieldCultivationClimateFailure::new(
+                FieldCultivationClimateFailureReason::CropRequirementIncomplete,
+                "missing stages",
+            ),
+        );
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
+            Some("api.errors.climate_crop_requirement_incomplete")
+        );
+        assert_eq!(
+            body.get("error_code").and_then(|v| v.as_str()),
+            Some("crop_requirement_incomplete")
+        );
+    }
 }
