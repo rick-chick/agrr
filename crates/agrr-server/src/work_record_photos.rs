@@ -490,3 +490,45 @@ async fn destroy_photo(
         None => Err(internal_error()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn photo_content_path_includes_plan_record_and_photo_ids() {
+        assert_eq!(
+            photo_content_path(9, 42, 7),
+            "/api/v1/plans/9/work_records/42/photos/7/content"
+        );
+    }
+
+    #[test]
+    fn parse_content_type_accepts_string_field() {
+        let body = BTreeMap::from([("content_type".into(), json!("image/jpeg"))]);
+        assert_eq!(parse_content_type(&body).as_deref(), Some("image/jpeg"));
+    }
+
+    #[test]
+    fn parse_content_type_rejects_missing_or_non_string() {
+        assert!(parse_content_type(&BTreeMap::new()).is_none());
+        let body = BTreeMap::from([("content_type".into(), json!(123))]);
+        assert!(parse_content_type(&body).is_none());
+    }
+
+    #[test]
+    fn parse_byte_size_accepts_number_or_numeric_string() {
+        let from_number = BTreeMap::from([("byte_size".into(), json!(1024))]);
+        assert_eq!(parse_byte_size(&from_number), Some(1024));
+        let from_string = BTreeMap::from([("byte_size".into(), json!("2048"))]);
+        assert_eq!(parse_byte_size(&from_string), Some(2048));
+    }
+
+    #[test]
+    fn parse_byte_size_rejects_invalid_values() {
+        assert!(parse_byte_size(&BTreeMap::new()).is_none());
+        let body = BTreeMap::from([("byte_size".into(), json!("not-a-number"))]);
+        assert!(parse_byte_size(&body).is_none());
+    }
+}
