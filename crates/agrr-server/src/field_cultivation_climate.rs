@@ -291,4 +291,63 @@ mod tests {
         assert!(body.get("error").is_none());
         assert!(body.get("message").is_none());
     }
+
+    #[test]
+    fn climate_failure_response_maps_progress_result_invalid_to_500() {
+        let (status, body) = climate_failure_response(FieldCultivationClimateFailure::new(
+            FieldCultivationClimateFailureReason::ProgressResultInvalid,
+            "empty progress records",
+        ));
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
+            Some("api.errors.climate_progress_result_invalid")
+        );
+        assert_eq!(
+            body.get("error_code").and_then(|v| v.as_str()),
+            Some("progress_result_invalid")
+        );
+    }
+
+    // Locks legacy `on_error` path until typed failures replace string-based status (docs/spec-defects/05 §3.A-6).
+    #[test]
+    fn status_for_message_maps_cultivation_period_errors_to_400() {
+        assert_eq!(
+            status_for_message("missing cultivation period for field"),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            status_for_message("栽培期間が未設定です"),
+            StatusCode::BAD_REQUEST
+        );
+    }
+
+    #[test]
+    fn status_for_message_treats_no_cultivation_period_key_as_500() {
+        assert_eq!(
+            status_for_message("api.errors.no_cultivation_period"),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+    }
+
+    #[test]
+    fn status_for_message_maps_not_found_phrases_to_404() {
+        assert_eq!(
+            status_for_message("field cultivation not found"),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            status_for_message("api.errors.weather_missing"),
+            StatusCode::NOT_FOUND
+        );
+    }
+
+    #[test]
+    fn status_for_message_defaults_unknown_messages_to_500() {
+        assert_eq!(
+            status_for_message("api.errors.climate_progress_unavailable"),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+        assert_eq!(status_for_message("Forbidden"), StatusCode::INTERNAL_SERVER_ERROR);
+    }
 }
