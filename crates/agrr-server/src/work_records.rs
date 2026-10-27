@@ -632,4 +632,79 @@ mod tests {
             Some("crop_requirement_incomplete")
         );
     }
+
+    #[test]
+    fn climate_snapshot_unavailable_response_maps_progress_result_invalid_to_500() {
+        let (status, body) = climate_snapshot_unavailable_response(
+            FieldCultivationClimateFailure::new(
+                FieldCultivationClimateFailureReason::ProgressResultInvalid,
+                "empty progress records",
+            ),
+        );
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            body.get("errors").and_then(|v| v.get(0)).and_then(|v| v.as_str()),
+            Some("api.errors.climate_progress_result_invalid")
+        );
+        assert_eq!(
+            body.get("error_code").and_then(|v| v.as_str()),
+            Some("progress_result_invalid")
+        );
+    }
+
+    #[test]
+    fn map_mutation_outcome_maps_not_found_to_plan_not_found() {
+        let result = map_mutation_outcome(
+            Some(MutationOutcome::<WorkRecordRead>::NotFound),
+            |_: WorkRecordRead| json!({"ignored": true}),
+            StatusCode::OK,
+        );
+        let err = result.expect_err("not found must not return success JSON");
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+        assert_eq!(
+            err.1
+                .get("errors")
+                .and_then(|v| v.get(0))
+                .and_then(|v| v.as_str()),
+            Some("plans.errors.not_found")
+        );
+    }
+
+    #[test]
+    fn map_mutation_outcome_maps_record_invalid_to_field_errors() {
+        let errors = BTreeMap::from([("name".into(), vec!["blank".into()])]);
+        let result = map_mutation_outcome(
+            Some(MutationOutcome::<WorkRecordRead>::RecordInvalid(errors)),
+            |_: WorkRecordRead| json!({"ignored": true}),
+            StatusCode::CREATED,
+        );
+        let err = result.expect_err("validation failure must not return success JSON");
+        assert_eq!(err.0, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            err.1
+                .get("errors")
+                .and_then(|v| v.get("name"))
+                .and_then(|v| v.get(0))
+                .and_then(|v| v.as_str()),
+            Some("blank")
+        );
+    }
+
+    #[test]
+    fn map_mutation_outcome_maps_missing_presenter_to_internal_error() {
+        let result = map_mutation_outcome(
+            None,
+            |_: WorkRecordRead| json!({"ignored": true}),
+            StatusCode::OK,
+        );
+        let err = result.expect_err("missing presenter must not return success JSON");
+        assert_eq!(err.0, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            err.1
+                .get("errors")
+                .and_then(|v| v.get(0))
+                .and_then(|v| v.as_str()),
+            Some("internal")
+        );
+    }
 }
