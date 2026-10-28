@@ -320,6 +320,10 @@ mod tests {
             status_for_message("栽培期間が未設定です"),
             StatusCode::BAD_REQUEST
         );
+        assert_eq!(
+            status_for_message("invalid start_date on field cultivation"),
+            StatusCode::BAD_REQUEST
+        );
     }
 
     #[test]

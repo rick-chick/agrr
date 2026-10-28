@@ -325,6 +325,21 @@ fn map_mutation_outcome<T>(
     }
 }
 
+fn map_destroy_outcome(
+    outcome: Option<DestroyOutcome>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    match outcome {
+        Some(DestroyOutcome::Success(undo)) => Ok(Json(undo)),
+        Some(DestroyOutcome::NotFound) => Err(not_found()),
+        Some(DestroyOutcome::RecordInvalid(errors)) => Err(record_invalid(errors)),
+        Some(DestroyOutcome::Failure(message)) => Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({"errors": [message]})),
+        )),
+        None => Err(internal_error()),
+    }
+}
+
 fn stale_conflict() -> (StatusCode, Json<Value>) {
     (
         StatusCode::CONFLICT,
@@ -481,16 +496,7 @@ async fn destroy_work_record(
         .call_rescuing(user_id, plan_id, record_id)
         .map_err(|_| internal_error())?;
 
-    match presenter.body {
-        Some(DestroyOutcome::Success(undo)) => Ok(Json(undo)),
-        Some(DestroyOutcome::NotFound) => Err(not_found()),
-        Some(DestroyOutcome::RecordInvalid(errors)) => Err(record_invalid(errors)),
-        Some(DestroyOutcome::Failure(message)) => Err((
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"errors": [message]})),
-        )),
-        None => Err(internal_error()),
-    }
+    map_destroy_outcome(presenter.body)
 }
 
 #[cfg(test)]
@@ -706,5 +712,78 @@ mod tests {
                 .and_then(|v| v.as_str()),
             Some("internal")
         );
+    }
+
+    #[test]
+    fn map_mutation_outcome_returns_success_status_and_json() {
+        let result = map_mutation_outcome(
+            Some(MutationOutcome::Success(WorkRecordRead {
+                id: 1,
+                cultivation_plan_id: 2,
+                field_cultivation_id: None,
+                task_schedule_item_id: None,
+                agricultural_task_id: None,
+                fertilize_id: None,
+                pesticide_id: None,
+                name: "task".into(),
+                task_type: None,
+                actual_date: time::Date::from_calendar_date(2026, time::Month::January, 1).unwrap(),
+                amount: None,
+                amount_unit: None,
+                time_spent_minutes: None,
+                notes: None,
+                gdd_at_actual: None,
+                weather_snapshot: None,
+                created_at: time::OffsetDateTime::UNIX_EPOCH,
+                updated_at: time::OffsetDateTime::UNIX_EPOCH,
+                field_name: None,
+                crop_name: None,
+                task_schedule_item: None,
+            })),
+            |_| json!({"work_record": {"id": 1}}),
+            StatusCode::CREATED,
+        );
+        let (status, Json(body)) = result.expect("success path must return JSON");
+        assert_eq!(status, StatusCode::CREATED);
+        assert_eq!(body["work_record"]["id"], 1);
+    }
+
+    // Locks destroy HTTP mapping (07 errors-array contract): domain failures vs validation vs not found.
+    #[test]
+    fn map_destroy_outcome_maps_destroy_failure_to_422_errors_array() {
+        let err = map_destroy_outcome(Some(DestroyOutcome::Failure(
+            "api.errors.work_record_destroy_blocked".into(),
+        )))
+        .expect_err("destroy failure must not return undo JSON");
+        assert_eq!(err.0, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            err.1
+                .get("errors")
+                .and_then(|v| v.get(0))
+                .and_then(|v| v.as_str()),
+            Some("api.errors.work_record_destroy_blocked")
+        );
+    }
+
+    #[test]
+    fn map_destroy_outcome_maps_not_found_to_plan_not_found() {
+        let err = map_destroy_outcome(Some(DestroyOutcome::NotFound))
+            .expect_err("not found must not return undo JSON");
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+        assert_eq!(
+            err.1
+                .get("errors")
+                .and_then(|v| v.get(0))
+                .and_then(|v| v.as_str()),
+            Some("plans.errors.not_found")
+        );
+    }
+
+    #[test]
+    fn map_destroy_outcome_returns_undo_json_on_success() {
+        let undo = json!({"undo": {"work_record_id": 9}});
+        let Json(body) = map_destroy_outcome(Some(DestroyOutcome::Success(undo.clone())))
+            .expect("success must return undo payload");
+        assert_eq!(body, undo);
     }
 }

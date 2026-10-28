@@ -311,7 +311,15 @@ mod tests {
             StatusCode::NOT_FOUND
         );
         assert_eq!(
+            preview_failure_status(PlanAllocationAdjustFailure::KIND_NO_WEATHER_LOCATION),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
             preview_failure_status(PlanAllocationAdjustFailure::KIND_INVALID_DATE),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            preview_failure_status(PlanAllocationAdjustFailure::KIND_CROP_MISSING_GROWTH_STAGES),
             StatusCode::BAD_REQUEST
         );
         assert_eq!(
