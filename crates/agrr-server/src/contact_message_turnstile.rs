@@ -296,4 +296,14 @@ mod tests {
         }
     }
 
+    #[test]
+    fn parse_verify_response_maps_malformed_json_to_unavailable() {
+        match TurnstileVerifier::parse_verify_response("not-json") {
+            CaptchaVerifyResult::Unavailable(message) => {
+                assert!(message.contains("Turnstile verification failed"), "{message}");
+            }
+            other => panic!("expected unavailable, got {other:?}"),
+        }
+    }
+
 }

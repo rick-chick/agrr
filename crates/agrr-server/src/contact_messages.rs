@@ -171,6 +171,17 @@ mod tests {
     }
 
     #[test]
+    fn failure_response_validation_returns_field_errors_shape() {
+        use agrr_domain::shared::validation::ValidationErrors;
+        let mut errors = ValidationErrors::new();
+        errors.add("email", "invalid");
+        let (status, Json(json)) =
+            failure_response(CreateContactMessageFailure::validation(errors));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(json["errors"][0], "invalid");
+    }
+
+    #[test]
     fn remote_ip_prefers_x_forwarded_for_first_hop() {
         let mut headers = HeaderMap::new();
         headers.insert(
