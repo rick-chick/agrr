@@ -786,4 +786,27 @@ mod tests {
             .expect("success must return undo payload");
         assert_eq!(body, undo);
     }
+
+    #[test]
+    fn map_destroy_outcome_maps_record_invalid_to_field_errors() {
+        let mut errors = BTreeMap::new();
+        errors.insert("base".into(), vec!["cannot destroy".into()]);
+        let err = map_destroy_outcome(Some(DestroyOutcome::RecordInvalid(errors)))
+            .expect_err("validation must not return undo JSON");
+        assert_eq!(err.0, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(err.1 .0["errors"]["base"][0], "cannot destroy");
+    }
+
+    #[test]
+    fn map_destroy_outcome_maps_missing_presenter_to_internal_error() {
+        let err = map_destroy_outcome(None).expect_err("missing presenter must not return undo JSON");
+        assert_eq!(err.0, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            err.1
+                .get("errors")
+                .and_then(|v| v.get(0))
+                .and_then(|v| v.as_str()),
+            Some("internal")
+        );
+    }
 }
