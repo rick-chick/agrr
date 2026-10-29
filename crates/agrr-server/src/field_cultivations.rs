@@ -325,3 +325,65 @@ async fn update_public_field_cultivation(
 
     map_update_outcome(presenter)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::StatusCode;
+    use serde_json::json;
+
+    #[test]
+    fn map_update_outcome_returns_success_json() {
+        let presenter = UpdatePresenter {
+            body: Some(UpdateOutcome::Success(json!({
+                "success": true,
+                "field_cultivation": {"id": 3}
+            }))),
+        };
+        let Json(body) = map_update_outcome(presenter).expect("success must return JSON");
+        assert_eq!(body["success"], true);
+        assert_eq!(body["field_cultivation"]["id"], 3);
+    }
+
+    #[test]
+    fn map_update_outcome_maps_forbidden_to_403() {
+        let presenter = UpdatePresenter {
+            body: Some(UpdateOutcome::Forbidden),
+        };
+        let err = map_update_outcome(presenter).expect_err("forbidden must not return success JSON");
+        assert_eq!(err.0, StatusCode::FORBIDDEN);
+        assert_eq!(err.1 .0["success"], false);
+        assert_eq!(err.1 .0["errors"][0], "forbidden");
+    }
+
+    #[test]
+    fn map_update_outcome_maps_not_found_message_to_errors_array() {
+        let presenter = UpdatePresenter {
+            body: Some(UpdateOutcome::NotFound("plans.errors.not_found".into())),
+        };
+        let err = map_update_outcome(presenter).expect_err("not found must not return success JSON");
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+        assert_eq!(err.1 .0["errors"][0], "plans.errors.not_found");
+    }
+
+    #[test]
+    fn map_update_outcome_maps_validation_to_422_with_messages() {
+        let presenter = UpdatePresenter {
+            body: Some(UpdateOutcome::Invalid(vec!["start_date invalid".into()])),
+        };
+        let err =
+            map_update_outcome(presenter).expect_err("validation must not return success JSON");
+        assert_eq!(err.0, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(err.1 .0["success"], false);
+        assert_eq!(err.1 .0["errors"][0], "start_date invalid");
+    }
+
+    #[test]
+    fn map_update_outcome_maps_missing_presenter_to_internal_error() {
+        let presenter = UpdatePresenter { body: None };
+        let err = map_update_outcome(presenter)
+            .expect_err("missing presenter must not return success JSON");
+        assert_eq!(err.0, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(err.1 .0["errors"][0], "no response");
+    }
+}

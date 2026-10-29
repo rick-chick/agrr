@@ -486,3 +486,72 @@ impl RegenerateTaskScheduleOutputPort for RegeneratePresenter {
         self.body = Some(RegenerateOutcome::NotFound);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::shared::attr::AttrValue;
+
+    #[test]
+    fn attrs_from_task_schedule_item_payload_maps_scalars_and_skips_arrays() {
+        let mut data = BTreeMap::new();
+        data.insert("name".into(), json!("till"));
+        data.insert("scheduled_date".into(), json!("2026-05-01"));
+        data.insert("skipped".into(), json!(true));
+        data.insert("priority".into(), json!(3));
+        data.insert("notes".into(), Value::Null);
+        data.insert("nested".into(), json!({"ignored": true}));
+
+        let attrs = attrs_from_task_schedule_item_payload(&data);
+        assert_eq!(attrs.get("name"), Some(&AttrValue::Str("till".into())));
+        assert_eq!(
+            attrs.get("scheduled_date"),
+            Some(&AttrValue::Str("2026-05-01".into()))
+        );
+        assert_eq!(attrs.get("skipped"), Some(&AttrValue::Bool(true)));
+        assert_eq!(attrs.get("priority"), Some(&AttrValue::Int(3)));
+        assert_eq!(attrs.get("notes"), Some(&AttrValue::Null));
+        assert!(attrs.get("nested").is_none());
+    }
+
+    #[test]
+    fn map_mutation_response_returns_item_json_with_requested_success_status() {
+        let item = json!({"id": 9, "name": "spray"});
+        let result = map_mutation_response(
+            Some(MutationOutcome::Success(item.clone())),
+            StatusCode::CREATED,
+        )
+        .expect("success path must return item JSON");
+        assert_eq!(result.0, StatusCode::CREATED);
+        assert_eq!(result.1 .0["item"], item);
+    }
+
+    #[test]
+    fn map_mutation_response_maps_not_found_to_plan_not_found() {
+        let err = map_mutation_response(Some(MutationOutcome::NotFound), StatusCode::OK)
+            .expect_err("not found must not return success JSON");
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+        assert_eq!(err.1 .0["errors"][0], "plans.errors.not_found");
+    }
+
+    #[test]
+    fn map_mutation_response_maps_record_invalid_to_field_errors_object() {
+        let mut errors = BTreeMap::new();
+        errors.insert("name".into(), vec!["blank".into()]);
+        let err = map_mutation_response(
+            Some(MutationOutcome::RecordInvalid(errors)),
+            StatusCode::OK,
+        )
+        .expect_err("validation failure must not return success JSON");
+        assert_eq!(err.0, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(err.1 .0["errors"]["name"][0], "blank");
+    }
+
+    #[test]
+    fn map_mutation_response_maps_missing_presenter_to_internal_error() {
+        let err = map_mutation_response(None, StatusCode::CREATED)
+            .expect_err("missing presenter must not return success JSON");
+        assert_eq!(err.0, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(err.1 .0["errors"][0], "no response");
+    }
+}
