@@ -822,3 +822,114 @@ mod add_crop_body_tests {
         assert_eq!(value_to_string(&json!("field-7")), "field-7");
     }
 }
+
+#[cfg(test)]
+mod plan_mutation_outcome_tests {
+    use super::{
+        map_add_crop_outcome, map_add_field_outcome, map_remove_field_outcome, adjust_failure_status,
+        normalize_moves, AddCropOutcome, AddFieldOutcome, RemoveFieldOutcome,
+    };
+    use agrr_domain::cultivation_plan::dtos::AddCropAdjustResult;
+    use agrr_domain::cultivation_plan::dtos::PlanAllocationAdjustFailure;
+    use axum::http::StatusCode;
+    use axum::Json;
+    use serde_json::json;
+
+    #[test]
+    fn map_add_crop_outcome_returns_success_json() {
+        let payload = json!({"success": true, "crop": {"id": 1}});
+        let Json(body) = map_add_crop_outcome(Some(AddCropOutcome::Success(payload.clone())))
+            .expect("success must return JSON");
+        assert_eq!(body, payload);
+    }
+
+    #[test]
+    fn map_add_crop_outcome_maps_forbidden_to_403() {
+        let err = map_add_crop_outcome(Some(AddCropOutcome::Forbidden))
+            .expect_err("forbidden must not return success JSON");
+        assert_eq!(err.0, StatusCode::FORBIDDEN);
+        assert_eq!(err.1 .0["errors"][0], "forbidden");
+    }
+
+    #[test]
+    fn map_add_crop_outcome_maps_prediction_incomplete_to_503_with_details() {
+        let err = map_add_crop_outcome(Some(AddCropOutcome::PredictionIncomplete(
+            "missing gdd".into(),
+        )))
+        .expect_err("prediction incomplete must not return success JSON");
+        assert_eq!(err.0, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(err.1 .0["errors"][0], "plans.errors.prediction_data_incomplete");
+        assert_eq!(err.1 .0["technical_details"], "missing gdd");
+    }
+
+    #[test]
+    fn map_add_crop_outcome_maps_adjust_failed_with_http_status() {
+        let adjust = AddCropAdjustResult {
+            success: false,
+            message: Some("daemon timeout".into()),
+            http_status: Some(504),
+        };
+        let err = map_add_crop_outcome(Some(AddCropOutcome::AdjustFailed(adjust)))
+            .expect_err("adjust failure must not return success JSON");
+        assert_eq!(err.0, StatusCode::GATEWAY_TIMEOUT);
+        assert_eq!(err.1 .0["errors"][0], "plans.gantt.adjust_failed");
+        assert_eq!(err.1 .0["technical_details"], "daemon timeout");
+    }
+
+    #[test]
+    fn map_add_crop_outcome_maps_missing_presenter_to_internal_error() {
+        let err = map_add_crop_outcome(None).expect_err("missing presenter must not succeed");
+        assert_eq!(err.0, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(err.1 .0["errors"][0], "no response");
+    }
+
+    #[test]
+    fn map_add_field_outcome_maps_max_fields_to_400() {
+        let err = map_add_field_outcome(Some(AddFieldOutcome::MaxFields))
+            .expect_err("max fields must not return success JSON");
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+        assert_eq!(err.1 .0["errors"][0], "plans.errors.max_fields_limit");
+    }
+
+    #[test]
+    fn map_add_field_outcome_maps_invalid_params_to_422() {
+        let err = map_add_field_outcome(Some(AddFieldOutcome::InvalidParams))
+            .expect_err("invalid params must not return success JSON");
+        assert_eq!(err.0, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(err.1 .0["errors"][0], "plans.errors.invalid_field_params");
+    }
+
+    #[test]
+    fn map_remove_field_outcome_maps_field_not_found_to_errors_key() {
+        let err = map_remove_field_outcome(Some(RemoveFieldOutcome::FieldNotFound))
+            .expect_err("field not found must not return success JSON");
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+        assert_eq!(err.1 .0["errors"][0], "plans.errors.field_not_found");
+    }
+
+    #[test]
+    fn adjust_failure_status_maps_forbidden_and_invalid_date() {
+        assert_eq!(
+            adjust_failure_status(PlanAllocationAdjustFailure::KIND_FORBIDDEN),
+            StatusCode::FORBIDDEN
+        );
+        assert_eq!(
+            adjust_failure_status(PlanAllocationAdjustFailure::KIND_INVALID_DATE),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            adjust_failure_status(PlanAllocationAdjustFailure::KIND_UNEXPECTED),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+    }
+
+    #[test]
+    fn normalize_moves_coerces_allocation_id_and_to_field_id() {
+        let moves = normalize_moves(vec![json!({
+            "allocation_id": 42u64,
+            "to_field_id": 7
+        })]);
+        assert_eq!(moves[0]["allocation_id"], 42);
+        assert_eq!(moves[0]["to_field_id"], "7");
+    }
+}

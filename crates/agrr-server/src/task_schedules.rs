@@ -387,7 +387,13 @@ async fn run_skip_mutation(
         ));
     }
 
-    match presenter.body {
+    map_skip_mutation_response(presenter.body)
+}
+
+fn map_skip_mutation_response(
+    outcome: Option<MutationOutcome>,
+) -> Result<Json<Value>, (axum::http::StatusCode, Json<Value>)> {
+    match outcome {
         Some(MutationOutcome::Success(item)) => Ok(Json(json!({ "item": item }))),
         Some(MutationOutcome::NotFound) => Err((
             axum::http::StatusCode::NOT_FOUND,
@@ -438,7 +444,13 @@ async fn regenerate_task_schedule(
         ));
     }
 
-    match presenter.body {
+    map_regenerate_task_schedule_response(presenter.body)
+}
+
+fn map_regenerate_task_schedule_response(
+    body: Option<RegenerateOutcome>,
+) -> Result<Json<Value>, (axum::http::StatusCode, Json<Value>)> {
+    match body {
         Some(RegenerateOutcome::Success(body)) => Ok(Json(body)),
         Some(RegenerateOutcome::NotFound) => Err((
             axum::http::StatusCode::NOT_FOUND,
@@ -553,5 +565,46 @@ mod tests {
             .expect_err("missing presenter must not return success JSON");
         assert_eq!(err.0, StatusCode::INTERNAL_SERVER_ERROR);
         assert_eq!(err.1 .0["errors"][0], "no response");
+    }
+
+    #[test]
+    fn map_skip_mutation_response_returns_item_json_on_success() {
+        let item = json!({"id": 2, "skipped": true});
+        let body = map_skip_mutation_response(Some(MutationOutcome::Success(item.clone())))
+            .expect("skip success must return item JSON");
+        assert_eq!(body["item"], item);
+    }
+
+    #[test]
+    fn map_skip_mutation_response_maps_record_invalid_to_field_errors_map() {
+        let mut errors = BTreeMap::new();
+        errors.insert("scheduled_date".into(), vec!["invalid".into()]);
+        let err = map_skip_mutation_response(Some(MutationOutcome::RecordInvalid(errors)))
+            .expect_err("validation must not return success JSON");
+        assert_eq!(err.0, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(err.1 .0["errors"]["scheduled_date"][0], "invalid");
+    }
+
+    #[test]
+    fn map_regenerate_task_schedule_response_returns_generating_sync_state() {
+        let body = json!({
+            "success": true,
+            "task_schedule_sync_state": task_schedule_sync_states::GENERATING,
+        });
+        let Json(out) = map_regenerate_task_schedule_response(Some(RegenerateOutcome::Success(body)))
+            .expect("regenerate success must return JSON");
+        assert_eq!(out["success"], true);
+        assert_eq!(
+            out["task_schedule_sync_state"],
+            task_schedule_sync_states::GENERATING
+        );
+    }
+
+    #[test]
+    fn map_regenerate_task_schedule_response_maps_not_found_to_plan_not_found() {
+        let err = map_regenerate_task_schedule_response(Some(RegenerateOutcome::NotFound))
+            .expect_err("not found must not return success JSON");
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+        assert_eq!(err.1 .0["errors"][0], "plans.errors.not_found");
     }
 }
