@@ -89,3 +89,28 @@ async fn restore(
 
     (presenter.status, Json(presenter.body))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn classify_restore_error_maps_not_found_to_404() {
+        let (status, msg) = classify_restore_error("Record not found");
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(msg, "Record not found");
+    }
+
+    #[test]
+    fn classify_restore_error_maps_expired_token_to_sanitized_message() {
+        let (status, msg) = classify_restore_error("undo token expired");
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(msg, "Undo token has expired");
+    }
+
+    #[test]
+    fn classify_restore_error_maps_conflict_to_409() {
+        let (status, _) = classify_restore_error("restore conflict");
+        assert_eq!(status, StatusCode::CONFLICT);
+    }
+}

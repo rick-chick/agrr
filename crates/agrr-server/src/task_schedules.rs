@@ -607,4 +607,20 @@ mod tests {
         assert_eq!(err.0, StatusCode::NOT_FOUND);
         assert_eq!(err.1 .0["errors"][0], "plans.errors.not_found");
     }
+
+    #[test]
+    fn map_regenerate_task_schedule_response_maps_missing_presenter_to_internal_error() {
+        let err = map_regenerate_task_schedule_response(None)
+            .expect_err("missing presenter must not return success JSON");
+        assert_eq!(err.0, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(err.1 .0["errors"][0], "no response");
+    }
+
+    #[test]
+    fn map_skip_mutation_response_maps_not_found_to_plan_not_found() {
+        let err = map_skip_mutation_response(Some(MutationOutcome::NotFound))
+            .expect_err("not found must not return success JSON");
+        assert_eq!(err.0, StatusCode::NOT_FOUND);
+        assert_eq!(err.1 .0["errors"][0], "plans.errors.not_found");
+    }
 }

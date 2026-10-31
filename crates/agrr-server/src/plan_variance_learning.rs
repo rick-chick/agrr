@@ -627,3 +627,79 @@ pub fn run_carryover_after_create(
         user_id,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::cultivation_plan::dtos::{
+        LearnHandoffStateRead, PlanVarianceLearningSnapshotRead,
+        ReorganizeOrchestrationProgressRead,
+    };
+
+    #[test]
+    fn parse_learn_handoff_patch_maps_null_post_master_payload_to_clear() {
+        let patch = parse_learn_handoff_patch(&json!({"post_master_payload": null}));
+        assert_eq!(patch.post_master_payload, Some(None));
+    }
+
+    #[test]
+    fn parse_learn_handoff_patch_ignores_non_object_input() {
+        let patch = parse_learn_handoff_patch(&json!([]));
+        assert!(!patch.has_updates());
+    }
+
+    #[test]
+    fn parse_learn_handoff_patch_extracts_blueprint_prefill_crop_and_body() {
+        let patch = parse_learn_handoff_patch(&json!({
+            "blueprint_prefill": {
+                "crop_id": 5,
+                "body": {"stage_count": 3}
+            }
+        }));
+        assert_eq!(patch.blueprint_prefill_crop_id, Some(5));
+        assert_eq!(
+            patch.blueprint_prefill_body,
+            Some(Some(json!({"stage_count": 3})))
+        );
+    }
+
+    #[test]
+    fn finalize_patch_response_maps_invalid_to_first_field_error() {
+        let mut errors = BTreeMap::new();
+        errors.insert("proposal_id".into(), vec!["taken".into()]);
+        let presenter = VarianceLearningUpdatePresenter {
+            body: Some(VarianceLearningUpdateOutcome::Invalid(
+                errors,
+                "fallback".into(),
+            )),
+        };
+        let err = finalize_patch_response(&presenter).expect_err("invalid patch");
+        assert_eq!(err.0, axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(err.1 .0["errors"][0], "taken");
+    }
+
+    #[test]
+    fn snapshot_to_json_includes_orchestration_progress_and_source_plan() {
+        let snapshot = PlanVarianceLearningSnapshotRead {
+            plan_id: 1,
+            source_plan_id: Some(2),
+            summary: None,
+            proposal_application_progress: BTreeMap::new(),
+            reorganize_orchestration_progress: ReorganizeOrchestrationProgressRead {
+                placement: true,
+                pipeline_active: true,
+                current_phase: "placement".into(),
+                ..Default::default()
+            },
+            learn_handoff: LearnHandoffStateRead::default(),
+        };
+        let body = snapshot_to_json(&snapshot);
+        assert_eq!(body["plan_id"], 1);
+        assert_eq!(body["source_plan_id"], 2);
+        assert_eq!(body["reorganize_orchestration_progress"]["placement"], true);
+        assert_eq!(
+            body["reorganize_orchestration_progress"]["current_phase"],
+            "placement"
+        );
+    }
+}
