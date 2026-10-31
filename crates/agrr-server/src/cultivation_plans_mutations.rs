@@ -932,4 +932,34 @@ mod plan_mutation_outcome_tests {
         assert_eq!(moves[0]["allocation_id"], 42);
         assert_eq!(moves[0]["to_field_id"], "7");
     }
+
+    #[test]
+    fn adjust_failure_status_maps_weather_and_crop_stage_kinds() {
+        assert_eq!(
+            adjust_failure_status(PlanAllocationAdjustFailure::KIND_NO_WEATHER_LOCATION),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            adjust_failure_status(PlanAllocationAdjustFailure::KIND_NOT_FOUND),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            adjust_failure_status(PlanAllocationAdjustFailure::KIND_CROP_MISSING_GROWTH_STAGES),
+            StatusCode::BAD_REQUEST
+        );
+    }
+
+    #[test]
+    fn normalize_moves_preserves_string_to_field_id() {
+        let moves = normalize_moves(vec![json!({"to_field_id": "field-north"})]);
+        assert_eq!(moves[0]["to_field_id"], "field-north");
+    }
+
+    #[test]
+    fn map_add_field_outcome_returns_success_json() {
+        let payload = json!({"success": true, "field": {"id": 3}});
+        let Json(body) = map_add_field_outcome(Some(AddFieldOutcome::Success(payload.clone())))
+            .expect("success must return JSON");
+        assert_eq!(body, payload);
+    }
 }

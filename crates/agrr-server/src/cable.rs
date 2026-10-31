@@ -671,6 +671,27 @@ mod cable_snapshot_tests {
         assert_eq!(None, parse_farm_id_from_identifier(&json!({})));
     }
 
+    #[test]
+    fn parse_plan_id_accepts_numeric_json_forms() {
+        assert_eq!(
+            Some(11),
+            parse_plan_id_from_identifier(&json!({ "cultivation_plan_id": 11 }))
+        );
+        assert_eq!(
+            Some(11),
+            parse_plan_id_from_identifier(&json!({ "cultivation_plan_id": "11" }))
+        );
+        assert_eq!(
+            Some(11),
+            parse_plan_id_from_identifier(&json!({ "cultivation_plan_id": 11.0 }))
+        );
+        assert_eq!(
+            None,
+            parse_plan_id_from_identifier(&json!({ "cultivation_plan_id": "bad" }))
+        );
+        assert_eq!(None, parse_plan_id_from_identifier(&json!({})));
+    }
+
     #[tokio::test]
     async fn cable_farm_refresh_broadcast_relays_to_subscriber() {
         let hub = Arc::new(CableHub::default());

@@ -714,3 +714,36 @@ fn membership_delete_failure(error: OrganizationMembershipDeleteFailure) -> (Sta
         ),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_role_trims_and_accepts_owner_and_member() {
+        assert_eq!(parse_role(" owner "), Some(OrganizationRole::Owner));
+        assert_eq!(parse_role("member"), Some(OrganizationRole::Member));
+        assert_eq!(parse_role("invalid"), None);
+    }
+
+    #[test]
+    fn delete_failure_maps_personal_org_forbidden_to_422() {
+        let (status, body) = delete_failure(OrganizationDeleteFailure::PersonalOrgForbidden);
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            body["errors"][0],
+            "organizations.personal_delete_forbidden"
+        );
+    }
+
+    #[test]
+    fn membership_update_failure_maps_last_owner_forbidden() {
+        let (status, body) =
+            membership_update_failure(OrganizationMembershipUpdateFailure::LastOwnerForbidden);
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            body["errors"][0],
+            "organizations.memberships.last_owner_forbidden"
+        );
+    }
+}
