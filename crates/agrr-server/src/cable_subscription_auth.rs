@@ -128,6 +128,12 @@ mod tests {
     }
 
     #[test]
+    fn plan_subscription_denies_unknown_channel() {
+        let plan = private_plan(1);
+        assert!(plan_subscription_denied("UnknownChannel", &plan, Some(&session(1))));
+    }
+
+    #[test]
     fn plans_optimization_channel_denies_without_session() {
         let plan = private_plan(1);
         assert!(plan_subscription_denied("PlansOptimizationChannel", &plan, None));

@@ -117,3 +117,84 @@ async fn save_plan(
     }
     (presenter.status, Json(presenter.body))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::cultivation_plan::dtos::PublicPlanSaveFailure;
+
+    #[test]
+    fn save_presenter_success_includes_plan_id_and_reused_flag() {
+        let mut presenter = SavePresenter {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            body: json!({}),
+        };
+        presenter.on_success(PublicPlanSaveSuccess::new(Some(99), true));
+        assert_eq!(presenter.status, StatusCode::OK);
+        assert_eq!(presenter.body["success"], true);
+        assert_eq!(presenter.body["cultivation_plan_id"], 99);
+        assert_eq!(presenter.body["plan_reused"], true);
+    }
+
+    #[test]
+    fn save_presenter_missing_plan_id_maps_to_400() {
+        let mut presenter = SavePresenter {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            body: json!({}),
+        };
+        presenter.on_failure(PublicPlanSaveFailure::new(
+            PublicPlanSaveFailure::KIND_MISSING_PLAN_ID,
+            None,
+        ));
+        assert_eq!(presenter.status, StatusCode::BAD_REQUEST);
+        assert_eq!(presenter.body["errors"][0], "plan_id is required");
+    }
+
+    #[test]
+    fn save_presenter_plan_not_found_maps_to_404() {
+        let mut presenter = SavePresenter {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            body: json!({}),
+        };
+        presenter.on_failure(PublicPlanSaveFailure::new(
+            PublicPlanSaveFailure::KIND_PLAN_NOT_FOUND,
+            None,
+        ));
+        assert_eq!(presenter.status, StatusCode::NOT_FOUND);
+        assert_eq!(presenter.body["errors"][0], "Plan not found");
+    }
+
+    #[test]
+    fn save_presenter_save_failed_uses_message_or_default() {
+        let mut presenter = SavePresenter {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            body: json!({}),
+        };
+        presenter.on_failure(PublicPlanSaveFailure::new(
+            PublicPlanSaveFailure::KIND_SAVE_FAILED,
+            Some("quota exceeded".into()),
+        ));
+        assert_eq!(presenter.status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(presenter.body["errors"][0], "quota exceeded");
+
+        presenter.on_failure(PublicPlanSaveFailure::new(
+            PublicPlanSaveFailure::KIND_SAVE_FAILED,
+            None,
+        ));
+        assert_eq!(presenter.body["errors"][0], "Save failed");
+    }
+
+    #[test]
+    fn save_presenter_unknown_kind_maps_to_internal_error() {
+        let mut presenter = SavePresenter {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            body: json!({}),
+        };
+        presenter.on_failure(PublicPlanSaveFailure::new(
+            PublicPlanSaveFailure::KIND_UNEXPECTED,
+            Some("db blew up".into()),
+        ));
+        assert_eq!(presenter.status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(presenter.body["errors"][0], "Internal server error");
+    }
+}

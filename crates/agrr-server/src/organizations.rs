@@ -746,4 +746,37 @@ mod tests {
             "organizations.memberships.last_owner_forbidden"
         );
     }
+
+    #[test]
+    fn find_failure_maps_not_found_to_404() {
+        let (status, body) = find_failure(OrganizationFindFailure::NotFound);
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "organization not found");
+    }
+
+    #[test]
+    fn membership_create_failure_maps_already_member_to_422() {
+        let (status, body) =
+            membership_create_failure(OrganizationMembershipCreateFailure::AlreadyMember);
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "organizations.memberships.already_member");
+    }
+
+    #[test]
+    fn membership_delete_failure_maps_last_owner_forbidden() {
+        let (status, body) =
+            membership_delete_failure(OrganizationMembershipDeleteFailure::LastOwnerForbidden);
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            body["errors"][0],
+            "organizations.memberships.last_owner_forbidden"
+        );
+    }
+
+    #[test]
+    fn delete_failure_maps_not_found_to_404() {
+        let (status, body) = delete_failure(OrganizationDeleteFailure::NotFound);
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "organization not found");
+    }
 }

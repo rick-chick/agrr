@@ -113,4 +113,18 @@ mod tests {
         let (status, _) = classify_restore_error("restore conflict");
         assert_eq!(status, StatusCode::CONFLICT);
     }
+
+    #[test]
+    fn classify_restore_error_maps_invalid_token_substring_to_sanitized_422() {
+        let (status, msg) = classify_restore_error("invalid undo token");
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(msg, "Undo token has expired");
+    }
+
+    #[test]
+    fn classify_restore_error_maps_unknown_message_to_500() {
+        let (status, msg) = classify_restore_error("database unavailable");
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(msg, "database unavailable");
+    }
 }
