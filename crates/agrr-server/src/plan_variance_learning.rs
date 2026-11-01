@@ -664,6 +664,33 @@ mod tests {
     }
 
     #[test]
+    fn finalize_patch_response_maps_not_found_to_404() {
+        let presenter = VarianceLearningUpdatePresenter {
+            body: Some(VarianceLearningUpdateOutcome::NotFound),
+        };
+        let err = finalize_patch_response(&presenter).expect_err("not found patch");
+        assert_eq!(err.0, axum::http::StatusCode::NOT_FOUND);
+        assert_eq!(err.1 .0["errors"][0], "not_found");
+    }
+
+    #[test]
+    fn finalize_patch_response_maps_success_to_snapshot_json() {
+        let snapshot = PlanVarianceLearningSnapshotRead {
+            plan_id: 3,
+            source_plan_id: None,
+            summary: None,
+            proposal_application_progress: BTreeMap::new(),
+            reorganize_orchestration_progress: ReorganizeOrchestrationProgressRead::default(),
+            learn_handoff: LearnHandoffStateRead::default(),
+        };
+        let presenter = VarianceLearningUpdatePresenter {
+            body: Some(VarianceLearningUpdateOutcome::Success(snapshot)),
+        };
+        let Json(body) = finalize_patch_response(&presenter).expect("success patch");
+        assert_eq!(body["plan_id"], 3);
+    }
+
+    #[test]
     fn finalize_patch_response_maps_invalid_to_first_field_error() {
         let mut errors = BTreeMap::new();
         errors.insert("proposal_id".into(), vec!["taken".into()]);
