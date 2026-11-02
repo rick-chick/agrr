@@ -133,3 +133,52 @@ fn internal_error() -> (StatusCode, Json<Value>) {
         Json(json!({ "errors": ["Internal server error"] })),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::shared::dtos::Error;
+    use agrr_domain::work_record::dtos::VariancePortfolioRow;
+    use agrr_domain::work_record::ports::VariancePortfolioOutputPort;
+
+    #[test]
+    fn list_presenter_maps_success_rows_to_items() {
+        let mut presenter = ListPresenter { body: None };
+        presenter.on_success(vec![VariancePortfolioRow {
+            farm_id: 3,
+            farm_name: "East".into(),
+            plan_id: 11,
+            plan_year: Some(2026),
+            status: "active".into(),
+            unrecorded_count: 2,
+            gdd_delay_count: 1,
+            threshold_exceeded_count: 0,
+            days_threshold_exceeded_count: 0,
+            carryover_not_imported: false,
+            weather_trigger_count: 4,
+        }]);
+
+        let rows = match presenter.body {
+            Some(Ok(rows)) => rows,
+            _ => panic!("expected success rows"),
+        };
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].farm_id, 3);
+        assert_eq!(rows[0].plan_id, 11);
+        assert_eq!(rows[0].weather_trigger_count, 4);
+    }
+
+    #[test]
+    fn list_presenter_on_failure_uses_422_status_code() {
+        let mut presenter = ListPresenter { body: None };
+        presenter.on_failure(Error::new("portfolio read failed"));
+
+        match presenter.body {
+            Some(Err((message, status))) => {
+                assert_eq!(message, "portfolio read failed");
+                assert_eq!(status, 422);
+            }
+            _ => panic!("expected failure"),
+        }
+    }
+}

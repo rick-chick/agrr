@@ -93,3 +93,47 @@ fn internal_error() -> (StatusCode, Json<Value>) {
         Json(json!({ "errors": ["Internal server error"] })),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::shared::dtos::Error;
+    use agrr_domain::work_record::dtos::WorkHubFarmRow;
+    use agrr_domain::work_record::ports::WorkHubListOutputPort;
+
+    #[test]
+    fn list_presenter_maps_success_rows_to_items() {
+        let mut presenter = ListPresenter { body: None };
+        presenter.on_success(vec![WorkHubFarmRow {
+            farm_id: 7,
+            farm_name: "North".into(),
+            field_count: 2,
+            total_area: 1.5,
+            has_valid_fields: true,
+            plan_id: Some(99),
+        }]);
+
+        let rows = match presenter.body {
+            Some(Ok(rows)) => rows,
+            _ => panic!("expected success rows"),
+        };
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].farm_id, 7);
+        assert_eq!(rows[0].farm_name, "North");
+        assert_eq!(rows[0].plan_id, Some(99));
+    }
+
+    #[test]
+    fn list_presenter_on_failure_uses_422_status_code() {
+        let mut presenter = ListPresenter { body: None };
+        presenter.on_failure(Error::new("hub unavailable"));
+
+        match presenter.body {
+            Some(Err((message, status))) => {
+                assert_eq!(message, "hub unavailable");
+                assert_eq!(status, 422);
+            }
+            _ => panic!("expected failure"),
+        }
+    }
+}

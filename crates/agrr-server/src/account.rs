@@ -185,7 +185,7 @@ async fn delete_account(
 mod tests {
     use super::*;
     use agrr_domain::user_account::dtos::{UserDataExport, UserDataExportFailure, UserExportSnapshot};
-    use agrr_domain::user_account::ports::UserDataExportOutputPort;
+    use agrr_domain::user_account::ports::{UserAccountDeleteOutputPort, UserDataExportOutputPort};
 
     fn sample_export() -> UserDataExport {
         UserDataExport {
@@ -238,5 +238,69 @@ mod tests {
         assert_eq!(err_body["errors"][0], "export_denied");
         assert!(err_body.get("error").is_none());
         assert!(err_body.get("message").is_none());
+    }
+
+    #[test]
+    fn delete_presenter_on_not_confirmed_returns_422_without_clearing_cookie() {
+        let body = Arc::new(Mutex::new(None));
+        let mut presenter = DeletePresenter { body: body.clone() };
+        presenter.on_not_confirmed();
+
+        let (status, Json(json), clear_cookie) = body
+            .lock()
+            .unwrap()
+            .take()
+            .expect("presenter wrote body");
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(json["errors"][0], "confirmation_required");
+        assert!(!clear_cookie);
+    }
+
+    #[test]
+    fn delete_presenter_on_failure_email_mismatch_is_422() {
+        let body = Arc::new(Mutex::new(None));
+        let mut presenter = DeletePresenter { body: body.clone() };
+        presenter.on_failure("Email confirmation does not match".into());
+
+        let (status, Json(json), clear_cookie) = body
+            .lock()
+            .unwrap()
+            .take()
+            .expect("presenter wrote body");
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(json["errors"][0], "Email confirmation does not match");
+        assert!(!clear_cookie);
+    }
+
+    #[test]
+    fn delete_presenter_on_failure_generic_is_500() {
+        let body = Arc::new(Mutex::new(None));
+        let mut presenter = DeletePresenter { body: body.clone() };
+        presenter.on_failure("database unavailable".into());
+
+        let (status, Json(json), clear_cookie) = body
+            .lock()
+            .unwrap()
+            .take()
+            .expect("presenter wrote body");
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(json["errors"][0], "database unavailable");
+        assert!(!clear_cookie);
+    }
+
+    #[test]
+    fn delete_presenter_on_success_clears_session_cookie() {
+        let body = Arc::new(Mutex::new(None));
+        let mut presenter = DeletePresenter { body: body.clone() };
+        presenter.on_success();
+
+        let (status, Json(json), clear_cookie) = body
+            .lock()
+            .unwrap()
+            .take()
+            .expect("presenter wrote body");
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(json["success"], true);
+        assert!(clear_cookie);
     }
 }
