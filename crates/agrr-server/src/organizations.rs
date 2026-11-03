@@ -779,4 +779,56 @@ mod tests {
         assert_eq!(status, StatusCode::NOT_FOUND);
         assert_eq!(body["errors"][0], "organization not found");
     }
+
+    #[test]
+    fn list_failure_maps_policy_denied_to_403() {
+        let (status, body) = list_failure(OrganizationListFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "organizations.flash.no_permission");
+    }
+
+    #[test]
+    fn create_failure_maps_policy_denied_to_403() {
+        let (status, body) = create_failure(CreateFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "organizations.flash.no_permission");
+    }
+
+    #[test]
+    fn update_failure_maps_not_found_to_404() {
+        let (status, body) = update_failure(UpdateFailure::NotFound);
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "organization not found");
+    }
+
+    #[test]
+    fn update_failure_maps_policy_denied_to_403() {
+        let (status, body) = update_failure(UpdateFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "organizations.flash.no_permission");
+    }
+
+    #[test]
+    fn membership_list_failure_maps_not_found_to_404() {
+        let (status, body) =
+            membership_list_failure(OrganizationMembershipListFailure::NotFound);
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "organization not found");
+    }
+
+    #[test]
+    fn membership_update_failure_maps_not_found_to_404() {
+        let (status, body) =
+            membership_update_failure(OrganizationMembershipUpdateFailure::NotFound);
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "membership not found");
+    }
+
+    #[test]
+    fn membership_delete_failure_maps_not_found_to_404() {
+        let (status, body) =
+            membership_delete_failure(OrganizationMembershipDeleteFailure::NotFound);
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "membership not found");
+    }
 }

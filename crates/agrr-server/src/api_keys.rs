@@ -89,3 +89,43 @@ async fn rotate(
     }
     Ok(response)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::api_keys::ports::UserApiKeyRotateOutputPort;
+
+    #[test]
+    fn rotate_presenter_on_success_returns_api_key_json() {
+        let body = Arc::new(Mutex::new(None));
+        let mut presenter = RotatePresenter { body: body.clone() };
+        presenter.on_success("secret-key".into());
+
+        let (status, Json(json)) = body.lock().unwrap().take().expect("presenter wrote body");
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(json["api_key"], "secret-key");
+        assert!(json.get("errors").is_none());
+    }
+
+    #[test]
+    fn rotate_presenter_on_failure_maps_not_found_to_404() {
+        let body = Arc::new(Mutex::new(None));
+        let mut presenter = RotatePresenter { body: body.clone() };
+        presenter.on_failure("user not found".into());
+
+        let (status, Json(json)) = body.lock().unwrap().take().expect("presenter wrote body");
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(json["errors"][0], "user not found");
+    }
+
+    #[test]
+    fn rotate_presenter_on_failure_maps_other_messages_to_422() {
+        let body = Arc::new(Mutex::new(None));
+        let mut presenter = RotatePresenter { body: body.clone() };
+        presenter.on_failure("rotation denied".into());
+
+        let (status, Json(json)) = body.lock().unwrap().take().expect("presenter wrote body");
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(json["errors"][0], "rotation denied");
+    }
+}
