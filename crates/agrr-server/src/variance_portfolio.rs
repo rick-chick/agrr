@@ -133,3 +133,56 @@ fn internal_error() -> (StatusCode, Json<Value>) {
         Json(json!({ "errors": ["Internal server error"] })),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::shared::dtos::Error;
+    use agrr_domain::work_record::dtos::VariancePortfolioRow;
+    use agrr_domain::work_record::ports::VariancePortfolioOutputPort;
+
+    #[test]
+    fn list_presenter_on_success_maps_variance_counts() {
+        let mut presenter = ListPresenter { body: None };
+        presenter.on_success(vec![VariancePortfolioRow {
+            farm_id: 1,
+            farm_name: "Farm".into(),
+            plan_id: 10,
+            plan_year: Some(2026),
+            status: "active".into(),
+            unrecorded_count: 2,
+            gdd_delay_count: 1,
+            threshold_exceeded_count: 3,
+            days_threshold_exceeded_count: 4,
+            carryover_not_imported: true,
+            weather_trigger_count: 5,
+        }]);
+
+        let rows = presenter.body.expect("body set").expect("success");
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].farm_id, 1);
+        assert_eq!(rows[0].plan_id, 10);
+        assert_eq!(rows[0].plan_year, Some(2026));
+        assert_eq!(rows[0].unrecorded_count, 2);
+        assert_eq!(rows[0].gdd_delay_count, 1);
+        assert_eq!(rows[0].threshold_exceeded_count, 3);
+        assert_eq!(rows[0].days_threshold_exceeded_count, 4);
+        assert!(rows[0].carryover_not_imported);
+        assert_eq!(rows[0].weather_trigger_count, 5);
+    }
+
+    #[test]
+    fn list_presenter_on_failure_uses_422() {
+        let mut presenter = ListPresenter { body: None };
+        presenter.on_failure(Error::new("variance_load_failed"));
+
+        match presenter.body {
+            Some(Err((message, status))) => {
+                assert_eq!(status, 422);
+                assert_eq!(message, "variance_load_failed");
+            }
+            Some(Ok(_)) => panic!("expected failure"),
+            None => panic!("expected body"),
+        }
+    }
+}
