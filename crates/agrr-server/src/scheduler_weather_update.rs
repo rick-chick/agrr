@@ -208,3 +208,25 @@ pub fn trigger_scheduler_weather_update(state: &AppState) -> Response {
                 .into_response()
         })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::internal_jobs::ports::SchedulerWeatherUpdateTriggerOutputPort;
+
+    #[test]
+    fn trigger_presenter_success_returns_ok_with_success_flag() {
+        let mut presenter = SchedulerWeatherUpdateTriggerApiPresenter::new();
+        presenter.on_success();
+        let response = presenter.response.expect("presenter wrote response");
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[test]
+    fn trigger_presenter_failure_returns_internal_error_json() {
+        let mut presenter = SchedulerWeatherUpdateTriggerApiPresenter::new();
+        presenter.on_failure(SchedulerWeatherUpdateTriggerFailure::new("enqueue failed"));
+        let response = presenter.response.expect("presenter wrote response");
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    }
+}
