@@ -52,7 +52,7 @@ pub fn routes() -> Router<AppState> {
             get(show_plan).delete(destroy_plan),
         )
 }
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 struct PlanListItem {
     id: i64,
     name: String,
@@ -62,7 +62,7 @@ struct PlanListItem {
     plan_year: Option<i32>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 struct PlanShowItem {
     id: i64,
     name: String,
@@ -98,6 +98,7 @@ struct ShowPresenter {
     body: Option<ShowOutcome>,
 }
 
+#[derive(Debug)]
 enum ShowOutcome {
     Success(PlanShowItem),
     NotFound,
@@ -239,6 +240,7 @@ struct CreatePresenter {
     body: Option<CreateOutcome>,
 }
 
+#[derive(Debug)]
 enum CreateOutcome {
     Success(i64),
     Failure { status: StatusCode, message: String },
@@ -433,6 +435,7 @@ struct DestroyPresenter {
     body: Option<DestroyOutcome>,
 }
 
+#[derive(Debug)]
 enum DestroyOutcome {
     Success(Value),
     Failure { status: StatusCode, message: String },
@@ -512,5 +515,211 @@ async fn destroy_plan(
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"errors": ["no response"]})),
         )),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::cultivation_plan::dtos::{
+        CultivationPlanDestroyOutput, PrivateCultivationPlanDetail,
+        PrivatePlanIndexPlanRow, PrivatePlanInitializeFromSelectionFailure,
+        PrivatePlanInitializeFromSelectionOutput,
+    };
+    use agrr_domain::cultivation_plan::ports::{
+        CultivationPlanDestroyOutputPort, PrivateOwnedPlanDetailOutputPort,
+        PrivateOwnedPlansListOutputPort, PrivatePlanInitializeFromSelectionOutputPort,
+    };
+    use agrr_domain::shared::dtos::Error;
+
+    #[test]
+    fn list_presenter_maps_index_rows_to_api_items() {
+        let mut presenter = ListPresenter { body: None };
+        presenter.on_success(vec![PrivatePlanIndexPlanRow {
+            id: 9,
+            farm_id: 2,
+            farm_display_name: "North".into(),
+            total_area: 1.0,
+            crops_count: 0,
+            fields_count: 1,
+            status: "pending".into(),
+            display_name: "2026 plan".into(),
+            created_at: "2026-01-01".into(),
+            plan_year: Some(2026),
+        }]);
+
+        let items = presenter.body.expect("presenter wrote body").expect("success");
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].id, 9);
+        assert_eq!(items[0].farm_name, "North");
+        assert_eq!(items[0].plan_year, Some(2026));
+    }
+
+    #[test]
+    fn list_presenter_failure_maps_to_422_message() {
+        let mut presenter = ListPresenter { body: None };
+        presenter.on_failure(Error {
+            message: "list denied".into(),
+        });
+        let err = presenter.body.expect("presenter wrote body").expect_err("failure");
+        assert_eq!(err.0, "list denied");
+        assert_eq!(err.1, 422);
+    }
+
+    #[test]
+    fn show_presenter_maps_not_found() {
+        let mut presenter = ShowPresenter { body: None };
+        presenter.on_not_found();
+        assert!(matches!(
+            presenter.body,
+            Some(ShowOutcome::NotFound)
+        ));
+    }
+
+    #[test]
+    fn show_presenter_maps_success() {
+        let mut presenter = ShowPresenter { body: None };
+        presenter.on_success(PrivateCultivationPlanDetail {
+            id: 3,
+            display_name: "Plan A".into(),
+            farm_display_name: "Farm".into(),
+            total_area: 0.0,
+            field_cultivations_count: 0,
+            cultivation_plan_fields_count: 0,
+            planning_start_date: None,
+            planning_end_date: None,
+            status: "completed".into(),
+            field_cultivations: vec![],
+            cultivation_plan_fields: vec![],
+            palette_used_crop_ids: vec![],
+            palette_crops: vec![],
+        });
+        match presenter.body {
+            Some(ShowOutcome::Success(item)) => {
+                assert_eq!(item.id, 3);
+                assert_eq!(item.name, "Plan A");
+                assert_eq!(item.status, "completed");
+            }
+            other => panic!("expected success, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn show_presenter_maps_failure_message() {
+        let mut presenter = ShowPresenter { body: None };
+        presenter.on_failure(Error {
+            message: "show failed".into(),
+        });
+        match presenter.body {
+            Some(ShowOutcome::Failure(msg)) => assert_eq!(msg, "show failed"),
+            other => panic!("expected failure, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn create_presenter_maps_not_found_to_404() {
+        let mut presenter = CreatePresenter { body: None };
+        presenter.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
+            PrivatePlanInitializeFromSelectionFailure::HTTP_NOT_FOUND,
+            "farm missing",
+        ));
+        match presenter.body {
+            Some(CreateOutcome::Failure { status, message }) => {
+                assert_eq!(status, StatusCode::NOT_FOUND);
+                assert_eq!(message, "farm missing");
+            }
+            other => panic!("expected failure, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn create_presenter_maps_unprocessable_to_422() {
+        let mut presenter = CreatePresenter { body: None };
+        presenter.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
+            PrivatePlanInitializeFromSelectionFailure::HTTP_UNPROCESSABLE_ENTITY,
+            "not ready",
+        ));
+        match presenter.body {
+            Some(CreateOutcome::Failure { status, message }) => {
+                assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+                assert_eq!(message, "not ready");
+            }
+            other => panic!("expected failure, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn create_presenter_maps_unknown_http_status_to_500() {
+        let mut presenter = CreatePresenter { body: None };
+        presenter.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
+            "internal_server_error",
+            "boom",
+        ));
+        match presenter.body {
+            Some(CreateOutcome::Failure { status, message }) => {
+                assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+                assert_eq!(message, "boom");
+            }
+            other => panic!("expected failure, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn create_presenter_success_records_plan_id() {
+        let mut presenter = CreatePresenter { body: None };
+        presenter.on_success(PrivatePlanInitializeFromSelectionOutput { id: 55 });
+        match presenter.body {
+            Some(CreateOutcome::Success(id)) => assert_eq!(id, 55),
+            other => panic!("expected success, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn destroy_presenter_maps_not_found_to_404() {
+        let mut presenter = DestroyPresenter { body: None };
+        presenter.on_not_found();
+        match presenter.body {
+            Some(DestroyOutcome::Failure { status, message }) => {
+                assert_eq!(status, StatusCode::NOT_FOUND);
+                assert_eq!(message, "Plan not found");
+            }
+            other => panic!("expected failure, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn destroy_presenter_success_includes_undo_payload_and_defaults() {
+        let mut presenter = DestroyPresenter { body: None };
+        presenter.on_success(CultivationPlanDestroyOutput::new(json!({
+            "undo_token": "tok",
+            "undo_deadline": "2026-12-31T00:00:00Z",
+            "toast_message": "deleted",
+            "resource": "plan",
+            "resource_dom_id": "plan-1"
+        })));
+        match presenter.body {
+            Some(DestroyOutcome::Success(body)) => {
+                assert_eq!(body["undo_token"], "tok");
+                assert_eq!(body["redirect_path"], "/plans");
+                assert_eq!(body["undo_path"], "/undo_deletion");
+                assert_eq!(body["auto_hide_after"], 5);
+            }
+            other => panic!("expected success, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn destroy_presenter_failure_maps_to_422() {
+        let mut presenter = DestroyPresenter { body: None };
+        presenter.on_failure(Error {
+            message: "destroy blocked".into(),
+        });
+        match presenter.body {
+            Some(DestroyOutcome::Failure { status, message }) => {
+                assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+                assert_eq!(message, "destroy blocked");
+            }
+            other => panic!("expected failure, got {other:?}"),
+        }
     }
 }
