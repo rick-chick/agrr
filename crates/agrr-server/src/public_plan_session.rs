@@ -88,4 +88,14 @@ mod tests {
         let auth = public_mutation_auth(&headers, &CookieJar::new());
         assert_eq!(auth.public_session_id.as_deref(), Some("sess-42"));
     }
+
+    #[test]
+    fn public_mutation_auth_defaults_empty_session_when_absent() {
+        let auth = public_mutation_auth(&HeaderMap::new(), &CookieJar::new());
+        assert_eq!(
+            auth.public_session_id.as_deref(),
+            Some(""),
+            "missing session must stay empty-string auth until fail-closed fix"
+        );
+    }
 }
