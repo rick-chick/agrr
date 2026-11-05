@@ -31,6 +31,7 @@ struct DataPresenter {
     body: Option<DataOutcome>,
 }
 
+#[derive(Debug)]
 enum DataOutcome {
     Success(Value),
     NotFound,
@@ -104,5 +105,66 @@ async fn private_plan_data(
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"success": false, "errors": ["no response"]})),
         )),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::cultivation_plan::dtos::cultivation_plan_workbench::{
+        CultivationPlanWorkbenchPlanHeader, CultivationPlanWorkbenchSnapshot,
+    };
+
+    #[test]
+    fn data_presenter_maps_not_found() {
+        let mut presenter = DataPresenter { body: None };
+        presenter.on_not_found();
+        assert!(matches!(presenter.body, Some(DataOutcome::NotFound)));
+    }
+
+    #[test]
+    fn data_presenter_maps_unexpected_message() {
+        let mut presenter = DataPresenter { body: None };
+        presenter.on_unexpected("load failed");
+        match presenter.body {
+            Some(DataOutcome::Unexpected(msg)) => assert_eq!(msg, "load failed"),
+            other => panic!("expected unexpected, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn data_presenter_success_uses_workbench_payload_shape() {
+        let mut presenter = DataPresenter { body: None };
+        presenter.on_success(CultivationPlanWorkbenchSnapshot {
+            plan: CultivationPlanWorkbenchPlanHeader {
+                id: 9,
+                user_id: Some(1),
+                plan_year: Some(2026),
+                plan_name: Some("Plan".into()),
+                plan_type: "private".into(),
+                status: "completed".into(),
+                total_area: 100.0,
+                planning_start_date: Some("2026-01-01".into()),
+                planning_end_date: Some("2026-12-31".into()),
+                total_profit: 1.0,
+                total_revenue: 2.0,
+                total_cost: 1.0,
+            },
+            fields: vec![json!({"id": 1})],
+            crops: vec![],
+            cultivations: vec![],
+            available_crop_rows: vec![],
+            farm_region: "jp".into(),
+        });
+
+        match presenter.body {
+            Some(DataOutcome::Success(body)) => {
+                assert_eq!(body["success"], true);
+                assert_eq!(body["data"]["id"], 9);
+                assert_eq!(body["data"]["plan_name"], "Plan");
+                assert_eq!(body["total_profit"], 1.0);
+            }
+            other => panic!("expected success body, got {other:?}"),
+        }
     }
 }

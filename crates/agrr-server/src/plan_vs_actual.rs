@@ -38,6 +38,7 @@ struct SummaryPresenter {
     body: Option<SummaryOutcome>,
 }
 
+#[derive(Debug)]
 enum SummaryOutcome {
     Success(PlanVsActualSummaryRead),
     NotFound,
@@ -108,6 +109,70 @@ async fn show_plan_vs_actual_summary(
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({"errors": ["internal_error"]})),
             ))
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::cultivation_plan::dtos::{
+        PlanVsActualCategorySummaryRead, PlanVsActualSummaryRead,
+    };
+    use agrr_domain::shared::dtos::Error;
+
+    fn empty_summary(plan_id: i64) -> PlanVsActualSummaryRead {
+        PlanVsActualSummaryRead {
+            plan_id,
+            unrecorded_count: 0,
+            structured_unrecorded_count: 0,
+            amount_variance_count: 0,
+            categories: vec![PlanVsActualCategorySummaryRead {
+                category: "general".into(),
+                average_delta_days: None,
+                item_count: 0,
+                recorded_count: 0,
+            }],
+            amount_group_summaries: vec![],
+            top_variance_items: vec![],
+            stage_gdd_calibration_proposals: vec![],
+            action_required_items: vec![],
+            blueprint_timing_adjustment_proposals: vec![],
+            blueprint_amount_adjustment_proposals: vec![],
+        }
+    }
+
+    // Locks docs/spec-defects/07 §3.7 / 10: interactor failures (including auth-shaped errors) become 404 not_found.
+    #[test]
+    fn summary_presenter_on_failure_maps_all_errors_to_not_found() {
+        let mut presenter = SummaryPresenter { body: None };
+        presenter.on_failure(Error::new("plans.errors.not_found"));
+        assert!(matches!(
+            presenter.body,
+            Some(SummaryOutcome::NotFound)
+        ));
+
+        let mut presenter = SummaryPresenter { body: None };
+        presenter.on_failure(Error::new("forbidden"));
+        assert!(matches!(
+            presenter.body,
+            Some(SummaryOutcome::NotFound)
+        ));
+    }
+
+    #[test]
+    fn summary_presenter_on_success_preserves_summary_for_json_mapping() {
+        let mut presenter = SummaryPresenter { body: None };
+        let dto = empty_summary(42);
+        presenter.on_success(dto.clone());
+
+        match presenter.body {
+            Some(SummaryOutcome::Success(read)) => {
+                assert_eq!(read.plan_id, 42);
+                let body = summary_to_json_body(read);
+                assert_eq!(body["plan_id"].as_i64(), Some(42));
+            }
+            other => panic!("expected success, got {other:?}"),
         }
     }
 }
