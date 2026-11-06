@@ -42,3 +42,12 @@ pub fn organization_member_access(
     }
     record_organization_id.is_some_and(|id| member_organization_ids.contains(&id))
 }
+
+#[cfg(test)]
+mod org_scope_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/shared/org_scope_test.rs"
+    ));
+}
