@@ -162,3 +162,38 @@ fn internal_error() -> (StatusCode, Json<Value>) {
         Json(single_failure("internal")),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::shared::dtos::Error;
+    use agrr_domain::shared::policies::policy_permission_denied::PolicyPermissionDenied;
+
+    #[test]
+    fn temperature_chart_failure_maps_policy_denied_to_404() {
+        let (status, body) =
+            temperature_chart_failure(TemperatureChartFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "not_found");
+    }
+
+    #[test]
+    fn temperature_chart_failure_maps_weather_not_ready_to_409() {
+        let (status, body) = temperature_chart_failure(TemperatureChartFailure::WeatherNotReady {
+            status: "fetching".into(),
+            progress: 42,
+        });
+        assert_eq!(status, StatusCode::CONFLICT);
+        assert_eq!(body["errors"][0], "weather_data_not_ready");
+        assert_eq!(body["weather_data_status"], "fetching");
+        assert_eq!(body["weather_data_progress"], 42);
+    }
+
+    #[test]
+    fn temperature_chart_failure_maps_not_found_message() {
+        let (status, body) =
+            temperature_chart_failure(TemperatureChartFailure::NotFound(Error::new("missing farm")));
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "missing farm");
+    }
+}
