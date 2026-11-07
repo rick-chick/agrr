@@ -448,3 +448,54 @@ fn destroy_failure(error: DestroyFailure) -> (StatusCode, Value) {
         DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"errors": [e.message]})),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::farm::dtos::FarmCreateLimitExceededFailure;
+    use agrr_domain::shared::dtos::Error;
+
+    #[test]
+    fn list_failure_maps_policy_denied_to_403() {
+        let (status, body) = list_failure(ListFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "farms.flash.no_permission");
+    }
+
+    #[test]
+    fn detail_failure_maps_policy_denied_to_403() {
+        let (status, body) = detail_failure(DetailFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "farms.flash.no_permission");
+    }
+
+    #[test]
+    fn detail_failure_maps_not_found_to_404() {
+        let (status, body) = detail_failure(DetailFailure::Error(Error::new("farm not found")));
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "farm not found");
+    }
+
+    #[test]
+    fn create_failure_maps_limit_exceeded_to_422() {
+        let (status, body) = create_failure(CreateFailure::LimitExceeded(
+            FarmCreateLimitExceededFailure::new("farms.limit.exceeded"),
+        ));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "farms.limit.exceeded");
+    }
+
+    #[test]
+    fn update_failure_maps_policy_denied_to_403() {
+        let (status, body) = update_failure(UpdateFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "farms.flash.no_permission");
+    }
+
+    #[test]
+    fn destroy_failure_maps_policy_denied_to_403() {
+        let (status, body) = destroy_failure(DestroyFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "farms.flash.no_permission");
+    }
+}

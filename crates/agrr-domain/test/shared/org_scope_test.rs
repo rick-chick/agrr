@@ -93,6 +93,18 @@
     }
 
     #[test]
+    fn resolve_creation_organization_id_propagates_personal_org_error() {
+        let scope = TestScopeGateway {
+            result: Ok(vec![]),
+        };
+        let personal = TestPersonalOrgGateway {
+            ensure_result: Err("ensure failed"),
+        };
+        let err = resolve_creation_organization_id(&scope, &personal, 7).expect_err("err");
+        assert_eq!(err.to_string(), "ensure failed");
+    }
+
+    #[test]
     fn member_organization_ids_delegates_to_gateway() {
         let scope = TestScopeGateway {
             result: Ok(vec![1, 2]),

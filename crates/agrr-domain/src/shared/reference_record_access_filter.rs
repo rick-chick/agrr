@@ -74,3 +74,69 @@ impl<P: RecordAccessPolicy> ReferenceRecordAccessFilter<P> {
         )
     }
 }
+
+#[cfg(test)]
+mod reference_record_access_filter_test_inline {
+    use super::*;
+    use crate::shared::user::User;
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    struct OwnerOnlyPolicy;
+
+    impl RecordAccessPolicy for OwnerOnlyPolicy {
+        fn view_allowed(user: &User, is_reference: bool, record_user_id: Option<i64>) -> bool {
+            user.admin || is_reference || record_user_id == Some(user.id)
+        }
+
+        fn edit_allowed(user: &User, is_reference: bool, record_user_id: Option<i64>) -> bool {
+            user.admin || (!is_reference && record_user_id == Some(user.id))
+        }
+
+        fn organization_member_edit_allowed() -> bool {
+            false
+        }
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    struct OrgMemberEditPolicy;
+
+    impl RecordAccessPolicy for OrgMemberEditPolicy {
+        fn view_allowed(user: &User, is_reference: bool, record_user_id: Option<i64>) -> bool {
+            OwnerOnlyPolicy::view_allowed(user, is_reference, record_user_id)
+        }
+
+        fn edit_allowed(user: &User, is_reference: bool, record_user_id: Option<i64>) -> bool {
+            OwnerOnlyPolicy::edit_allowed(user, is_reference, record_user_id)
+        }
+    }
+
+    #[test]
+    fn org_member_can_view_team_record_but_not_edit_when_org_edit_disabled() {
+        let filter = ReferenceRecordAccessFilter::<OwnerOnlyPolicy>::new(User::new(2, false), vec![10]);
+        assert!(filter.view_allows(false, Some(1), Some(10)));
+        assert!(!filter.edit_allows(false, Some(1), Some(10)));
+    }
+
+    #[test]
+    fn org_member_can_edit_team_record_when_org_edit_enabled() {
+        let filter =
+            ReferenceRecordAccessFilter::<OrgMemberEditPolicy>::new(User::new(2, false), vec![10]);
+        assert!(filter.view_allows(false, Some(1), Some(10)));
+        assert!(filter.edit_allows(false, Some(1), Some(10)));
+    }
+
+    #[test]
+    fn reference_records_never_gain_access_via_organization_membership() {
+        let filter =
+            ReferenceRecordAccessFilter::<OrgMemberEditPolicy>::new(User::new(2, false), vec![10]);
+        assert!(filter.view_allows(true, Some(1), Some(10)));
+        assert!(!filter.edit_allows(true, Some(1), Some(10)));
+    }
+
+    #[test]
+    fn admin_bypasses_owner_and_org_checks() {
+        let filter = ReferenceRecordAccessFilter::<OwnerOnlyPolicy>::new(User::new(99, true), vec![]);
+        assert!(filter.view_allows(false, Some(1), Some(10)));
+        assert!(filter.edit_allows(false, Some(1), Some(10)));
+    }
+}
