@@ -412,6 +412,81 @@ mod tests {
         (pool, file)
     }
 
+    use agrr_domain::crop::dtos::CropCreateLimitExceededFailure;
+    use agrr_domain::crop::ports::{CropUpdateOutputPort, UpdateFailure};
+    use agrr_domain::shared::dtos::{Error, ReferenceFlagChangeDeniedFailure};
+
+    #[test]
+    fn detail_failure_maps_policy_denied_to_403() {
+        let (status, body) = detail_failure(DetailFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "crops.flash.no_permission");
+    }
+
+    #[test]
+    fn detail_failure_maps_crop_not_found_to_404() {
+        let (status, body) = detail_failure(DetailFailure::Error(Error::new("Crop not found")));
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Crop not found");
+    }
+
+    #[test]
+    fn detail_failure_maps_other_error_to_422() {
+        let (status, body) = detail_failure(DetailFailure::Error(Error::new("db locked")));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "db locked");
+    }
+
+    #[test]
+    fn destroy_failure_maps_policy_denied_to_403() {
+        let (status, body) = destroy_failure(DestroyFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "crops.flash.no_permission");
+    }
+
+    #[test]
+    fn error_message_create_maps_limit_exceeded() {
+        let msg = error_message_create(&CreateFailure::LimitExceeded(
+            CropCreateLimitExceededFailure::new("crops.limit.exceeded"),
+        ));
+        assert_eq!(msg, "crops.limit.exceeded");
+    }
+
+    #[test]
+    fn update_presenter_maps_policy_denied_to_403() {
+        let mut presenter = UpdatePresenter { body: None };
+        presenter.on_failure(UpdateFailure::Policy(PolicyPermissionDenied));
+        let Err((status, body)) = presenter.body.expect("failure body") else {
+            panic!("expected failure");
+        };
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "crops.flash.no_permission");
+    }
+
+    #[test]
+    fn update_presenter_maps_reference_flag_change_to_422() {
+        let mut presenter = UpdatePresenter { body: None };
+        presenter.on_failure(UpdateFailure::ReferenceFlagChangeDenied(
+            ReferenceFlagChangeDeniedFailure::new("crops.flash.reference_flag_denied", 9),
+        ));
+        let Err((status, body)) = presenter.body.expect("failure body") else {
+            panic!("expected failure");
+        };
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "crops.flash.reference_flag_denied");
+    }
+
+    #[test]
+    fn update_presenter_maps_stale_update_to_409() {
+        let mut presenter = UpdatePresenter { body: None };
+        presenter.on_failure(UpdateFailure::StaleUpdate);
+        let Err((status, body)) = presenter.body.expect("failure body") else {
+            panic!("expected failure");
+        };
+        assert_eq!(status, StatusCode::CONFLICT);
+        assert_eq!(body["errors"][0], "stale_record");
+    }
+
     // Locks fail-open at show_crop (docs/spec-defects/06 item D): stages list Err → empty stages in JSON.
     #[test]
     fn show_crop_stages_empty_when_list_by_crop_id_fails() {
