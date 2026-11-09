@@ -361,3 +361,98 @@ fn internal_error() -> (StatusCode, Json<Value>) {
         Json(json!({"errors": ["internal"]})),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::field::dtos::FieldDetailFailure;
+    use agrr_domain::shared::dtos::Error;
+
+    #[test]
+    fn list_failure_maps_policy_denied_to_403() {
+        let (status, body) = list_failure(ListFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "fields.flash.no_permission");
+    }
+
+    #[test]
+    fn list_failure_maps_farm_not_found_to_404() {
+        let (status, body) = list_failure(ListFailure::Error(Error::new("Farm not found")));
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Farm not found");
+    }
+
+    #[test]
+    fn list_failure_maps_user_not_found_to_401() {
+        let (status, body) = list_failure(ListFailure::Error(Error::new("User not found")));
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert_eq!(body["errors"][0], "User not found");
+    }
+
+    #[test]
+    fn list_failure_maps_other_error_to_422() {
+        let (status, body) = list_failure(ListFailure::Error(Error::new("db locked")));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "db locked");
+    }
+
+    #[test]
+    fn detail_failure_maps_policy_denied_to_403() {
+        let (status, body) = detail_failure(DetailFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "fields.flash.no_permission");
+    }
+
+    #[test]
+    fn detail_failure_maps_field_not_found_to_404() {
+        let (status, body) = detail_failure(DetailFailure::FieldDetail(
+            FieldDetailFailure::new("Field not found", Some(1)),
+        ));
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Field not found");
+    }
+
+    #[test]
+    fn detail_failure_maps_other_field_detail_to_422() {
+        let (status, body) = detail_failure(DetailFailure::FieldDetail(
+            FieldDetailFailure::new("stale", None),
+        ));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "stale");
+    }
+
+    #[test]
+    fn create_failure_maps_policy_denied_to_403() {
+        let (status, body) = create_failure(CreateFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "fields.flash.no_permission");
+    }
+
+    #[test]
+    fn create_failure_maps_error_to_422() {
+        let (status, body) = create_failure(CreateFailure::Error(Error::new("limit")));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "limit");
+    }
+
+    #[test]
+    fn update_failure_maps_policy_denied_to_403() {
+        let (status, body) = update_failure(UpdateFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "fields.flash.no_permission");
+    }
+
+    #[test]
+    fn destroy_failure_maps_field_not_found_to_404() {
+        let (status, body) = destroy_failure(DestroyFailure::Error(Error::new("Field not found")));
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Field not found");
+    }
+
+    #[test]
+    fn destroy_failure_maps_policy_denied_to_403() {
+        let (status, body) = destroy_failure(DestroyFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "fields.flash.no_permission");
+    }
+}
