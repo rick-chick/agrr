@@ -258,15 +258,19 @@ impl PesticideUpdateOutputPort for UpdatePort {
             Some(Ok((StatusCode::OK, Json(pesticide_json(&entity)))));
     }
     fn on_failure(&mut self, failure: UpdateFailure) {
-        let (status, msg) = match failure {
-            UpdateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
-            UpdateFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
-            UpdateFailure::ReferenceFlag(_) => (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                "reference flag change denied".into(),
-            ),
-        };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
+        let (status, body) = update_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
+    }
+}
+
+fn update_failure(failure: UpdateFailure) -> (StatusCode, Value) {
+    match failure {
+        UpdateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, json!({"errors": [e.message]})),
+        UpdateFailure::Policy(_) => (StatusCode::FORBIDDEN, json!({"errors": ["forbidden"]})),
+        UpdateFailure::ReferenceFlag(_) => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({"errors": ["reference flag change denied"]}),
+        ),
     }
 }
 
@@ -345,4 +349,120 @@ async fn destroy(
         .call(id)
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     take_response(&out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::pesticide::dtos::PesticideDetailOutput;
+    use agrr_domain::pesticide::entities::{PesticideEntity, PesticideEntityAttrs};
+    use agrr_domain::shared::dtos::Error;
+    use agrr_domain::shared::dtos::ReferenceFlagChangeDeniedFailure;
+    use agrr_domain::shared::policies::policy_permission_denied::PolicyPermissionDenied;
+
+    fn sample_entity() -> PesticideEntity {
+        PesticideEntity::new(PesticideEntityAttrs {
+            id: 3,
+            user_id: Some(1),
+            name: "サンプル".into(),
+            active_ingredient: Some("有効成分".into()),
+            description: None,
+            crop_id: Some(10),
+            pest_id: Some(20),
+            region: Some("jp".into()),
+            is_reference: false,
+            created_at: "2020-01-01".into(),
+            updated_at: "2020-01-02".into(),
+        })
+        .expect("valid entity")
+    }
+
+    fn valid_attrs() -> PesticideAttrs {
+        PesticideAttrs {
+            name: Some("農薬".into()),
+            active_ingredient: None,
+            description: None,
+            crop_id: Some(json!("5")),
+            pest_id: Some(json!(6)),
+            region: None,
+            is_reference: None,
+        }
+    }
+
+    #[test]
+    fn parse_optional_id_accepts_number_string_and_rejects_invalid() {
+        assert_eq!(parse_optional_id(&Some(json!(42))), Some(42));
+        assert_eq!(parse_optional_id(&Some(json!("  7 "))), Some(7));
+        assert_eq!(parse_optional_id(&Some(json!(""))), None);
+        assert_eq!(parse_optional_id(&Some(json!("not-a-number"))), None);
+        assert_eq!(parse_optional_id(&Some(json!(null))), None);
+        assert_eq!(parse_optional_id(&None), None);
+        assert_eq!(parse_optional_id(&Some(json!([]))), None);
+    }
+
+    #[test]
+    fn valid_pesticide_create_attrs_requires_positive_ids_and_non_empty_name() {
+        assert!(valid_pesticide_create_attrs(&valid_attrs()));
+
+        let missing_name = PesticideAttrs {
+            name: Some("  ".into()),
+            active_ingredient: None,
+            description: None,
+            crop_id: Some(json!("5")),
+            pest_id: Some(json!(6)),
+            region: None,
+            is_reference: None,
+        };
+        assert!(!valid_pesticide_create_attrs(&missing_name));
+
+        let zero_crop = PesticideAttrs {
+            name: Some("農薬".into()),
+            active_ingredient: None,
+            description: None,
+            crop_id: Some(json!(0)),
+            pest_id: Some(json!(6)),
+            region: None,
+            is_reference: None,
+        };
+        assert!(!valid_pesticide_create_attrs(&zero_crop));
+    }
+
+    #[test]
+    fn pesticide_detail_json_includes_related_names() {
+        let entity = sample_entity();
+        let dto = PesticideDetailOutput::new(
+            entity,
+            Some("トマト".into()),
+            Some("アブラムシ".into()),
+            None,
+            None,
+        );
+        let value = pesticide_detail_json(&dto);
+        assert_eq!(value["crop_name"], "トマト");
+        assert_eq!(value["pest_name"], "アブラムシ");
+        assert_eq!(value["name"], "サンプル");
+    }
+
+    #[test]
+    fn update_failure_maps_reference_flag_to_422() {
+        let (status, body) = update_failure(UpdateFailure::ReferenceFlag(
+            ReferenceFlagChangeDeniedFailure::new("denied", 9),
+        ));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "reference flag change denied");
+    }
+
+    #[test]
+    fn update_failure_maps_policy_to_403() {
+        let (status, body) = update_failure(UpdateFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "forbidden");
+    }
+
+    #[test]
+    fn update_failure_maps_domain_error_to_422() {
+        let (status, body) = update_failure(UpdateFailure::Error(Error::new("stale")));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "stale");
+    }
 }
