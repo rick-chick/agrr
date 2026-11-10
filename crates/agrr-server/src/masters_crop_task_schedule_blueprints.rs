@@ -472,3 +472,62 @@ fn blueprint_failure_response(
         ),
     }
 }
+
+#[cfg(test)]
+mod failure_mapper_tests {
+    use super::*;
+    use agrr_domain::crop::dtos::{
+        CropBlueprintRegenerateFailure, MastersCropTaskScheduleBlueprintCreateFailure,
+        MastersCropTaskScheduleBlueprintFailure,
+    };
+
+    #[test]
+    fn create_failure_response_maps_crop_not_found_to_404_with_code() {
+        let (status, Json(body)) = create_failure_response(
+            MastersCropTaskScheduleBlueprintCreateFailure::new(
+                MastersCropTaskScheduleBlueprintCreateFailureReason::CropNotFound,
+            ),
+        );
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Crop not found");
+        assert_eq!(body["error_code"], "crop_not_found");
+    }
+
+    #[test]
+    fn create_failure_response_maps_validation_failed_to_422_with_errors() {
+        let (status, Json(body)) = create_failure_response(
+            MastersCropTaskScheduleBlueprintCreateFailure::validation_failed(vec![
+                "bad stage".into(),
+            ]),
+        );
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "bad stage");
+        assert_eq!(body["error_code"], "validation_failed");
+    }
+
+    #[test]
+    fn regenerate_failure_response_maps_ai_unavailable_to_503() {
+        let (status, Json(body)) = regenerate_failure_response(CropBlueprintRegenerateFailure::new(
+            CropBlueprintRegenerateFailureReason::AiUnavailable,
+            "AI offline",
+        ));
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(body["errors"][0], "AI offline");
+        assert_eq!(body["error_code"], "ai_unavailable");
+    }
+
+    #[test]
+    fn blueprint_failure_response_maps_duplicate_to_422_with_code() {
+        let (status, Json(body)) = blueprint_failure_response(
+            MastersCropTaskScheduleBlueprintFailure::new(
+                MastersCropTaskScheduleBlueprintFailureReason::Duplicate,
+            ),
+        );
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            body["errors"][0],
+            "A task plan for this stage, task, and GDD timing already exists"
+        );
+        assert_eq!(body["error_code"], "duplicate_blueprint");
+    }
+}
