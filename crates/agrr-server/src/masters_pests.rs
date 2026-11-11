@@ -12,8 +12,9 @@ use agrr_domain::pest::interactors::{
     PestUpdateInteractor,
 };
 use agrr_domain::pest::ports::{
-    CreateFailure, DestroyFailure, DetailFailure, PestCreateOutputPort, PestDestroyOutputPort,
-    PestDetailOutputPort, PestListOutputPort, PestUpdateOutputPort, UpdateFailure,
+    CreateFailure, DestroyFailure, DetailFailure, ListFailure, PestCreateOutputPort,
+    PestDestroyOutputPort, PestDetailOutputPort, PestListOutputPort, PestUpdateOutputPort,
+    UpdateFailure,
 };
 use agrr_domain::shared::dtos::ReferencableListRow;
 use axum::{
@@ -81,14 +82,19 @@ impl PestListOutputPort for ListPort {
         *self.0.lock().unwrap() = Some(Ok((StatusCode::OK, Json(json!(payload)))));
     }
     fn on_failure(&mut self, failure: agrr_domain::pest::ports::ListFailure) {
-        let msg = match failure {
-            agrr_domain::pest::ports::ListFailure::Error(e) => e.message,
-        };
-        *self.0.lock().unwrap() = Some(Err((
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"errors": [msg]})),
-        )));
+        let (status, body) = list_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn list_failure(failure: ListFailure) -> (StatusCode, Value) {
+    let msg = match failure {
+        ListFailure::Error(e) => e.message,
+    };
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        json!({"errors": [msg]}),
+    )
 }
 
 async fn index(
@@ -119,12 +125,17 @@ impl PestDetailOutputPort for DetailPort {
         )));
     }
     fn on_failure(&mut self, failure: DetailFailure) {
-        let (status, msg) = match failure {
-            DetailFailure::Error(e) => (StatusCode::NOT_FOUND, e.message),
-            DetailFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
-        };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
+        let (status, body) = detail_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn detail_failure(failure: DetailFailure) -> (StatusCode, Value) {
+    let (status, msg) = match failure {
+        DetailFailure::Error(e) => (StatusCode::NOT_FOUND, e.message),
+        DetailFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
+    };
+    (status, json!({"errors": [msg]}))
 }
 
 async fn show(
@@ -178,14 +189,19 @@ impl PestCreateOutputPort for CreatePort {
         )));
     }
     fn on_failure(&mut self, failure: CreateFailure) {
-        let msg = match failure {
-            CreateFailure::Error(e) => e.message,
-        };
-        *self.0.lock().unwrap() = Some(Err((
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"errors": [msg]})),
-        )));
+        let (status, body) = create_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn create_failure(failure: CreateFailure) -> (StatusCode, Value) {
+    let msg = match failure {
+        CreateFailure::Error(e) => e.message,
+    };
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        json!({"errors": [msg]}),
+    )
 }
 
 async fn create(
@@ -244,16 +260,21 @@ impl PestUpdateOutputPort for UpdatePort {
             Some(Ok((StatusCode::OK, Json(pest_entity_json(&entity)))));
     }
     fn on_failure(&mut self, failure: UpdateFailure) {
-        let (status, msg) = match failure {
-            UpdateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
-            UpdateFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
-            UpdateFailure::ReferenceFlagChange(_) => (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                "reference flag change denied".into(),
-            ),
-        };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
+        let (status, body) = update_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn update_failure(failure: UpdateFailure) -> (StatusCode, Value) {
+    let (status, msg) = match failure {
+        UpdateFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
+        UpdateFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
+        UpdateFailure::ReferenceFlagChange(_) => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "reference flag change denied".into(),
+        ),
+    };
+    (status, json!({"errors": [msg]}))
 }
 
 async fn update(
@@ -315,12 +336,17 @@ impl PestDestroyOutputPort for DestroyPort {
         *self.0.lock().unwrap() = Some(Ok((StatusCode::OK, Json(output.undo))));
     }
     fn on_failure(&mut self, failure: DestroyFailure) {
-        let (status, msg) = match failure {
-            DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
-            DestroyFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
-        };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
+        let (status, body) = destroy_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn destroy_failure(failure: DestroyFailure) -> (StatusCode, Value) {
+    let (status, msg) = match failure {
+        DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
+        DestroyFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
+    };
+    (status, json!({"errors": [msg]}))
 }
 
 async fn destroy(
@@ -353,6 +379,8 @@ async fn destroy(
 mod tests {
     use super::*;
     use agrr_domain::pest::entities::{PestEntity, PestEntityAttrs};
+    use agrr_domain::shared::dtos::{Error, ReferenceFlagChangeDeniedFailure};
+    use agrr_domain::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 
     #[test]
     fn pest_entity_json_exposes_name_at_top_level() {
@@ -372,5 +400,49 @@ mod tests {
         assert_eq!(json["name_scientific"], "Testus pestus");
         assert_eq!(json["family"], "テスト科");
         assert!(!json.as_object().unwrap().contains_key("pest"));
+    }
+
+    #[test]
+    fn list_failure_maps_error_to_422() {
+        let (status, body) = list_failure(ListFailure::Error(Error::new("db locked")));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "db locked");
+    }
+
+    #[test]
+    fn detail_failure_maps_not_found_to_404() {
+        let (status, body) = detail_failure(DetailFailure::Error(Error::new("Pest not found")));
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Pest not found");
+    }
+
+    #[test]
+    fn detail_failure_maps_policy_to_403() {
+        let (status, body) = detail_failure(DetailFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "forbidden");
+    }
+
+    #[test]
+    fn update_failure_maps_reference_flag_change_to_422() {
+        let (status, body) = update_failure(UpdateFailure::ReferenceFlagChange(
+            ReferenceFlagChangeDeniedFailure::new("denied", 3),
+        ));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "reference flag change denied");
+    }
+
+    #[test]
+    fn update_failure_maps_policy_to_403() {
+        let (status, body) = update_failure(UpdateFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "forbidden");
+    }
+
+    #[test]
+    fn destroy_failure_maps_policy_to_403() {
+        let (status, body) = destroy_failure(DestroyFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "forbidden");
     }
 }
