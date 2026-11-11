@@ -74,15 +74,17 @@ impl FertilizeListOutputPort for ListPort {
         *self.0.lock().unwrap() = Some(Ok((StatusCode::OK, Json(json!(payload)))));
     }
     fn on_failure(&mut self, failure: ListFailure) {
-        let msg = match failure {
-            ListFailure::Error(e) => e.message,
-            ListFailure::Policy(_) => "forbidden".into(),
-        };
-        *self.0.lock().unwrap() = Some(Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({"errors": [msg]})),
-        )));
+        let (status, body) = list_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn list_failure(failure: ListFailure) -> (StatusCode, Value) {
+    let msg = match failure {
+        ListFailure::Error(e) => e.message,
+        ListFailure::Policy(_) => "forbidden".into(),
+    };
+    (StatusCode::FORBIDDEN, json!({"errors": [msg]}))
 }
 
 async fn index(
@@ -123,12 +125,17 @@ impl FertilizeDetailOutputPort for DetailPort {
         )));
     }
     fn on_failure(&mut self, failure: DetailFailure) {
-        let (status, msg) = match failure {
-            DetailFailure::Error(e) => (StatusCode::NOT_FOUND, e.message),
-            DetailFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
-        };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
+        let (status, body) = detail_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn detail_failure(failure: DetailFailure) -> (StatusCode, Value) {
+    let (status, msg) = match failure {
+        DetailFailure::Error(e) => (StatusCode::NOT_FOUND, e.message),
+        DetailFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
+    };
+    (status, json!({"errors": [msg]}))
 }
 
 async fn show(
@@ -182,15 +189,20 @@ impl FertilizeCreateOutputPort for CreatePort {
         )));
     }
     fn on_failure(&mut self, failure: CreateFailure) {
-        let msg = match failure {
-            CreateFailure::Error(e) => e.message,
-            CreateFailure::Policy(_) => "forbidden".into(),
-        };
-        *self.0.lock().unwrap() = Some(Err((
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"errors": [msg]})),
-        )));
+        let (status, body) = create_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn create_failure(failure: CreateFailure) -> (StatusCode, Value) {
+    let msg = match failure {
+        CreateFailure::Error(e) => e.message,
+        CreateFailure::Policy(_) => "forbidden".into(),
+    };
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        json!({"errors": [msg]}),
+    )
 }
 
 async fn create(
@@ -240,12 +252,17 @@ impl FertilizeUpdateOutputPort for UpdatePort {
             Some(Ok((StatusCode::OK, Json(fertilize_json(&entity)))));
     }
     fn on_failure(&mut self, failure: UpdateFailure) {
-        let (status, msg) = match failure {
-            UpdateFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
-            UpdateFailure::Fertilize(f) => (StatusCode::UNPROCESSABLE_ENTITY, f.message),
-        };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
+        let (status, body) = update_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn update_failure(failure: UpdateFailure) -> (StatusCode, Value) {
+    let (status, msg) = match failure {
+        UpdateFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
+        UpdateFailure::Fertilize(f) => (StatusCode::UNPROCESSABLE_ENTITY, f.message),
+    };
+    (status, json!({"errors": [msg]}))
 }
 
 async fn update(
@@ -292,12 +309,17 @@ impl FertilizeDestroyOutputPort for DestroyPort {
         *self.0.lock().unwrap() = Some(Ok((StatusCode::OK, Json(output.undo))));
     }
     fn on_failure(&mut self, failure: DestroyFailure) {
-        let (status, msg) = match failure {
-            DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
-            DestroyFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
-        };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
+        let (status, body) = destroy_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn destroy_failure(failure: DestroyFailure) -> (StatusCode, Value) {
+    let (status, msg) = match failure {
+        DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
+        DestroyFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
+    };
+    (status, json!({"errors": [msg]}))
 }
 
 async fn destroy(
@@ -324,4 +346,78 @@ async fn destroy(
         .call(id)
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     take_response(&out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::fertilize::dtos::FertilizeUpdateFailure;
+    use agrr_domain::shared::dtos::Error;
+    use agrr_domain::shared::policies::policy_permission_denied::PolicyPermissionDenied;
+
+    #[test]
+    fn list_failure_maps_policy_to_403() {
+        let (status, body) = list_failure(ListFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "forbidden");
+    }
+
+    #[test]
+    fn list_failure_maps_error_to_403_with_message() {
+        let (status, body) = list_failure(ListFailure::Error(Error::new("db locked")));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "db locked");
+    }
+
+    #[test]
+    fn detail_failure_maps_not_found_to_404() {
+        let (status, body) = detail_failure(DetailFailure::Error(Error::new("Fertilize not found")));
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Fertilize not found");
+    }
+
+    #[test]
+    fn detail_failure_maps_policy_to_403() {
+        let (status, body) = detail_failure(DetailFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "forbidden");
+    }
+
+    #[test]
+    fn create_failure_maps_policy_to_422() {
+        let (status, body) = create_failure(CreateFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "forbidden");
+    }
+
+    #[test]
+    fn update_failure_maps_policy_to_403() {
+        let (status, body) = update_failure(UpdateFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "forbidden");
+    }
+
+    #[test]
+    fn update_failure_maps_fertilize_domain_error_to_422() {
+        let (status, body) = update_failure(UpdateFailure::Fertilize(FertilizeUpdateFailure::new(
+            "stale",
+            Some(1),
+        )));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "stale");
+    }
+
+    #[test]
+    fn destroy_failure_maps_policy_to_403() {
+        let (status, body) = destroy_failure(DestroyFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "forbidden");
+    }
+
+    #[test]
+    fn destroy_failure_maps_error_to_422() {
+        let (status, body) = destroy_failure(DestroyFailure::Error(Error::new("in use")));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "in use");
+    }
 }
