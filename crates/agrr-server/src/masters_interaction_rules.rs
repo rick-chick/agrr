@@ -75,15 +75,17 @@ impl InteractionRuleListOutputPort for ListPort {
         *self.0.lock().unwrap() = Some(Ok((StatusCode::OK, Json(json!(payload)))));
     }
     fn on_failure(&mut self, failure: ListFailure) {
-        let msg = match failure {
-            ListFailure::Error(e) => e.message,
-            ListFailure::Policy(_) => "forbidden".into(),
-        };
-        *self.0.lock().unwrap() = Some(Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({"errors": [msg]})),
-        )));
+        let (status, body) = list_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn list_failure(failure: ListFailure) -> (StatusCode, Value) {
+    let msg = match failure {
+        ListFailure::Error(e) => e.message,
+        ListFailure::Policy(_) => "forbidden".into(),
+    };
+    (StatusCode::FORBIDDEN, json!({"errors": [msg]}))
 }
 
 async fn index(
@@ -110,12 +112,17 @@ impl InteractionRuleDetailOutputPort for DetailPort {
         *self.0.lock().unwrap() = Some(Ok((StatusCode::OK, Json(rule_json(&dto.rule)))));
     }
     fn on_failure(&mut self, failure: DetailFailure) {
-        let (status, msg) = match failure {
-            DetailFailure::Error(e) => (StatusCode::NOT_FOUND, e.message),
-            DetailFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
-        };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
+        let (status, body) = detail_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn detail_failure(failure: DetailFailure) -> (StatusCode, Value) {
+    let (status, msg) = match failure {
+        DetailFailure::Error(e) => (StatusCode::NOT_FOUND, e.message),
+        DetailFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
+    };
+    (status, json!({"errors": [msg]}))
 }
 
 async fn show(
@@ -164,11 +171,16 @@ impl InteractionRuleCreateOutputPort for CreatePort {
         *self.0.lock().unwrap() = Some(Ok((StatusCode::CREATED, Json(rule_json(&entity)))));
     }
     fn on_failure(&mut self, error: Error) {
-        *self.0.lock().unwrap() = Some(Err((
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"errors": [error.message]})),
-        )));
+        let (status, body) = create_failure(error);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn create_failure(error: Error) -> (StatusCode, Value) {
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        json!({"errors": [error.message]}),
+    )
 }
 
 async fn create(
@@ -213,16 +225,18 @@ impl InteractionRuleUpdateOutputPort for UpdatePort {
         *self.0.lock().unwrap() = Some(Ok((StatusCode::OK, Json(rule_json(&entity)))));
     }
     fn on_failure(&mut self, failure: UpdateFailure) {
-        let msg = match failure {
-            UpdateFailure::Error(e) => e.message,
-            UpdateFailure::Policy(_) => "forbidden".into(),
-            UpdateFailure::ReferenceFlag(_) => "reference flag change denied".into(),
-        };
-        *self.0.lock().unwrap() = Some(Err((
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"errors": [msg]})),
-        )));
+        let (status, body) = update_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn update_failure(failure: UpdateFailure) -> (StatusCode, Value) {
+    let msg = match failure {
+        UpdateFailure::Error(e) => e.message,
+        UpdateFailure::Policy(_) => "forbidden".into(),
+        UpdateFailure::ReferenceFlag(_) => "reference flag change denied".into(),
+    };
+    (StatusCode::UNPROCESSABLE_ENTITY, json!({"errors": [msg]}))
 }
 
 async fn update(
@@ -269,12 +283,17 @@ impl InteractionRuleDestroyOutputPort for DestroyPort {
         *self.0.lock().unwrap() = Some(Ok((StatusCode::OK, Json(output.undo))));
     }
     fn on_failure(&mut self, failure: DestroyFailure) {
-        let (status, msg) = match failure {
-            DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
-            DestroyFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
-        };
-        *self.0.lock().unwrap() = Some(Err((status, Json(json!({"errors": [msg]})))));
+        let (status, body) = destroy_failure(failure);
+        *self.0.lock().unwrap() = Some(Err((status, Json(body))));
     }
+}
+
+fn destroy_failure(failure: DestroyFailure) -> (StatusCode, Value) {
+    let (status, msg) = match failure {
+        DestroyFailure::Error(e) => (StatusCode::UNPROCESSABLE_ENTITY, e.message),
+        DestroyFailure::Policy(_) => (StatusCode::FORBIDDEN, "forbidden".into()),
+    };
+    (status, json!({"errors": [msg]}))
 }
 
 async fn destroy(
@@ -301,4 +320,71 @@ async fn destroy(
         .call(id)
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     take_response(&out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::interaction_rule::ports::{
+        DestroyFailure, DetailFailure, ListFailure, UpdateFailure,
+    };
+    use agrr_domain::shared::dtos::{Error, ReferenceFlagChangeDeniedFailure};
+    use agrr_domain::shared::policies::policy_permission_denied::PolicyPermissionDenied;
+
+    #[test]
+    fn list_failure_maps_policy_and_error_both_to_403() {
+        let (status, body) = list_failure(ListFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "forbidden");
+
+        let (status, body) = list_failure(ListFailure::Error(Error::new("db locked")));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "db locked");
+    }
+
+    #[test]
+    fn detail_failure_maps_not_found_and_policy() {
+        let (status, body) = detail_failure(DetailFailure::Error(Error::new("Rule not found")));
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Rule not found");
+
+        let (status, body) = detail_failure(DetailFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "forbidden");
+    }
+
+    #[test]
+    fn create_failure_maps_domain_error_to_422() {
+        let (status, body) = create_failure(Error::new("invalid rule"));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "invalid rule");
+    }
+
+    #[test]
+    fn update_failure_maps_all_variants_to_422_including_policy() {
+        let (status, body) = update_failure(UpdateFailure::Error(Error::new("stale")));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "stale");
+
+        let (status, body) = update_failure(UpdateFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "forbidden");
+
+        let (status, body) = update_failure(UpdateFailure::ReferenceFlag(
+            ReferenceFlagChangeDeniedFailure::new("denied", 4),
+        ));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "reference flag change denied");
+    }
+
+    #[test]
+    fn destroy_failure_maps_error_to_422_and_policy_to_403() {
+        let (status, body) = destroy_failure(DestroyFailure::Error(Error::new("in use")));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "in use");
+
+        let (status, body) = destroy_failure(DestroyFailure::Policy(PolicyPermissionDenied));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "forbidden");
+    }
 }
