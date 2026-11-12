@@ -10,7 +10,8 @@ on:
 
 jobs:
   frontend-test:
-    runs-on: ubuntu-latest
+    # Playwright 1.59.x has no chromium build for ubuntu26.04 (ubuntu-latest as of 2026-11).
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend

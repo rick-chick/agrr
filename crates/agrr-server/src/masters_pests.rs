@@ -440,7 +440,25 @@ mod tests {
     }
 
     #[test]
-    fn destroy_failure_maps_policy_to_403() {
+    fn create_failure_maps_domain_error_to_422() {
+        let (status, body) = create_failure(CreateFailure::Error(Error::new("duplicate")));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "duplicate");
+    }
+
+    #[test]
+    fn update_failure_maps_domain_error_to_422() {
+        let (status, body) = update_failure(UpdateFailure::Error(Error::new("stale")));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "stale");
+    }
+
+    #[test]
+    fn destroy_failure_maps_error_to_422_and_policy_to_403() {
+        let (status, body) = destroy_failure(DestroyFailure::Error(Error::new("in use")));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "in use");
+
         let (status, body) = destroy_failure(DestroyFailure::Policy(PolicyPermissionDenied));
         assert_eq!(status, StatusCode::FORBIDDEN);
         assert_eq!(body["errors"][0], "forbidden");
