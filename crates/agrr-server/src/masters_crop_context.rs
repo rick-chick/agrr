@@ -41,7 +41,10 @@ pub(crate) async fn load_user_non_reference_crop(
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
     match port.crop {
         Some(crop) => Ok(crop),
-        None => Err((StatusCode::NOT_FOUND, Json(json!({"errors": ["not found"]})))),
+        None => {
+            let (status, body) = masters_crop_context_not_found();
+            Err((status, Json(body)))
+        }
     }
 }
 
@@ -50,4 +53,30 @@ pub(crate) fn internal_error() -> (StatusCode, Json<Value>) {
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(json!({"errors": ["internal"]})),
     )
+}
+
+fn masters_crop_context_not_found() -> (StatusCode, Value) {
+    (
+        StatusCode::NOT_FOUND,
+        json!({"errors": ["not found"]}),
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn internal_error_returns_500_with_errors_array() {
+        let (status, body) = internal_error();
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.0["errors"][0], "internal");
+    }
+
+    #[test]
+    fn masters_crop_context_not_found_maps_to_404() {
+        let (status, body) = masters_crop_context_not_found();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "not found");
+    }
 }

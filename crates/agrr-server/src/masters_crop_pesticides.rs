@@ -60,10 +60,8 @@ async fn index(
             self.body = Some(Ok(Json(json!(payload))));
         }
         fn on_not_found(&mut self) {
-            self.body = Some(Err((
-                StatusCode::NOT_FOUND,
-                Json(json!({"errors": ["Crop not found"]})),
-            )));
+            let (status, body) = crop_pesticides_index_crop_not_found();
+            self.body = Some(Err((status, Json(body))));
         }
     }
     let mut port = Port { body: None };
@@ -81,5 +79,24 @@ async fn index(
         Some(Ok(json)) => Ok(json),
         Some(Err(e)) => Err(e),
         None => Err(internal_error()),
+    }
+}
+
+fn crop_pesticides_index_crop_not_found() -> (StatusCode, Value) {
+    (
+        StatusCode::NOT_FOUND,
+        json!({"errors": ["Crop not found"]}),
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn crop_pesticides_index_crop_not_found_maps_to_404() {
+        let (status, body) = crop_pesticides_index_crop_not_found();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Crop not found");
     }
 }
