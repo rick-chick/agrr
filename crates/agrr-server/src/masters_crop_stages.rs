@@ -402,3 +402,97 @@ async fn destroy(
         Err((StatusCode::NOT_FOUND, Json(json!({"errors": ["not found"]}))))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn stage_payload_rejects_empty_name() {
+        let attrs = StageAttrs {
+            name: Some("  ".into()),
+            order: Some(1),
+        };
+        let err = stage_payload_from_attrs(&attrs).unwrap_err();
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+        assert_eq!(err.1.0["errors"][0], "Invalid parameters");
+    }
+
+    #[test]
+    fn stage_payload_rejects_missing_order() {
+        let attrs = StageAttrs {
+            name: Some("苗期".into()),
+            order: None,
+        };
+        let err = stage_payload_from_attrs(&attrs).unwrap_err();
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn stage_payload_trims_name_and_returns_order() {
+        let attrs = StageAttrs {
+            name: Some("  定植 ".into()),
+            order: Some(2),
+        };
+        let payload = stage_payload_from_attrs(&attrs).expect("valid");
+        assert_eq!(payload["name"], "定植");
+        assert_eq!(payload["order"], 2);
+    }
+
+    #[test]
+    fn stage_update_payload_rejects_empty_body() {
+        let attrs = StageAttrs {
+            name: None,
+            order: None,
+        };
+        let err = stage_update_payload_from_attrs(&attrs).unwrap_err();
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn stage_update_payload_rejects_blank_name_when_present() {
+        let attrs = StageAttrs {
+            name: Some("   ".into()),
+            order: Some(1),
+        };
+        let err = stage_update_payload_from_attrs(&attrs).unwrap_err();
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn stage_update_payload_allows_order_only() {
+        let attrs = StageAttrs {
+            name: None,
+            order: Some(5),
+        };
+        let payload = stage_update_payload_from_attrs(&attrs).expect("valid");
+        assert_eq!(payload["order"], 5);
+        assert!(payload.get("name").is_none());
+    }
+
+    #[test]
+    fn reorder_entries_rejects_empty_list() {
+        let body = ReorderRequest {
+            crop_stages: vec![],
+        };
+        let err = reorder_entries_from_body(&body).unwrap_err();
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+        assert_eq!(err.1.0["errors"][0], "Invalid parameters");
+    }
+
+    #[test]
+    fn reorder_entries_maps_ids_to_domain_entries() {
+        let body = ReorderRequest {
+            crop_stages: vec![
+                ReorderEntry { id: 10, order: 1 },
+                ReorderEntry { id: 20, order: 2 },
+            ],
+        };
+        let entries = reorder_entries_from_body(&body).expect("valid");
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].crop_stage_id, 10);
+        assert_eq!(entries[0].order, 1);
+        assert_eq!(entries[1].crop_stage_id, 20);
+        assert_eq!(entries[1].order, 2);
+    }
+}

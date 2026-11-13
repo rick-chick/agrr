@@ -121,36 +121,24 @@ async fn create(
         fn on_success(&mut self, crop_id: i64, pest_id: i64) {
             *self.0.lock().unwrap() = Some(Ok((
                 StatusCode::CREATED,
-                Json(json!({
-                    "message": "Pest associated successfully",
-                    "crop_id": crop_id,
-                    "pest_id": pest_id,
-                })),
+                Json(crop_pests_create_success_body(crop_id, pest_id)),
             )));
         }
         fn on_pest_id_missing(&mut self) {
-            *self.0.lock().unwrap() = Some(Err((
-                StatusCode::UNPROCESSABLE_ENTITY,
-                Json(json!({"errors": ["pest_id is required"]})),
-            )));
+            let (status, body) = crop_pests_create_pest_id_missing();
+            *self.0.lock().unwrap() = Some(Err((status, Json(body))));
         }
         fn on_pest_not_found(&mut self) {
-            *self.0.lock().unwrap() = Some(Err((
-                StatusCode::NOT_FOUND,
-                Json(json!({"errors": ["Pest not found"]})),
-            )));
+            let (status, body) = crop_pests_create_pest_not_found();
+            *self.0.lock().unwrap() = Some(Err((status, Json(body))));
         }
         fn on_forbidden(&mut self) {
-            *self.0.lock().unwrap() = Some(Err((
-                StatusCode::FORBIDDEN,
-                Json(json!({"errors": ["Permission denied"]})),
-            )));
+            let (status, body) = crop_pests_create_forbidden();
+            *self.0.lock().unwrap() = Some(Err((status, Json(body))));
         }
         fn on_already_associated(&mut self) {
-            *self.0.lock().unwrap() = Some(Err((
-                StatusCode::UNPROCESSABLE_ENTITY,
-                Json(json!({"errors": ["Pest is already associated with this crop"]})),
-            )));
+            let (status, body) = crop_pests_create_already_associated();
+            *self.0.lock().unwrap() = Some(Err((status, Json(body))));
         }
     }
     let mut port = Port(out.clone());
@@ -188,22 +176,16 @@ async fn destroy(
             self.status = Some(Ok(StatusCode::NO_CONTENT));
         }
         fn on_crop_not_found(&mut self) {
-            self.status = Some(Err((
-                StatusCode::NOT_FOUND,
-                Json(json!({"errors": ["Crop not found"]})),
-            )));
+            let (status, body) = crop_pests_destroy_crop_not_found();
+            self.status = Some(Err((status, Json(body))));
         }
         fn on_pest_not_found(&mut self) {
-            self.status = Some(Err((
-                StatusCode::NOT_FOUND,
-                Json(json!({"errors": ["Pest not found"]})),
-            )));
+            let (status, body) = crop_pests_destroy_pest_not_found();
+            self.status = Some(Err((status, Json(body))));
         }
         fn on_not_associated(&mut self) {
-            self.status = Some(Err((
-                StatusCode::NOT_FOUND,
-                Json(json!({"errors": ["Pest is not associated with this crop"]})),
-            )));
+            let (status, body) = crop_pests_destroy_not_associated();
+            self.status = Some(Err((status, Json(body))));
         }
     }
     let mut port = Port { status: None };
@@ -222,5 +204,124 @@ async fn destroy(
         Some(Ok(s)) => Ok(s),
         Some(Err(e)) => Err(e),
         None => Err(internal_error()),
+    }
+}
+
+fn crop_pests_create_success_body(crop_id: i64, pest_id: i64) -> Value {
+    json!({
+        "message": "Pest associated successfully",
+        "crop_id": crop_id,
+        "pest_id": pest_id,
+    })
+}
+
+fn crop_pests_create_pest_id_missing() -> (StatusCode, Value) {
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        json!({"errors": ["pest_id is required"]}),
+    )
+}
+
+fn crop_pests_create_pest_not_found() -> (StatusCode, Value) {
+    (
+        StatusCode::NOT_FOUND,
+        json!({"errors": ["Pest not found"]}),
+    )
+}
+
+fn crop_pests_create_forbidden() -> (StatusCode, Value) {
+    (
+        StatusCode::FORBIDDEN,
+        json!({"errors": ["Permission denied"]}),
+    )
+}
+
+fn crop_pests_create_already_associated() -> (StatusCode, Value) {
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        json!({"errors": ["Pest is already associated with this crop"]}),
+    )
+}
+
+fn crop_pests_destroy_crop_not_found() -> (StatusCode, Value) {
+    (
+        StatusCode::NOT_FOUND,
+        json!({"errors": ["Crop not found"]}),
+    )
+}
+
+fn crop_pests_destroy_pest_not_found() -> (StatusCode, Value) {
+    (
+        StatusCode::NOT_FOUND,
+        json!({"errors": ["Pest not found"]}),
+    )
+}
+
+fn crop_pests_destroy_not_associated() -> (StatusCode, Value) {
+    (
+        StatusCode::NOT_FOUND,
+        json!({"errors": ["Pest is not associated with this crop"]}),
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn crop_pests_create_pest_id_missing_maps_to_422() {
+        let (status, body) = crop_pests_create_pest_id_missing();
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "pest_id is required");
+    }
+
+    #[test]
+    fn crop_pests_create_pest_not_found_maps_to_404() {
+        let (status, body) = crop_pests_create_pest_not_found();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Pest not found");
+    }
+
+    #[test]
+    fn crop_pests_create_forbidden_maps_to_403() {
+        let (status, body) = crop_pests_create_forbidden();
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body["errors"][0], "Permission denied");
+    }
+
+    #[test]
+    fn crop_pests_create_already_associated_maps_to_422() {
+        let (status, body) = crop_pests_create_already_associated();
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "Pest is already associated with this crop");
+    }
+
+    #[test]
+    fn crop_pests_destroy_crop_not_found_maps_to_404() {
+        let (status, body) = crop_pests_destroy_crop_not_found();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Crop not found");
+    }
+
+    #[test]
+    fn crop_pests_destroy_pest_not_found_maps_to_404() {
+        let (status, body) = crop_pests_destroy_pest_not_found();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Pest not found");
+    }
+
+    #[test]
+    fn crop_pests_destroy_not_associated_maps_to_404() {
+        let (status, body) = crop_pests_destroy_not_associated();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Pest is not associated with this crop");
+    }
+
+    #[test]
+    fn crop_pests_create_success_body_includes_ids() {
+        let body = crop_pests_create_success_body(3, 9);
+        assert_eq!(body["crop_id"], 3);
+        assert_eq!(body["pest_id"], 9);
+        assert_eq!(body["message"], "Pest associated successfully");
     }
 }
