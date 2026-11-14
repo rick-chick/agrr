@@ -42,18 +42,7 @@ async fn setup_proposal(
     Query(query): Query<SetupProposalQuery>,
     Json(body): Json<Value>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let mode = match query.mode.as_str() {
-        "dry_run" => CropSetupProposalMode::DryRun,
-        "apply" => CropSetupProposalMode::Apply,
-        _ => {
-            return Err((
-                StatusCode::UNPROCESSABLE_ENTITY,
-                Json(json!({
-                    "errors": ["mode must be dry_run or apply"]
-                })),
-            ));
-        }
-    };
+    let mode = parse_setup_proposal_mode(&query.mode)?;
 
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
@@ -113,10 +102,8 @@ async fn setup_proposal(
         }
 
         fn on_crop_not_found(&mut self) {
-            self.resp = Some(Err((
-                StatusCode::NOT_FOUND,
-                Json(json!({ "errors": ["crop not found"] })),
-            )));
+            let (status, body) = setup_proposal_crop_not_found();
+            self.resp = Some(Err((status, Json(body))));
         }
     }
 
@@ -141,6 +128,31 @@ async fn setup_proposal(
     port.resp.unwrap_or(Err(internal_error()))
 }
 
+fn parse_setup_proposal_mode(
+    mode: &str,
+) -> Result<CropSetupProposalMode, (StatusCode, Json<Value>)> {
+    match mode {
+        "dry_run" => Ok(CropSetupProposalMode::DryRun),
+        "apply" => Ok(CropSetupProposalMode::Apply),
+        _ => Err(setup_proposal_invalid_mode()),
+    }
+}
+
+fn setup_proposal_invalid_mode() -> (StatusCode, Json<Value>) {
+    let (status, body) = (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        json!({"errors": ["mode must be dry_run or apply"]}),
+    );
+    (status, Json(body))
+}
+
+fn setup_proposal_crop_not_found() -> (StatusCode, Value) {
+    (
+        StatusCode::NOT_FOUND,
+        json!({"errors": ["crop not found"]}),
+    )
+}
+
 fn errors_to_json(errors: &[CropSetupProposalValidationError]) -> Vec<Value> {
     errors
         .iter()
@@ -151,4 +163,54 @@ fn errors_to_json(errors: &[CropSetupProposalValidationError]) -> Vec<Value> {
             })
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_setup_proposal_mode_accepts_dry_run_and_apply() {
+        assert_eq!(
+            parse_setup_proposal_mode("dry_run").unwrap(),
+            CropSetupProposalMode::DryRun
+        );
+        assert_eq!(
+            parse_setup_proposal_mode("apply").unwrap(),
+            CropSetupProposalMode::Apply
+        );
+    }
+
+    #[test]
+    fn parse_setup_proposal_mode_rejects_unknown_with_422() {
+        let err = parse_setup_proposal_mode("preview").unwrap_err();
+        assert_eq!(err.0, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(err.1.0["errors"][0], "mode must be dry_run or apply");
+    }
+
+    #[test]
+    fn setup_proposal_crop_not_found_maps_to_404() {
+        let (status, body) = setup_proposal_crop_not_found();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "crop not found");
+    }
+
+    #[test]
+    fn errors_to_json_maps_path_and_message() {
+        let errors = vec![
+            CropSetupProposalValidationError {
+                path: "stages[0].name".into(),
+                message: "required".into(),
+            },
+            CropSetupProposalValidationError {
+                path: "blueprints".into(),
+                message: "empty".into(),
+            },
+        ];
+        let json = errors_to_json(&errors);
+        assert_eq!(json.len(), 2);
+        assert_eq!(json[0]["path"], "stages[0].name");
+        assert_eq!(json[0]["message"], "required");
+        assert_eq!(json[1]["path"], "blueprints");
+    }
 }

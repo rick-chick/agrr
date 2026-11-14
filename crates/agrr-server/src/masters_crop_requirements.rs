@@ -126,6 +126,53 @@ fn nutrient_json(e: &NutrientRequirementEntity) -> Value {
     })
 }
 
+fn crop_stage_requirement_internal_error() -> (StatusCode, Value) {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        json!({"errors": ["internal"]}),
+    )
+}
+
+fn crop_stage_requirement_internal_http_error() -> (StatusCode, Json<Value>) {
+    let (status, body) = crop_stage_requirement_internal_error();
+    (status, Json(body))
+}
+
+fn crop_stage_requirement_show_not_found(kind: &str) -> (StatusCode, Value) {
+    (
+        StatusCode::NOT_FOUND,
+        json!({"errors": [format!("{kind} not found")]}),
+    )
+}
+
+fn crop_stage_requirement_temperature_show_already_exists() -> (StatusCode, Value) {
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        json!({"errors": ["TemperatureRequirement already exists"]}),
+    )
+}
+
+fn crop_stage_requirement_write_not_found() -> (StatusCode, Value) {
+    (
+        StatusCode::NOT_FOUND,
+        json!({"errors": ["not found"]}),
+    )
+}
+
+fn crop_stage_requirement_write_already_exists() -> (StatusCode, Value) {
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        json!({"errors": ["already exists"]}),
+    )
+}
+
+fn crop_stage_requirement_validation_errors(errors: Vec<String>) -> (StatusCode, Value) {
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        json!({"errors": errors}),
+    )
+}
+
 async fn temperature_show(
     State(state): State<AppState>,
     auth: MastersUserId,
@@ -156,16 +203,19 @@ async fn temperature_show(
             self.status = StatusCode::NO_CONTENT;
         }
         fn on_not_found(&mut self) {
-            self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"errors": ["TemperatureRequirement not found"]});
+            let (status, body) = crop_stage_requirement_show_not_found("TemperatureRequirement");
+            self.status = status;
+            self.body = body;
         }
         fn on_already_exists(&mut self) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": ["TemperatureRequirement already exists"]});
+            let (status, body) = crop_stage_requirement_temperature_show_already_exists();
+            self.status = status;
+            self.body = body;
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": errors});
+            let (status, body) = crop_stage_requirement_validation_errors(errors);
+            self.status = status;
+            self.body = body;
         }
     }
     let mut port = Port {
@@ -177,7 +227,7 @@ async fn temperature_show(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+        .map_err(|_| crop_stage_requirement_internal_http_error())?;
     Ok((port.status, Json(port.body)))
 }
 
@@ -228,16 +278,19 @@ async fn temperature_write(
         }
         fn on_destroy_success(&mut self) {}
         fn on_not_found(&mut self) {
-            self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"errors": ["not found"]});
+            let (status, body) = crop_stage_requirement_write_not_found();
+            self.status = status;
+            self.body = body;
         }
         fn on_already_exists(&mut self) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": ["already exists"]});
+            let (status, body) = crop_stage_requirement_write_already_exists();
+            self.status = status;
+            self.body = body;
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": errors});
+            let (status, body) = crop_stage_requirement_validation_errors(errors);
+            self.status = status;
+            self.body = body;
         }
     }
     let mut port = Port {
@@ -250,13 +303,13 @@ async fn temperature_write(
             MastersTemperatureRequirementCreateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+            .map_err(|_| crop_stage_requirement_internal_http_error())?;
     } else {
         let mut interactor =
             MastersTemperatureRequirementUpdateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+            .map_err(|_| crop_stage_requirement_internal_http_error())?;
     }
     Ok((port.status, Json(port.body)))
 }
@@ -294,7 +347,7 @@ async fn temperature_destroy(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+        .map_err(|_| crop_stage_requirement_internal_http_error())?;
     Ok(port.status)
 }
 
@@ -328,16 +381,19 @@ async fn thermal_show(
             self.status = StatusCode::NO_CONTENT;
         }
         fn on_not_found(&mut self) {
-            self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"errors": ["ThermalRequirement not found"]});
+            let (status, body) = crop_stage_requirement_show_not_found("ThermalRequirement");
+            self.status = status;
+            self.body = body;
         }
         fn on_already_exists(&mut self) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": ["already exists"]});
+            let (status, body) = crop_stage_requirement_write_already_exists();
+            self.status = status;
+            self.body = body;
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": errors});
+            let (status, body) = crop_stage_requirement_validation_errors(errors);
+            self.status = status;
+            self.body = body;
         }
     }
     let mut port = Port {
@@ -349,7 +405,7 @@ async fn thermal_show(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+        .map_err(|_| crop_stage_requirement_internal_http_error())?;
     Ok((port.status, Json(port.body)))
 }
 
@@ -400,16 +456,19 @@ async fn thermal_write(
         }
         fn on_destroy_success(&mut self) {}
         fn on_not_found(&mut self) {
-            self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"errors": ["not found"]});
+            let (status, body) = crop_stage_requirement_write_not_found();
+            self.status = status;
+            self.body = body;
         }
         fn on_already_exists(&mut self) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": ["already exists"]});
+            let (status, body) = crop_stage_requirement_write_already_exists();
+            self.status = status;
+            self.body = body;
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": errors});
+            let (status, body) = crop_stage_requirement_validation_errors(errors);
+            self.status = status;
+            self.body = body;
         }
     }
     let mut port = Port {
@@ -422,13 +481,13 @@ async fn thermal_write(
             MastersThermalRequirementCreateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+            .map_err(|_| crop_stage_requirement_internal_http_error())?;
     } else {
         let mut interactor =
             MastersThermalRequirementUpdateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+            .map_err(|_| crop_stage_requirement_internal_http_error())?;
     }
     Ok((port.status, Json(port.body)))
 }
@@ -466,7 +525,7 @@ async fn thermal_destroy(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+        .map_err(|_| crop_stage_requirement_internal_http_error())?;
     Ok(port.status)
 }
 
@@ -500,16 +559,19 @@ async fn sunshine_show(
             self.status = StatusCode::NO_CONTENT;
         }
         fn on_not_found(&mut self) {
-            self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"errors": ["not found"]});
+            let (status, body) = crop_stage_requirement_write_not_found();
+            self.status = status;
+            self.body = body;
         }
         fn on_already_exists(&mut self) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": ["already exists"]});
+            let (status, body) = crop_stage_requirement_write_already_exists();
+            self.status = status;
+            self.body = body;
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": errors});
+            let (status, body) = crop_stage_requirement_validation_errors(errors);
+            self.status = status;
+            self.body = body;
         }
     }
     let mut port = Port {
@@ -521,7 +583,7 @@ async fn sunshine_show(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+        .map_err(|_| crop_stage_requirement_internal_http_error())?;
     Ok((port.status, Json(port.body)))
 }
 
@@ -572,16 +634,19 @@ async fn sunshine_write(
         }
         fn on_destroy_success(&mut self) {}
         fn on_not_found(&mut self) {
-            self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"errors": ["not found"]});
+            let (status, body) = crop_stage_requirement_write_not_found();
+            self.status = status;
+            self.body = body;
         }
         fn on_already_exists(&mut self) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": ["already exists"]});
+            let (status, body) = crop_stage_requirement_write_already_exists();
+            self.status = status;
+            self.body = body;
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": errors});
+            let (status, body) = crop_stage_requirement_validation_errors(errors);
+            self.status = status;
+            self.body = body;
         }
     }
     let mut port = Port {
@@ -594,13 +659,13 @@ async fn sunshine_write(
             MastersSunshineRequirementCreateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+            .map_err(|_| crop_stage_requirement_internal_http_error())?;
     } else {
         let mut interactor =
             MastersSunshineRequirementUpdateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+            .map_err(|_| crop_stage_requirement_internal_http_error())?;
     }
     Ok((port.status, Json(port.body)))
 }
@@ -638,7 +703,7 @@ async fn sunshine_destroy(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+        .map_err(|_| crop_stage_requirement_internal_http_error())?;
     Ok(port.status)
 }
 
@@ -672,16 +737,19 @@ async fn nutrient_show(
             self.status = StatusCode::NO_CONTENT;
         }
         fn on_not_found(&mut self) {
-            self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"errors": ["not found"]});
+            let (status, body) = crop_stage_requirement_write_not_found();
+            self.status = status;
+            self.body = body;
         }
         fn on_already_exists(&mut self) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": ["already exists"]});
+            let (status, body) = crop_stage_requirement_write_already_exists();
+            self.status = status;
+            self.body = body;
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": errors});
+            let (status, body) = crop_stage_requirement_validation_errors(errors);
+            self.status = status;
+            self.body = body;
         }
     }
     let mut port = Port {
@@ -693,7 +761,7 @@ async fn nutrient_show(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+        .map_err(|_| crop_stage_requirement_internal_http_error())?;
     Ok((port.status, Json(port.body)))
 }
 
@@ -744,16 +812,19 @@ async fn nutrient_write(
         }
         fn on_destroy_success(&mut self) {}
         fn on_not_found(&mut self) {
-            self.status = StatusCode::NOT_FOUND;
-            self.body = json!({"errors": ["not found"]});
+            let (status, body) = crop_stage_requirement_write_not_found();
+            self.status = status;
+            self.body = body;
         }
         fn on_already_exists(&mut self) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": ["already exists"]});
+            let (status, body) = crop_stage_requirement_write_already_exists();
+            self.status = status;
+            self.body = body;
         }
         fn on_validation_errors(&mut self, errors: Vec<String>) {
-            self.status = StatusCode::UNPROCESSABLE_ENTITY;
-            self.body = json!({"errors": errors});
+            let (status, body) = crop_stage_requirement_validation_errors(errors);
+            self.status = status;
+            self.body = body;
         }
     }
     let mut port = Port {
@@ -766,13 +837,13 @@ async fn nutrient_write(
             MastersNutrientRequirementCreateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+            .map_err(|_| crop_stage_requirement_internal_http_error())?;
     } else {
         let mut interactor =
             MastersNutrientRequirementUpdateInteractor::new(&mut port, &crop_gw, &req_gw);
         interactor
             .call(input)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+            .map_err(|_| crop_stage_requirement_internal_http_error())?;
     }
     Ok((port.status, Json(port.body)))
 }
@@ -810,6 +881,126 @@ async fn nutrient_destroy(
         .call(CropStageDetailInput {
             crop_stage_id: stage_id,
         })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"errors": ["internal"]}))))?;
+        .map_err(|_| crop_stage_requirement_internal_http_error())?;
     Ok(port.status)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::crop::entities::{
+        NutrientRequirementEntity, SunshineRequirementEntity, TemperatureRequirementEntity,
+        ThermalRequirementEntity,
+    };
+    use rust_decimal::Decimal;
+
+    #[test]
+    fn temperature_show_not_found_maps_to_404_with_kind_label() {
+        let (status, body) = crop_stage_requirement_show_not_found("TemperatureRequirement");
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "TemperatureRequirement not found");
+    }
+
+    #[test]
+    fn thermal_show_not_found_maps_to_404_with_kind_label() {
+        let (status, body) = crop_stage_requirement_show_not_found("ThermalRequirement");
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "ThermalRequirement not found");
+    }
+
+    #[test]
+    fn temperature_show_already_exists_maps_to_422_with_specific_message() {
+        let (status, body) = crop_stage_requirement_temperature_show_already_exists();
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "TemperatureRequirement already exists");
+    }
+
+    #[test]
+    fn requirement_write_not_found_maps_to_404() {
+        let (status, body) = crop_stage_requirement_write_not_found();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "not found");
+    }
+
+    #[test]
+    fn requirement_write_already_exists_maps_to_422() {
+        let (status, body) = crop_stage_requirement_write_already_exists();
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "already exists");
+    }
+
+    #[test]
+    fn requirement_validation_errors_preserves_messages() {
+        let (status, body) =
+            crop_stage_requirement_validation_errors(vec!["base_temperature invalid".into()]);
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "base_temperature invalid");
+    }
+
+    #[test]
+    fn requirement_internal_error_maps_to_500() {
+        let (status, body) = crop_stage_requirement_internal_error();
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body["errors"][0], "internal");
+    }
+
+    #[test]
+    fn temperature_json_serializes_decimal_fields_as_strings() {
+        let entity = TemperatureRequirementEntity {
+            id: 1,
+            crop_stage_id: 9,
+            base_temperature: Some(Decimal::new(105, 1)),
+            optimal_min: None,
+            optimal_max: None,
+            low_stress_threshold: None,
+            high_stress_threshold: None,
+            frost_threshold: None,
+            sterility_risk_threshold: None,
+            max_temperature: None,
+        };
+        let body = temperature_json(&entity);
+        assert_eq!(body["id"], 1);
+        assert_eq!(body["crop_stage_id"], 9);
+        assert_eq!(body["base_temperature"], "10.5");
+        assert!(body.get("optimal_min").unwrap().is_null());
+    }
+
+    #[test]
+    fn thermal_json_serializes_required_gdd() {
+        let entity = ThermalRequirementEntity {
+            id: 2,
+            crop_stage_id: 3,
+            required_gdd: Some(Decimal::new(1200, 0)),
+        };
+        let body = thermal_json(&entity);
+        assert_eq!(body["required_gdd"], "1200");
+    }
+
+    #[test]
+    fn sunshine_json_serializes_hour_fields() {
+        let entity = SunshineRequirementEntity {
+            id: 4,
+            crop_stage_id: 5,
+            minimum_sunshine_hours: Some(Decimal::new(6, 0)),
+            target_sunshine_hours: Some(Decimal::new(8, 0)),
+        };
+        let body = sunshine_json(&entity);
+        assert_eq!(body["minimum_sunshine_hours"], "6");
+        assert_eq!(body["target_sunshine_hours"], "8");
+    }
+
+    #[test]
+    fn nutrient_json_includes_region() {
+        let entity = NutrientRequirementEntity {
+            id: 6,
+            crop_stage_id: 7,
+            daily_uptake_n: Some(Decimal::new(15, 1)),
+            daily_uptake_p: None,
+            daily_uptake_k: None,
+            region: Some("jp".into()),
+        };
+        let body = nutrient_json(&entity);
+        assert_eq!(body["region"], "jp");
+        assert_eq!(body["daily_uptake_n"], "1.5");
+    }
 }
