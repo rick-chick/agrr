@@ -477,8 +477,11 @@ fn blueprint_failure_response(
 mod failure_mapper_tests {
     use super::*;
     use agrr_domain::crop::dtos::{
-        CropBlueprintRegenerateFailure, MastersCropTaskScheduleBlueprintCreateFailure,
+        CropBlueprintRegenerateFailure, CropBlueprintRegenerateFailureReason,
+        MastersCropTaskScheduleBlueprintCreateFailure,
+        MastersCropTaskScheduleBlueprintCreateFailureReason,
         MastersCropTaskScheduleBlueprintFailure,
+        MastersCropTaskScheduleBlueprintFailureReason,
     };
 
     #[test]
@@ -529,5 +532,110 @@ mod failure_mapper_tests {
             "A task plan for this stage, task, and GDD timing already exists"
         );
         assert_eq!(body["error_code"], "duplicate_blueprint");
+    }
+
+    #[test]
+    fn create_failure_response_maps_missing_gdd_trigger_to_422_with_code() {
+        let (status, Json(body)) = create_failure_response(
+            MastersCropTaskScheduleBlueprintCreateFailure::new(
+                MastersCropTaskScheduleBlueprintCreateFailureReason::MissingGddTrigger,
+            ),
+        );
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "gdd_trigger is required");
+        assert_eq!(body["error_code"], "missing_gdd_trigger");
+    }
+
+    #[test]
+    fn create_failure_response_maps_duplicate_to_422_with_code() {
+        let (status, Json(body)) = create_failure_response(
+            MastersCropTaskScheduleBlueprintCreateFailure::new(
+                MastersCropTaskScheduleBlueprintCreateFailureReason::Duplicate,
+            ),
+        );
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            body["errors"][0],
+            "A task plan for this stage, task, and GDD timing already exists"
+        );
+        assert_eq!(body["error_code"], "duplicate_blueprint");
+    }
+
+    #[test]
+    fn regenerate_failure_response_maps_crop_not_found_to_404() {
+        let (status, Json(body)) = regenerate_failure_response(CropBlueprintRegenerateFailure::new(
+            CropBlueprintRegenerateFailureReason::CropNotFound,
+            "missing crop",
+        ));
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "missing crop");
+        assert_eq!(body["error_code"], "crop_not_found");
+    }
+
+    #[test]
+    fn regenerate_failure_response_maps_missing_agrr_requirement_to_422() {
+        let (status, Json(body)) = regenerate_failure_response(CropBlueprintRegenerateFailure::new(
+            CropBlueprintRegenerateFailureReason::MissingAgrrRequirement,
+            "no agrr profile",
+        ));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "no agrr profile");
+        assert_eq!(body["error_code"], "missing_agrr_requirement");
+    }
+
+    #[test]
+    fn blueprint_failure_response_maps_blueprint_not_found_to_404() {
+        let (status, Json(body)) = blueprint_failure_response(
+            MastersCropTaskScheduleBlueprintFailure::new(
+                MastersCropTaskScheduleBlueprintFailureReason::BlueprintNotFound,
+            ),
+        );
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "Blueprint not found");
+    }
+}
+
+#[cfg(test)]
+mod blueprint_json_tests {
+    use super::*;
+    use agrr_domain::crop::dtos::MastersCropTaskScheduleBlueprint;
+
+    fn sample_blueprint(gdd_trigger: Option<Decimal>) -> MastersCropTaskScheduleBlueprint {
+        MastersCropTaskScheduleBlueprint {
+            id: 10,
+            crop_id: 20,
+            agricultural_task_id: Some(3),
+            source_agricultural_task_id: None,
+            stage_order: Some(1),
+            stage_name: Some("vegetative".into()),
+            gdd_trigger,
+            gdd_tolerance: None,
+            task_type: "field_work".into(),
+            source: "manual".into(),
+            priority: 1,
+            amount: None,
+            amount_unit: None,
+            description: None,
+            weather_dependency: None,
+            time_per_sqm: None,
+            name: Some("till".into()),
+            created_at: Some("2026-01-01".into()),
+            updated_at: None,
+        }
+    }
+
+    #[test]
+    fn decimal_to_json_f64_converts_decimal_to_float() {
+        assert_eq!(decimal_to_json_f64(Some(Decimal::new(125, 1))), Some(12.5));
+        assert_eq!(decimal_to_json_f64(None), None);
+    }
+
+    #[test]
+    fn blueprint_json_serializes_gdd_trigger_as_f64_not_string() {
+        let json = blueprint_json(&sample_blueprint(Some(Decimal::new(200, 0))));
+        assert_eq!(json["gdd_trigger"], 200.0);
+        assert!(json["gdd_trigger"].is_f64());
+        assert_eq!(json["crop_id"], 20);
+        assert_eq!(json["name"], "till");
     }
 }
