@@ -185,3 +185,145 @@ pub fn masters_destroy_undo_json(undo: &Value, toast_message: &str) -> Value {
     })
 }
 
+#[cfg(test)]
+mod crop_json_tests {
+    use super::*;
+    use agrr_domain::crop::entities::{
+        CropEntity, CropStageEntity, NutrientRequirementEntity, SunshineRequirementEntity,
+        TemperatureRequirementEntity, ThermalRequirementEntity,
+    };
+    use rust_decimal::Decimal;
+
+    #[test]
+    fn crop_to_json_embeds_stage_list() {
+        let crop = CropEntity {
+            id: 1,
+            user_id: Some(9),
+            organization_id: None,
+            name: "Tomato".into(),
+            variety: Some("Momotaro".into()),
+            is_reference: false,
+            area_per_unit: Some(0.25),
+            revenue_per_area: Some(1200.0),
+            region: Some("jp".into()),
+            groups: vec!["solanaceae".into()],
+            cultivation_method: None,
+            created_at: None,
+            updated_at: None,
+        };
+        let stage = CropStageEntity {
+            id: 2,
+            crop_id: 1,
+            name: "seedling".into(),
+            order: 1,
+            temperature_requirement: None,
+            thermal_requirement: None,
+            sunshine_requirement: None,
+            nutrient_requirement: None,
+            created_at: None,
+            updated_at: None,
+        };
+        let json = crop_to_json(&crop, &[stage]);
+        assert_eq!(json["name"], "Tomato");
+        assert_eq!(json["groups"][0], "solanaceae");
+        assert_eq!(json["crop_stages"].as_array().unwrap().len(), 1);
+        assert_eq!(json["crop_stages"][0]["name"], "seedling");
+    }
+
+    #[test]
+    fn crop_stage_to_json_omits_absent_requirements() {
+        let stage = CropStageEntity {
+            id: 1,
+            crop_id: 2,
+            name: "flowering".into(),
+            order: 3,
+            temperature_requirement: None,
+            thermal_requirement: None,
+            sunshine_requirement: None,
+            nutrient_requirement: None,
+            created_at: None,
+            updated_at: None,
+        };
+        let json = crop_stage_to_json(&stage);
+        assert!(!json.as_object().unwrap().contains_key("temperature_requirement"));
+        assert!(!json.as_object().unwrap().contains_key("thermal_requirement"));
+    }
+
+    #[test]
+    fn crop_stage_to_json_includes_nested_requirement_objects() {
+        let stage = CropStageEntity {
+            id: 5,
+            crop_id: 6,
+            name: "fruiting".into(),
+            order: 2,
+            temperature_requirement: Some(TemperatureRequirementEntity {
+                id: 10,
+                crop_stage_id: 5,
+                base_temperature: Some(Decimal::new(100, 1)),
+                optimal_min: None,
+                optimal_max: None,
+                low_stress_threshold: None,
+                high_stress_threshold: None,
+                frost_threshold: None,
+                sterility_risk_threshold: None,
+                max_temperature: None,
+            }),
+            thermal_requirement: Some(ThermalRequirementEntity {
+                id: 11,
+                crop_stage_id: 5,
+                required_gdd: Some(Decimal::new(800, 0)),
+            }),
+            sunshine_requirement: Some(SunshineRequirementEntity {
+                id: 12,
+                crop_stage_id: 5,
+                minimum_sunshine_hours: Some(Decimal::new(6, 0)),
+                target_sunshine_hours: None,
+            }),
+            nutrient_requirement: Some(NutrientRequirementEntity {
+                id: 13,
+                crop_stage_id: 5,
+                daily_uptake_n: None,
+                daily_uptake_p: None,
+                daily_uptake_k: None,
+                region: Some("jp".into()),
+            }),
+            created_at: None,
+            updated_at: None,
+        };
+        let json = crop_stage_to_json(&stage);
+        assert_eq!(
+            json["temperature_requirement"]["base_temperature"],
+            "10.0"
+        );
+        assert_eq!(json["thermal_requirement"]["required_gdd"], "800");
+        assert_eq!(json["sunshine_requirement"]["minimum_sunshine_hours"], "6");
+        assert_eq!(json["nutrient_requirement"]["region"], "jp");
+    }
+}
+
+#[cfg(test)]
+mod masters_destroy_undo_json_tests {
+    use super::*;
+
+    #[test]
+    fn masters_destroy_undo_json_wires_token_deadline_and_toast() {
+        let undo = json!({
+            "undo_token": "abc123",
+            "expires_at": "2026-12-31T00:00:00Z",
+        });
+        let json = masters_destroy_undo_json(&undo, "Farm deleted");
+        assert_eq!(json["undo"]["undo_token"], "abc123");
+        assert_eq!(json["undo"]["undo_deadline"], "2026-12-31T00:00:00Z");
+        assert_eq!(json["undo"]["toast_message"], "Farm deleted");
+        assert_eq!(json["undo"]["undo_path"], "/undo_deletion");
+        assert_eq!(json["undo"]["auto_hide_after"], 5000);
+    }
+
+    #[test]
+    fn masters_destroy_undo_json_defaults_missing_undo_fields_to_empty_strings() {
+        let json = masters_destroy_undo_json(&json!({}), "Crop deleted");
+        assert_eq!(json["undo"]["undo_token"], "");
+        assert_eq!(json["undo"]["undo_deadline"], "");
+    }
+}
+
