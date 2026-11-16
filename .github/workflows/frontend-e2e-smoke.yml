@@ -26,7 +26,8 @@ concurrency:
 
 jobs:
   frontend-e2e-smoke:
-    runs-on: ubuntu-latest
+    # ubuntu-latest is 26.04+; Playwright 1.59.x has no chromium deps for it yet
+    runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
       - name: Checkout
