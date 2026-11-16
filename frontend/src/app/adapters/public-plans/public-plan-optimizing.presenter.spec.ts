@@ -11,6 +11,8 @@ import { UxAnalyticsService } from '../../services/ux-analytics.service';
 const translationMap = new Map<string, string>([
   ['models.cultivation_plan.phases.completed', '最適化が完了しました'],
   ['models.cultivation_plan.phases.optimizing', '最適化処理中...'],
+  ['models.cultivation_plan.phases.fetching_weather', '気象データを取得しています...'],
+  ['models.cultivation_plan.phases.predicting_weather', '気象データを予測しています...'],
   [
     'models.cultivation_plan.phase_failed.predicting_weather',
     '気象データの予測に失敗しました'
@@ -316,6 +318,20 @@ describe('PublicPlanOptimizingPresenter', () => {
     expect(lastControl.progress).toBe(100);
     expect(lastControl.phaseMessage).toBe('最適化が完了しました');
     expect(onCompletedSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the current phase on screen when the cable drops before field progress reaches 100', () => {
+    presenter.present({
+      status: 'optimizing',
+      progress: 0,
+      message_key: 'models.cultivation_plan.phases.predicting_weather'
+    });
+
+    presenter.presentConnectionLost();
+
+    expect(lastControl.status).toBe('optimizing');
+    expect(lastControl.phaseMessage).toBe('気象データを予測しています...');
+    expect(lastControl.failureCategory).toBeUndefined();
   });
 
   it('ignores connection lost after optimization completed', () => {

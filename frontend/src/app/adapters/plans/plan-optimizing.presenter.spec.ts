@@ -122,7 +122,24 @@ describe('PlanOptimizingPresenter', () => {
     });
   });
 
-  it('sets failed state with connection lost message on presentConnectionLost', () => {
+  it('keeps the in-progress phase when the cable drops before field progress reaches 100', () => {
+    const harness = createView({
+      status: 'optimizing',
+      progress: 12,
+      phaseMessage: 'Predicting weather...'
+    });
+    presenter.setView(harness.view);
+
+    presenter.presentConnectionLost();
+
+    expect(harness.control.status).toBe('optimizing');
+    expect(harness.control.progress).toBe(12);
+    expect(harness.control.phaseMessage).toBe('Predicting weather...');
+    expect(harness.control.failureCategory).toBeUndefined();
+    expect(uxAnalytics.trackOptimizationLifecycle).not.toHaveBeenCalled();
+  });
+
+  it('sets failed state with connection lost message before a phase starts', () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
@@ -132,13 +149,12 @@ describe('PlanOptimizingPresenter', () => {
       },
       true
     );
-    const harness = createView({ status: 'optimizing', progress: 12, phaseMessage: '' });
+    const harness = createView({ status: 'pending', progress: 0, phaseMessage: '' });
     presenter.setView(harness.view);
 
     presenter.presentConnectionLost();
 
     expect(harness.control.status).toBe('failed');
-    expect(harness.control.progress).toBe(12);
     expect(harness.control.phaseMessage).toBe('Connection was lost.');
     expect(harness.control.failureHint).toBe('Try reloading.');
     expect(harness.control.failureCategory).toBe('connection_lost');
