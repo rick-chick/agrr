@@ -92,11 +92,40 @@ fn crop_pesticides_index_crop_not_found() -> (StatusCode, Value) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use agrr_domain::pesticide::entities::{PesticideEntity, PesticideEntityAttrs};
+
+    fn sample_pesticide() -> PesticideEntity {
+        PesticideEntity::new(PesticideEntityAttrs {
+            id: 7,
+            user_id: Some(2),
+            name: "Sample spray".into(),
+            active_ingredient: Some("active".into()),
+            description: Some("desc".into()),
+            crop_id: Some(10),
+            pest_id: Some(20),
+            region: Some("jp".into()),
+            is_reference: false,
+            created_at: "2026-01-01T00:00:00Z".into(),
+            updated_at: "2026-01-02T00:00:00Z".into(),
+        })
+        .expect("valid pesticide")
+    }
 
     #[test]
     fn crop_pesticides_index_crop_not_found_maps_to_404() {
         let (status, body) = crop_pesticides_index_crop_not_found();
         assert_eq!(status, StatusCode::NOT_FOUND);
         assert_eq!(body["errors"][0], "Crop not found");
+    }
+
+    #[test]
+    fn pesticide_json_exposes_association_and_metadata_fields() {
+        let value = pesticide_json(&sample_pesticide());
+        assert_eq!(value["id"], 7);
+        assert_eq!(value["name"], "Sample spray");
+        assert_eq!(value["crop_id"], 10);
+        assert_eq!(value["pest_id"], 20);
+        assert_eq!(value["active_ingredient"], "active");
+        assert_eq!(value["is_reference"], false);
     }
 }

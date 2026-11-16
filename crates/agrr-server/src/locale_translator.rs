@@ -27,3 +27,47 @@ impl TranslatorPort for LocaleTranslator<'_> {
         date.to_string()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::locale_catalog::LocaleCatalog;
+    use agrr_domain::shared::ports::translator_port::TranslatorPort;
+    use std::collections::BTreeMap;
+    use time::Date;
+
+    fn empty_options() -> TranslateOptions {
+        BTreeMap::new()
+    }
+
+    #[test]
+    fn translate_returns_catalog_string_for_locale() {
+        let catalog = LocaleCatalog::from_pairs("en", &[("api.errors.forbidden", "Forbidden")]);
+        let translator = LocaleTranslator::new(&catalog, "en");
+        assert_eq!(
+            translator.translate("api.errors.forbidden", &empty_options()),
+            "Forbidden"
+        );
+    }
+
+    #[test]
+    fn translate_falls_back_to_key_when_missing() {
+        let catalog = LocaleCatalog::from_pairs("en", &[("known.key", "Known")]);
+        let translator = LocaleTranslator::new(&catalog, "en");
+        assert_eq!(
+            translator.translate("missing.key", &empty_options()),
+            "missing.key"
+        );
+    }
+
+    #[test]
+    fn localize_formats_date_as_iso_string() {
+        let catalog = LocaleCatalog::from_pairs("en", &[]);
+        let translator = LocaleTranslator::new(&catalog, "en");
+        let date = Date::from_calendar_date(2026, time::Month::June, 15).expect("valid date");
+        assert_eq!(
+            translator.localize(date, None, &empty_options()),
+            "2026-06-15"
+        );
+    }
+}
