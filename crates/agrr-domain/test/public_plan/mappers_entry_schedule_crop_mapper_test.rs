@@ -9,7 +9,9 @@ use crate::public_plan::mappers::entry_schedule_crop_mapper::{
     crop_detail, prediction_meta, CropStageRow, DateWindow, EntryScheduleCropLike,
     EntryScheduleFarmLike, EntryScheduleWindowResult,
 };
-use crate::shared::ports::{ClockPort, TranslatorPort, TranslateOptions};
+use crate::shared::ports::{
+    apply_translation_options, ClockPort, TranslatorPort, TranslateOptions,
+};
 
 struct TestCrop {
     id: i64,
@@ -41,6 +43,29 @@ struct KeyTranslator;
 impl TranslatorPort for KeyTranslator {
     fn translate(&self, key: &str, _options: &TranslateOptions) -> String {
         key.to_string()
+    }
+
+    fn localize(
+        &self,
+        _date: time::Date,
+        _format: Option<&str>,
+        _options: &TranslateOptions,
+    ) -> String {
+        String::new()
+    }
+}
+
+struct EntryScheduleTemplateTranslator;
+
+impl TranslatorPort for EntryScheduleTemplateTranslator {
+    fn translate(&self, key: &str, options: &TranslateOptions) -> String {
+        let template = match key {
+            "api.entry_schedule.reason.agrr" => {
+                "栽培期間の最適化結果: %{start}〜%{completion}（生育約%{days}日、GDD %{gdd}）。"
+            }
+            other => other,
+        };
+        apply_translation_options(template, options)
     }
 
     fn localize(
@@ -144,20 +169,40 @@ fn prediction_meta_omits_weather_location_id_when_farm_has_none() {
 }
 
 #[test]
-fn crop_detail_reason_summary_uses_agrr_key_for_optimize_period_source() {
+fn crop_detail_reason_summary_interpolates_agrr_template_for_optimize_period() {
     let crop = TestCrop { id: 7, name: "Tomato" };
-    let translator = KeyTranslator;
+    let translator = EntryScheduleTemplateTranslator;
     let clock = FixedClock {
         today: date!(2026-06-15),
     };
-    let result = window_result(true, "agrr_optimize_period", None);
+    let result = window_result(
+        true,
+        "agrr_optimize_period",
+        Some((
+            "optimal_start_date",
+            json!("2026-03-04"),
+        )),
+    );
+    let mut result = result;
+    result
+        .reason_parts
+        .insert("completion_date".into(), json!("2026-07-06"));
+    result
+        .reason_parts
+        .insert("growth_days".into(), json!(125));
+    result.reason_parts.insert("gdd".into(), json!(987.5));
 
     let detail = crop_detail(&crop, &result, &translator, &[], &clock);
 
-    assert_eq!(
-        detail.get("reason_summary").and_then(|v| v.as_str()),
-        Some("api.entry_schedule.reason.agrr")
-    );
+    let summary = detail
+        .get("reason_summary")
+        .and_then(|v| v.as_str())
+        .expect("reason_summary");
+    assert!(!summary.contains("%{"), "unexpanded placeholders: {summary}");
+    assert!(summary.contains("2026-03-04"));
+    assert!(summary.contains("2026-07-06"));
+    assert!(summary.contains("125"));
+    assert!(summary.contains("987.5"));
 }
 
 #[test]
