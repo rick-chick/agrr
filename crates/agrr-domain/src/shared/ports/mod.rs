@@ -24,4 +24,4 @@ pub use interaction_rule_agrr_format_builder_port::{
 pub use logger_port::LoggerPort;
 pub use masters_api_credentials_resolve_output_port::MastersApiCredentialsResolveOutputPort;
 pub use sql_like_sanitize_port::SqlLikeSanitizePort;
-pub use translator_port::{TranslateOptions, TranslatorPort};
+pub use translator_port::{apply_translation_options, TranslateOptions, TranslatorPort};
