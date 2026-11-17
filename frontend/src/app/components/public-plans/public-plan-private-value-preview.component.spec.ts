@@ -20,13 +20,14 @@ describe('buildPublicPlanPrivateValueFeatures', () => {
 
 describe('PublicPlanPrivateValuePreviewComponent', () => {
   let fixture: ComponentFixture<PublicPlanPrivateValuePreviewComponent>;
+  let translate: TranslateService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PublicPlanPrivateValuePreviewComponent, TranslateModule.forRoot()]
     }).compileComponents();
 
-    const translate = TestBed.inject(TranslateService);
+    translate = TestBed.inject(TranslateService);
     translate.setDefaultLang('ja');
     translate.use('ja');
     translate.setTranslation(
@@ -67,5 +68,31 @@ describe('PublicPlanPrivateValuePreviewComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('天候リスケ');
     expect(fixture.nativeElement.textContent).toContain('学習ループ');
     expect(fixture.nativeElement.textContent).toContain('作業 GDD 比較');
+  });
+
+  it('uses logged-in toggle summary when isLoggedIn is true', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'public_plans.results.private_value_preview.toggle_summary': 'ログイン後に使える機能（3）',
+        'public_plans.results.private_value_preview.toggle_summary_logged_in':
+          '保存後に使える機能（3）',
+        'public_plans.results.private_value_preview.lead': 'マイプランに保存すると利用できます。',
+        'public_plans.results.private_value_preview.weather_reschedule.title': '天候リスケ',
+        'public_plans.results.private_value_preview.weather_reschedule.description': '説明',
+        'public_plans.results.private_value_preview.learn_loop.title': '学習ループ',
+        'public_plans.results.private_value_preview.learn_loop.description': '説明',
+        'public_plans.results.private_value_preview.work_gdd_comparison.title': '作業 GDD 比較',
+        'public_plans.results.private_value_preview.work_gdd_comparison.description': '説明'
+      },
+      true
+    );
+
+    fixture.componentInstance.isLoggedIn = true;
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('保存後に使える機能（3）');
+    expect(text).not.toContain('ログイン後に使える機能（3）');
   });
 });
