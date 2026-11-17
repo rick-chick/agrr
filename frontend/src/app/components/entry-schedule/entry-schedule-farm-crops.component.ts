@@ -27,6 +27,7 @@ import {
 } from '../../domain/entry-schedule/entry-schedule-timeline-bounds';
 import { segmentStylesForRange } from '../../domain/entry-schedule/entry-schedule-timeline-segment';
 import { BackendWarmupLoadingComponent } from '../shared/backend-warmup-loading/backend-warmup-loading.component';
+import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 
 const PAGE_LIMIT = 20;
 
@@ -116,7 +117,7 @@ const initialControl: EntryScheduleFarmCropsViewState = {
                   @if (control.listResponse!.prediction.generated_at) {
                     <span class="meta-line"
                       >{{ 'entrySchedule.predictionFresh' | translate }}:
-                      {{ control.listResponse!.prediction.generated_at | slice: 0 : 16 }}</span
+                      {{ predictionGeneratedAtDisplay(control.listResponse!.prediction.generated_at) }}</span
                     >
                   }
                   @if (control.listResponse!.prediction.prediction_end_date) {
@@ -451,6 +452,10 @@ export class EntryScheduleFarmCropsComponent implements EntryScheduleFarmCropsVi
     const a = summary.start_date.slice(5, 10).replace('-', '/');
     const b = summary.end_date.slice(5, 10).replace('-', '/');
     return `${a} – ${b}`;
+  }
+
+  predictionGeneratedAtDisplay(value: string): string {
+    return formatIsoDateTimeForDisplay(value, this.translate.currentLang);
   }
 
   listEmptyKind(): 'noCrops' | 'allIneligible' | null {
