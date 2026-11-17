@@ -11,6 +11,7 @@ import {
   ENTRY_SCHEDULE_DETAIL_PROVIDERS
 } from '../../adapters/entry-schedule/entry-schedule-detail.providers';
 import { EntrySchedulePhaseSegment } from '../../domain/entry-schedule/entry-schedule';
+import { formatEntrySchedulePredictionGeneratedAt } from '../../domain/entry-schedule/entry-schedule-prediction-generated-at';
 import {
   MONTH_NUMBERS,
   timelineBoundsFromSummaries,
@@ -75,7 +76,8 @@ const initialControl: EntryScheduleDetailViewState = {
             <div class="prediction-strip es-meta-chips mt-4" role="status">
               @if (control.data.prediction.generated_at) {
                 <span class="es-meta-chip"
-                  >{{ 'entrySchedule.predictionFresh' | translate }}: {{ control.data.prediction.generated_at!.slice(0, 16) }}</span
+                  >{{ 'entrySchedule.predictionFresh' | translate }}:
+                  {{ formatPredictionGeneratedAt(control.data.prediction.generated_at!) }}</span
                 >
               }
               @if (control.data.prediction.prediction_end_date) {
@@ -313,6 +315,7 @@ export class EntryScheduleDetailComponent implements EntryScheduleDetailView, On
 
   readonly monthTicks = [...MONTH_NUMBERS];
   readonly segmentStylesForRange = segmentStylesForRange;
+  readonly formatPredictionGeneratedAt = formatEntrySchedulePredictionGeneratedAt;
 
   private _control: EntryScheduleDetailViewState = initialControl;
   get control(): EntryScheduleDetailViewState {

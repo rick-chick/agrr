@@ -14,6 +14,7 @@ import {
 } from '../../adapters/entry-schedule/entry-schedule-farm-crops.providers';
 import { Farm } from '../../domain/farms/farm';
 import { EntryScheduleCropListItem } from '../../domain/entry-schedule/entry-schedule';
+import { formatEntrySchedulePredictionGeneratedAt } from '../../domain/entry-schedule/entry-schedule-prediction-generated-at';
 import { detectBrowserRegion } from '../../core/browser-region';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { FunnelShellComponent } from '../shared/shells/funnel-shell.component';
@@ -116,7 +117,7 @@ const initialControl: EntryScheduleFarmCropsViewState = {
                   @if (control.listResponse!.prediction.generated_at) {
                     <span class="meta-line"
                       >{{ 'entrySchedule.predictionFresh' | translate }}:
-                      {{ control.listResponse!.prediction.generated_at | slice: 0 : 16 }}</span
+                      {{ formatPredictionGeneratedAt(control.listResponse!.prediction.generated_at!) }}</span
                     >
                   }
                   @if (control.listResponse!.prediction.prediction_end_date) {
@@ -347,6 +348,7 @@ export class EntryScheduleFarmCropsComponent implements EntryScheduleFarmCropsVi
 
   readonly monthTicks = [...MONTH_NUMBERS];
   readonly segmentStylesForRange = segmentStylesForRange;
+  readonly formatPredictionGeneratedAt = formatEntrySchedulePredictionGeneratedAt;
   readonly flowDetailOpen = signal<Set<number>>(new Set());
 
   private _control: EntryScheduleFarmCropsViewState = initialControl;

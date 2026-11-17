@@ -132,6 +132,41 @@ fn prediction_meta_uses_generated_at_and_prediction_end_date_aliases() {
 }
 
 #[test]
+fn prediction_meta_normalizes_unix_generated_at_seconds() {
+    let farm = TestFarm {
+        weather_location_id: Some(1),
+    };
+    let payload = BTreeMap::from([("generated_at".into(), json!(1_700_000_000))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    assert_eq!(
+        meta.get("generated_at").and_then(|v| v.as_str()),
+        Some("2023-11-14T22:13:20Z")
+    );
+}
+
+#[test]
+fn prediction_meta_normalizes_unix_generated_at_numeric_string() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([("generated_at".into(), json!("1788855795"))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    let generated_at = meta
+        .get("generated_at")
+        .and_then(|v| v.as_str())
+        .expect("generated_at");
+    assert!(
+        generated_at.starts_with("2026-"),
+        "expected ISO datetime, got {generated_at}"
+    );
+    assert!(!generated_at.chars().all(|c| c.is_ascii_digit()));
+}
+
+#[test]
 fn prediction_meta_omits_weather_location_id_when_farm_has_none() {
     let farm = TestFarm {
         weather_location_id: None,
