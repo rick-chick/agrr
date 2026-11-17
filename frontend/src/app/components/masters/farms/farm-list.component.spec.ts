@@ -64,6 +64,11 @@ describe('FarmListComponent', () => {
       farms: {
         index: {
           reference_badge: 'Reference',
+          empty: {
+            title: 'No farms yet',
+            description: 'Add your first farm to get started.',
+            button: 'Add farm'
+          },
           delete_confirm_message:
             'Delete this farm? Registered fields and cultivation plans will be affected. You can undo shortly after deleting.'
         },
@@ -411,5 +416,28 @@ farms: [],
     loadUseCase.execute.mockClear();
     retryBtn.click();
     expect(loadUseCase.execute).toHaveBeenCalled();
+  });
+
+  it('renders empty-state block with description and add link when list is empty', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const empty = fixture.nativeElement.querySelector('.empty-state') as HTMLElement;
+    expect(empty).toBeTruthy();
+    expect(empty.querySelector('.empty-state__message')?.textContent?.trim()).toBe('No farms yet');
+    expect(empty.querySelector('.empty-state__description')?.textContent?.trim()).toBe(
+      'Add your first farm to get started.'
+    );
+    const addLink = empty.querySelector('a.btn-primary') as HTMLAnchorElement;
+    expect(addLink?.textContent?.trim()).toBe('Add farm');
+    expect(addLink?.getAttribute('href')).toBe('/farms/new');
+    expect(fixture.nativeElement.querySelector('.card-list__item')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.section-card__header-actions')).toBeNull();
   });
 });
