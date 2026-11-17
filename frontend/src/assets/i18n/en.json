@@ -1203,7 +1203,8 @@
           "title": "Work GDD comparison",
           "description": "Compare recorded work GDD with the plan to spot delays or early completion."
         },
-        "toggle_summary": "Features after login (3)"
+        "toggle_summary": "Features after login (3)",
+        "toggle_summary_logged_in": "Features after you save (3)"
       },
       "next_steps": {
         "title": "Next steps",
