@@ -2060,7 +2060,8 @@
           "title": "作業 GDD 比較",
           "description": "作業実績の積算温度を計画と比較し、遅れや前倒しを気づきやすくします。"
         },
-        "toggle_summary": "ログイン後に使える機能（3）"
+        "toggle_summary": "ログイン後に使える機能（3）",
+        "toggle_summary_logged_in": "保存後に使える機能（3）"
       },
       "next_steps": {
         "title": "次のステップ",

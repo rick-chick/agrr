@@ -117,7 +117,9 @@ const initialControl: PublicPlanResultsViewState = {
             (saveRequest)="savePlan()"
           />
 
-          <app-public-plan-private-value-preview />
+          <app-public-plan-private-value-preview
+            [isLoggedIn]="auth.user() !== null"
+          />
         }
       </div>
     </div>
