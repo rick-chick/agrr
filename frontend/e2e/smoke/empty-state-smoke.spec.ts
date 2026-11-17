@@ -29,6 +29,7 @@ const SCENARIOS: {
     scenario: 'farms-zero',
     host: 'app-farm-list',
     assert: async (page) => {
+      await expect(page.locator('app-farm-list .empty-state')).toBeVisible();
       await expect(page.locator('app-farm-list .card-list__item')).toHaveCount(0);
     },
   },
@@ -43,6 +44,7 @@ const SCENARIOS: {
     scenario: 'crops-zero',
     host: 'app-crop-list',
     assert: async (page) => {
+      await expect(page.locator('app-crop-list .empty-state')).toBeVisible();
       await expect(page.locator('app-crop-list .card-list__item')).toHaveCount(0);
     },
   },

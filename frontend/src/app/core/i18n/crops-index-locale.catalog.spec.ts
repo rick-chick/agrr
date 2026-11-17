@@ -32,6 +32,9 @@ const CATALOG_KEYS = [
   'crops.index.title',
   'crops.index.description',
   'crops.index.new_crop',
+  'crops.index.empty.title',
+  'crops.index.empty.description',
+  'crops.index.empty.button',
   'crops.index.menu.more_actions',
   'crops.index.inline.stages_toggle',
   'crops.index.inline.blueprints_toggle'

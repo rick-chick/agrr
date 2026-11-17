@@ -47,6 +47,12 @@ const initialControl: FarmListViewState = {
               {{ 'masters.load_error.retry' | translate }}
             </button>
           </div>
+        } @else if (control.farms.length === 0) {
+          <div class="empty-state">
+            <p class="empty-state__message">{{ 'farms.index.empty.title' | translate }}</p>
+            <p class="empty-state__description">{{ 'farms.index.empty.description' | translate }}</p>
+            <a routerLink="/farms/new" class="btn btn-primary">{{ 'farms.index.empty.button' | translate }}</a>
+          </div>
         } @else {
           <div class="section-card__header-actions">
             <a routerLink="/farms/new" class="btn btn-primary">{{ 'farms.index.new_farm' | translate }}</a>
