@@ -50,6 +50,11 @@ const translations = {
       title: 'Crops',
       description: 'Manage crops',
       new_crop: 'Add crop',
+      empty: {
+        title: 'No crops yet',
+        description: 'Add your first crop to get started.',
+        button: 'Add crop'
+      },
       delete_confirm_message:
         'Delete this crop? Growth stages and task schedule templates will also be removed. You can undo shortly after deleting.',
       inline: {
@@ -281,5 +286,71 @@ errorIsWarmup: false,
       cropId: 10,
       onAfterUndo: expect.any(Function)
     });
+  });
+});
+
+describe('CropListComponent empty state', () => {
+  let fixture: ComponentFixture<CropListComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CropListComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        CropListPresenter,
+        { provide: LoadCropListUseCase, useValue: { execute: vi.fn() } },
+        { provide: DeleteCropUseCase, useValue: { execute: vi.fn() } },
+        { provide: AuthService, useValue: { user: () => ({ admin: false }) } },
+        { provide: FlashMessageService, useValue: { show: vi.fn() } },
+        { provide: UndoToastService, useValue: { show: vi.fn() } },
+        { provide: ListRefreshBus, useValue: { onRefresh: () => () => undefined } }
+      ]
+    })
+      .overrideComponent(CropListComponent, { set: { providers: [] } })
+      .compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          index: {
+            empty: {
+              title: 'No crops yet',
+              description: 'Add your first crop to get started.',
+              button: 'Add crop'
+            }
+          }
+        }
+      },
+      true
+    );
+    translate.use('en');
+
+    fixture = TestBed.createComponent(CropListComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: null,
+      errorIsWarmup: false,
+      crops: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+  });
+
+  it('renders empty-state block with description and add link when list is empty', () => {
+    const empty = fixture.nativeElement.querySelector('.empty-state') as HTMLElement;
+    expect(empty).toBeTruthy();
+    expect(empty.querySelector('.empty-state__message')?.textContent?.trim()).toBe('No crops yet');
+    expect(empty.querySelector('.empty-state__description')?.textContent?.trim()).toBe(
+      'Add your first crop to get started.'
+    );
+    const addLink = empty.querySelector('a.btn-primary') as HTMLAnchorElement;
+    expect(addLink?.textContent?.trim()).toBe('Add crop');
+    expect(addLink?.getAttribute('href')).toBe('/crops/new');
+    expect(fixture.nativeElement.querySelector('.card-list__item')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.section-card__header-actions')).toBeNull();
   });
 });

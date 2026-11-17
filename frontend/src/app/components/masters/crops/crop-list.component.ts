@@ -49,6 +49,12 @@ const initialControl: CropListViewState = {
               {{ 'masters.load_error.retry' | translate }}
             </button>
           </div>
+        } @else if (control.crops.length === 0) {
+          <div class="empty-state">
+            <p class="empty-state__message">{{ 'crops.index.empty.title' | translate }}</p>
+            <p class="empty-state__description">{{ 'crops.index.empty.description' | translate }}</p>
+            <a [routerLink]="['/crops', 'new']" class="btn btn-primary">{{ 'crops.index.empty.button' | translate }}</a>
+          </div>
         } @else {
           <div class="section-card__header-actions">
             <a [routerLink]="['/crops', 'new']" class="btn btn-primary">{{ 'crops.index.new_crop' | translate }}</a>

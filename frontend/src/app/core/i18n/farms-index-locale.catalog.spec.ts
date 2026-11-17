@@ -33,6 +33,9 @@ const CATALOG_KEYS = [
   'farms.index.title',
   'farms.index.description',
   'farms.index.new_farm',
+  'farms.index.empty.title',
+  'farms.index.empty.description',
+  'farms.index.empty.button',
   'farms.index.reference_badge',
   'farms.index.delete_confirm_message'
 ] as const;
