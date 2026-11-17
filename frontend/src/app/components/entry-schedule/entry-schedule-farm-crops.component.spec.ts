@@ -155,6 +155,38 @@ describe('EntryScheduleFarmCropsComponent', () => {
     await initComponent();
   }
 
+  it('formats unix prediction generated_at in the crop list meta strip', async () => {
+    getEntryScheduleCrops.mockReturnValue(
+      of({
+        farm: farms[0],
+        crops: [
+          {
+            id: 1,
+            name: 'Tomato',
+            eligible: true,
+            schedule_flow_summary: 'Sow → transplant',
+            sowing_summary: { start_date: '2026-04-01', end_date: '2026-04-30' },
+            transplant_summary: { start_date: '2026-05-01', end_date: '2026-05-20' },
+          },
+        ],
+        prediction: { generated_at: '1788855795', prediction_end_date: '2027-12-31' },
+        meta: { has_more: false, next_cursor: null },
+      }),
+    );
+    translate.setTranslation('en', {
+      entrySchedule: {
+        predictionFresh: 'Forecast updated',
+        predictionUntil: 'Valid through',
+      },
+    });
+    await initComponent();
+
+    const meta = fixture.nativeElement.querySelector('.entry-schedule-meta') as HTMLElement;
+    expect(meta).toBeTruthy();
+    expect(meta.textContent).not.toContain('1788855795');
+    expect(meta.textContent).toMatch(/2026/);
+  });
+
   it('loads crops for the farm route param', async () => {
     await initComponent();
 
