@@ -27,6 +27,8 @@ import {
   buildGanttVisibleRangeFromStart,
   clampGanttChartWidth,
   computeGanttBarLabelPosition,
+  resolveGanttBarLabelPresentation,
+  resolveGanttYearLabelPlacement,
   computeGanttBarParamsForPlanView,
   computeGanttChartHeight,
   determineGanttTimeScale,
@@ -366,16 +368,25 @@ type GanttPendingDeleteAction =
                   {{ 'shared.navbar.farms' | translate }}
                 }
               </text>
-              @for (month of months; track month.date.getTime()) {
+              @for (month of months; track month.date.getTime(); let isLast = $last) {
                 @if (month.showLabel) {
                   <text [attr.x]="month.x + (month.width / 2)" y="30" class="month-label" text-anchor="middle" font-size="12" font-weight="600" fill="#1F2937">
                     {{ month.label }}
                   </text>
                 }
                 @if (month.showYear) {
-                  <text [attr.x]="month.x + (month.width / 2)" y="15" class="year-label" text-anchor="middle" font-size="11" font-weight="bold" fill="#6B7280">
-                    {{ month.year }}{{ 'plans.gantt.labels.year' | translate }}
-                  </text>
+                  @if (yearLabelPlacement(month, isLast); as yearLabel) {
+                    <text
+                      [attr.x]="yearLabel.x"
+                      y="15"
+                      class="year-label"
+                      [attr.text-anchor]="yearLabel.textAnchor"
+                      font-size="11"
+                      font-weight="bold"
+                      fill="#6B7280">
+                      {{ month.year }}{{ 'plans.gantt.labels.year' | translate }}
+                    </text>
+                  }
                 }
                 <line [attr.x1]="month.x" y1="40" [attr.x2]="month.x" [attr.y2]="config.height" stroke="#E5E7EB" stroke-width="1" />
               }
@@ -456,17 +467,30 @@ type GanttPendingDeleteAction =
                             stroke-width="2.5"
                             class="bar-bg"
                             style="cursor: grab;" />
-                      <text
-                            [attr.x]="params.width > 72 ? params.x + (params.width - 32) / 2 : params.x + 10"
-                            [attr.y]="config.barPadding + config.barHeight / 2 + 5"
-                            class="bar-label"
-                            [attr.text-anchor]="params.width > 72 ? 'middle' : 'start'"
-                            font-size="12"
-                            font-weight="600"
-                            fill="#1F2937"
-                            style="pointer-events: none;">
-                        {{ cultivation.crop_name }}
-                      </text>
+                      @if (barLabelPresentation(params.x, params.width); as barLabel) {
+                        <defs>
+                          <clipPath [attr.id]="'bar-label-clip-' + cultivation.id">
+                            <rect
+                              [attr.x]="barLabel.clipX"
+                              [attr.y]="config.barPadding"
+                              [attr.width]="barLabel.clipWidth"
+                              [attr.height]="config.barHeight" />
+                          </clipPath>
+                        </defs>
+                        <text
+                              [attr.x]="barLabel.x"
+                              [attr.y]="config.barPadding + config.barHeight / 2 + 5"
+                              class="bar-label"
+                              [attr.text-anchor]="barLabel.textAnchor"
+                              [attr.clip-path]="'url(#bar-label-clip-' + cultivation.id + ')'"
+                              font-size="12"
+                              font-weight="600"
+                              fill="#1F2937"
+                              style="pointer-events: none;">
+                          <title>{{ cultivation.crop_name }}</title>
+                          {{ cultivation.crop_name }}
+                        </text>
+                      }
                     </g>
                   }
                 }
@@ -860,6 +884,7 @@ export class GanttChartComponent
         const reserve = 24;
         const y = parseFloat(rect.getAttribute('y') || this.config.barPadding.toString());
         const height = parseFloat(rect.getAttribute('height') || this.config.barHeight.toString());
+        const barLabel = resolveGanttBarLabelPresentation(x, width, reserve);
         const { x: labelX, y: labelY } = computeGanttBarLabelPosition({
           barX: x,
           barWidth: width,
@@ -869,6 +894,7 @@ export class GanttChartComponent
         });
         t.setAttribute('x', labelX.toString());
         t.setAttribute('y', labelY.toString());
+        t.setAttribute('text-anchor', barLabel.textAnchor);
       });
     } catch (e) {
       // 万が一SVG操作で例外が出ても描画は継続する
@@ -1845,5 +1871,18 @@ export class GanttChartComponent
 
   cultivationAriaSelected(cultivationId: number): 'true' | null {
     return this.selectedCultivationId === cultivationId ? 'true' : null;
+  }
+
+  yearLabelPlacement(month: GanttTimeAxisSegment, isLastSegment: boolean) {
+    return resolveGanttYearLabelPlacement({
+      segmentX: month.x,
+      segmentWidth: month.width,
+      chartAreaRightX: this.config.width - this.config.margin.right,
+      isLastSegment
+    });
+  }
+
+  barLabelPresentation(barX: number, barWidth: number) {
+    return resolveGanttBarLabelPresentation(barX, barWidth);
   }
 }

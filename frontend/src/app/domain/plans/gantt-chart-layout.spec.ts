@@ -26,6 +26,8 @@ import {
   getGanttFieldLabelAnchorX,
   getGanttFieldDividerX,
   GANTT_FIELD_LABEL_GAP,
+  resolveGanttBarLabelPresentation,
+  resolveGanttYearLabelPlacement,
   resolveGanttDragFieldContext,
   GANTT_MARGIN_LEFT_DESKTOP,
   GANTT_MARGIN_LEFT_MOBILE,
@@ -601,5 +603,40 @@ describe('gantt-chart-layout', () => {
     const rect = { left: 10, right: 20, top: 30, bottom: 40 };
     expect(isPointInsideClientRect(15, 35, rect)).toBe(true);
     expect(isPointInsideClientRect(5, 35, rect)).toBe(false);
+  });
+
+  it('resolveGanttYearLabelPlacement anchors the last axis year inside the chart right edge', () => {
+    const chartAreaRightX = 1000;
+    const last = resolveGanttYearLabelPlacement({
+      segmentX: 960,
+      segmentWidth: 40,
+      chartAreaRightX,
+      isLastSegment: true
+    });
+    expect(last.textAnchor).toBe('end');
+    expect(last.x).toBeLessThanOrEqual(chartAreaRightX - 4);
+    expect(last.x).toBeGreaterThan(960);
+
+    const inner = resolveGanttYearLabelPlacement({
+      segmentX: 400,
+      segmentWidth: 80,
+      chartAreaRightX,
+      isLastSegment: false
+    });
+    expect(inner.textAnchor).toBe('middle');
+    expect(inner.x).toBe(440);
+  });
+
+  it('resolveGanttBarLabelPresentation clips labels to the bar width for narrow and wide bars', () => {
+    const narrow = resolveGanttBarLabelPresentation(120, 48);
+    expect(narrow.textAnchor).toBe('start');
+    expect(narrow.x).toBe(130);
+    expect(narrow.clipX).toBe(120);
+    expect(narrow.clipWidth).toBe(48);
+
+    const wide = resolveGanttBarLabelPresentation(200, 120);
+    expect(wide.textAnchor).toBe('middle');
+    expect(wide.x).toBe(200 + (120 - 32) / 2);
+    expect(wide.clipWidth).toBe(120);
   });
 });
