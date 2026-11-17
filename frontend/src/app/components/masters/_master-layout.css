@@ -145,8 +145,8 @@
   margin: 0;
   padding: 0;
   width: 100%;
-  /* stretch だと行高さと min-height:% の相互作用で枠が潰れることがある */
-  align-items: start;
+  /* 同一行の item-card 高さを L2 契約（±4px）に合わせるため行トラックを stretch */
+  align-items: stretch;
   min-width: 0;
 }
 
@@ -165,7 +165,16 @@
 .card-list__item {
   margin: 0;
   display: flex;
+  align-items: stretch;
   min-width: 0;
+  min-height: 0;
+}
+
+.card-list__item > .item-card,
+.card-list__item > a.item-card {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
   min-height: 0;
 }
 

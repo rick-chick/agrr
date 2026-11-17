@@ -3,7 +3,6 @@
 .crop-list__reference-badge.item-card__badge-row--single-line {
   display: flex;
   align-items: center;
-  min-height: 1.5rem;
 }
 
 .item-card__badge {
