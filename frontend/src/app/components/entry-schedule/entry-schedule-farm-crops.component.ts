@@ -28,6 +28,7 @@ import {
 import { segmentStylesForRange } from '../../domain/entry-schedule/entry-schedule-timeline-segment';
 import { BackendWarmupLoadingComponent } from '../shared/backend-warmup-loading/backend-warmup-loading.component';
 import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
+import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 
 const PAGE_LIMIT = 20;
 

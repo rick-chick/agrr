@@ -314,7 +314,6 @@ export class EntryScheduleDetailComponent implements EntryScheduleDetailView, On
 
   readonly monthTicks = [...MONTH_NUMBERS];
   readonly segmentStylesForRange = segmentStylesForRange;
-
   private _control: EntryScheduleDetailViewState = initialControl;
   get control(): EntryScheduleDetailViewState {
     return this._control;
