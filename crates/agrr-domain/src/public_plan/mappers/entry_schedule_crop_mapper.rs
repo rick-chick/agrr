@@ -219,7 +219,10 @@ fn reason_summary_text(result: &EntryScheduleWindowResult, translator: &dyn Tran
         .and_then(|v| v.as_str())
         .unwrap_or("");
     if src == "agrr_optimize_period" {
-        return translator.t("api.entry_schedule.reason.agrr", &empty_options());
+        return translator.t(
+            "api.entry_schedule.reason.agrr",
+            &agrr_reason_options(&result.reason_parts),
+        );
     }
     if src == "agrr_failed" {
         return translator.t(
@@ -232,6 +235,44 @@ fn reason_summary_text(result: &EntryScheduleWindowResult, translator: &dyn Tran
 
 fn empty_options() -> TranslateOptions {
     BTreeMap::new()
+}
+
+fn agrr_reason_options(reason_parts: &BTreeMap<String, Value>) -> TranslateOptions {
+    let mut options = TranslateOptions::new();
+    if let Some(start) = reason_parts
+        .get("optimal_start_date")
+        .and_then(value_to_display_string)
+    {
+        options.insert("start".into(), start);
+    }
+    if let Some(completion) = reason_parts
+        .get("completion_date")
+        .and_then(value_to_display_string)
+    {
+        options.insert("completion".into(), completion);
+    }
+    if let Some(days) = reason_parts
+        .get("growth_days")
+        .and_then(value_to_display_string)
+    {
+        options.insert("days".into(), days);
+    }
+    if let Some(gdd) = reason_parts
+        .get("gdd")
+        .and_then(value_to_display_string)
+    {
+        options.insert("gdd".into(), gdd);
+    }
+    options
+}
+
+fn value_to_display_string(value: &Value) -> Option<String> {
+    match value {
+        Value::String(s) => Some(s.clone()),
+        Value::Number(n) => Some(n.to_string()),
+        Value::Bool(b) => Some(b.to_string()),
+        _ => None,
+    }
 }
 
 #[cfg(test)]

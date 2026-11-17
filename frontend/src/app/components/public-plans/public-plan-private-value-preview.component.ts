@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 
 export interface PublicPlanPrivateValueFeature {
@@ -36,7 +36,12 @@ export function buildPublicPlanPrivateValueFeatures(): PublicPlanPrivateValueFea
   template: `
     <details class="public-plan-private-value-preview">
       <summary class="public-plan-private-value-preview__summary">
-        {{ 'public_plans.results.private_value_preview.toggle_summary' | translate }}
+        {{
+          (isLoggedIn
+            ? 'public_plans.results.private_value_preview.toggle_summary_logged_in'
+            : 'public_plans.results.private_value_preview.toggle_summary'
+          ) | translate
+        }}
       </summary>
       <div class="public-plan-private-value-preview__content">
         <p class="public-plan-private-value-preview__lead">
@@ -60,5 +65,7 @@ export function buildPublicPlanPrivateValueFeatures(): PublicPlanPrivateValueFea
   styleUrls: ['./public-plan-private-value-preview.component.css']
 })
 export class PublicPlanPrivateValuePreviewComponent {
+  @Input() isLoggedIn = false;
+
   readonly features = buildPublicPlanPrivateValueFeatures();
 }
