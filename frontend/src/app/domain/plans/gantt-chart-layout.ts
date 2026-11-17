@@ -12,6 +12,10 @@ export const GANTT_MARGIN_LEFT_MOBILE = 36;
 export const GANTT_FIELD_DIVIDER_OFFSET = 10;
 export const GANTT_FIELD_LABEL_GAP = 8;
 export const GANTT_FIELD_LABEL_CLIP_PADDING = 4;
+export const GANTT_YEAR_LABEL_EDGE_PADDING = 4;
+export const GANTT_BAR_LABEL_MIN_WIDTH_FOR_CENTER = 72;
+export const GANTT_BAR_LABEL_INSET = 10;
+export const GANTT_BAR_LABEL_CENTER_RESERVE = 32;
 
 export function getGanttMarginLeft(isMobileLayout: boolean): number {
   return isMobileLayout ? GANTT_MARGIN_LEFT_MOBILE : GANTT_MARGIN_LEFT_DESKTOP;
@@ -823,9 +827,57 @@ export function computeGanttBarLabelPosition(input: {
   barY: number;
   barHeight: number;
 }): { x: number; y: number } {
-  const labelCenterX = input.barX + Math.max(0, (input.barWidth - input.labelReserve) / 2);
+  const layout = resolveGanttBarLabelPresentation(input.barX, input.barWidth, input.labelReserve);
   const y = input.barY + input.barHeight / 2 + 5;
-  return { x: labelCenterX, y };
+  return { x: layout.x, y };
+}
+
+export function resolveGanttYearLabelPlacement(input: {
+  segmentX: number;
+  segmentWidth: number;
+  chartAreaRightX: number;
+  isLastSegment: boolean;
+}): { x: number; textAnchor: 'start' | 'middle' | 'end' } {
+  if (input.isLastSegment) {
+    const segmentRight = input.segmentX + input.segmentWidth;
+    const maxX = input.chartAreaRightX - GANTT_YEAR_LABEL_EDGE_PADDING;
+    return {
+      x: Math.min(segmentRight - GANTT_YEAR_LABEL_EDGE_PADDING, maxX),
+      textAnchor: 'end'
+    };
+  }
+  return {
+    x: input.segmentX + input.segmentWidth / 2,
+    textAnchor: 'middle'
+  };
+}
+
+export function resolveGanttBarLabelPresentation(
+  barX: number,
+  barWidth: number,
+  labelReserve: number = GANTT_BAR_LABEL_CENTER_RESERVE
+): {
+  x: number;
+  textAnchor: 'start' | 'middle';
+  clipX: number;
+  clipWidth: number;
+} {
+  const clipX = barX;
+  const clipWidth = Math.max(0, barWidth);
+  if (barWidth > GANTT_BAR_LABEL_MIN_WIDTH_FOR_CENTER) {
+    return {
+      x: barX + Math.max(0, (barWidth - labelReserve) / 2),
+      textAnchor: 'middle',
+      clipX,
+      clipWidth
+    };
+  }
+  return {
+    x: barX + GANTT_BAR_LABEL_INSET,
+    textAnchor: 'start',
+    clipX,
+    clipWidth
+  };
 }
 
 export type GanttVisibleRange = {
