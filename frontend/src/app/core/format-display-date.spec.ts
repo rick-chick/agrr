@@ -51,6 +51,13 @@ describe('formatIsoDateTimeForDisplay', () => {
   it('returns original string when not parseable', () => {
     expect(formatIsoDateTimeForDisplay('invalid', 'ja')).toBe('invalid');
   });
+
+  it('formats UNIX epoch seconds as localized datetime (not raw digits)', () => {
+    const formatted = formatIsoDateTimeForDisplay('1788855795', 'ja');
+    expect(formatted).not.toBe('1788855795');
+    expect(formatted).toMatch(/2026/);
+    expect(formatted).toMatch(/[0-9]{1,2}:[0-9]{2}/);
+  });
 });
 
 describe('formatIsoMonthForDisplay', () => {
