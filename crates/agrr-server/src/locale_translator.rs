@@ -1,6 +1,8 @@
 //! `TranslatorPort` backed by `LocaleCatalog` (replaces passthrough for user-visible strings).
 
-use agrr_domain::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
+use agrr_domain::shared::ports::translator_port::{
+    apply_translation_options, TranslateOptions, TranslatorPort,
+};
 use time::Date;
 
 use crate::locale_catalog::LocaleCatalog;
@@ -17,10 +19,12 @@ impl<'a> LocaleTranslator<'a> {
 }
 
 impl TranslatorPort for LocaleTranslator<'_> {
-    fn translate(&self, key: &str, _options: &TranslateOptions) -> String {
-        self.catalog
+    fn translate(&self, key: &str, options: &TranslateOptions) -> String {
+        let template = self
+            .catalog
             .translate(self.locale, key)
-            .unwrap_or_else(|| key.to_string())
+            .unwrap_or_else(|| key.to_string());
+        apply_translation_options(&template, options)
     }
 
     fn localize(&self, date: Date, _format: Option<&str>, _options: &TranslateOptions) -> String {
@@ -48,6 +52,27 @@ mod tests {
             translator.translate("api.errors.forbidden", &empty_options()),
             "Forbidden"
         );
+    }
+
+    #[test]
+    fn translate_interpolates_translation_options() {
+        let catalog = LocaleCatalog::from_pairs(
+            "ja",
+            &[(
+                "api.entry_schedule.reason.agrr",
+                "栽培期間の最適化結果: %{start}〜%{completion}（生育約%{days}日、GDD %{gdd}）。",
+            )],
+        );
+        let translator = LocaleTranslator::new(&catalog, "ja");
+        let mut opts = empty_options();
+        opts.insert("start".into(), "2026-03-04".into());
+        opts.insert("completion".into(), "2026-07-06".into());
+        opts.insert("days".into(), "125".into());
+        opts.insert("gdd".into(), "987.5".into());
+        let msg = translator.translate("api.entry_schedule.reason.agrr", &opts);
+        assert!(!msg.contains("%{"));
+        assert!(msg.contains("2026-03-04"));
+        assert!(msg.contains("125"));
     }
 
     #[test]
