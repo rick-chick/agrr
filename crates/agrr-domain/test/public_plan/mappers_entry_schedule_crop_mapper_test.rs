@@ -132,6 +132,23 @@ fn prediction_meta_uses_generated_at_and_prediction_end_date_aliases() {
 }
 
 #[test]
+fn prediction_meta_normalizes_unix_generated_at_to_rfc3339() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([("generated_at".into(), json!(1788855795i64))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    let generated = meta.get("generated_at").and_then(|v| v.as_str()).expect("generated_at");
+    assert!(
+        generated.contains('T'),
+        "expected RFC3339, got {generated}"
+    );
+    assert!(!generated.chars().all(|c| c.is_ascii_digit()));
+}
+
+#[test]
 fn prediction_meta_omits_weather_location_id_when_farm_has_none() {
     let farm = TestFarm {
         weather_location_id: None,

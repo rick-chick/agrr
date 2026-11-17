@@ -56,6 +56,13 @@ function parseAppDateTime(value: string): Date | null {
     return Number.isNaN(date.getTime()) ? null : date;
   }
 
+  if (/^\d{10,13}$/.test(value)) {
+    const raw = Number(value);
+    const millis = value.length > 10 ? raw : raw * 1000;
+    const date = new Date(millis);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
   const sqlite = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(value);
   if (sqlite) {
     const date = new Date(

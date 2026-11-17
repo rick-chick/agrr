@@ -3,7 +3,8 @@
 use std::collections::BTreeMap;
 
 use serde_json::{json, Value};
-use time::Date;
+use time::format_description::well_known::Rfc3339;
+use time::{Date, OffsetDateTime};
 
 use crate::shared::ports::{ClockPort, TranslatorPort, TranslateOptions};
 
@@ -43,6 +44,24 @@ pub trait EntryScheduleFarmLike {
     fn weather_location_id(&self) -> Option<i64>;
 }
 
+fn normalize_prediction_timestamp(value: &Value) -> Value {
+    let unix_secs = match value {
+        Value::Number(n) => n.as_i64(),
+        Value::String(s) if s.chars().all(|c| c.is_ascii_digit()) && s.len() >= 10 => {
+            s.parse::<i64>().ok()
+        }
+        _ => None,
+    };
+    if let Some(ts) = unix_secs {
+        if let Ok(dt) = OffsetDateTime::from_unix_timestamp(ts) {
+            if let Ok(formatted) = dt.format(&Rfc3339) {
+                return Value::String(formatted);
+            }
+        }
+    }
+    value.clone()
+}
+
 /// Ruby: `EntryScheduleCropMapper.prediction_meta`
 pub fn prediction_meta(
     farm: &dyn EntryScheduleFarmLike,
@@ -54,7 +73,7 @@ pub fn prediction_meta(
         .get("generated_at")
         .or_else(|| payload_hash.get("predicted_at"))
     {
-        out.insert("generated_at".into(), v.clone());
+        out.insert("generated_at".into(), normalize_prediction_timestamp(v));
     }
     if let Some(v) = payload_hash.get("prediction_start_date") {
         out.insert("prediction_start_date".into(), v.clone());

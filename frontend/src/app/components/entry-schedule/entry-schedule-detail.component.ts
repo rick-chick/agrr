@@ -29,6 +29,7 @@ import { AuthService } from '../../services/auth.service';
 import { Farm } from '../../domain/farms/farm';
 import { displayEntryScheduleFarmName } from './entry-schedule-farm-display';
 import { BackendWarmupLoadingComponent } from '../shared/backend-warmup-loading/backend-warmup-loading.component';
+import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 
 const initialControl: EntryScheduleDetailViewState = {
   loading: true,
@@ -75,7 +76,7 @@ const initialControl: EntryScheduleDetailViewState = {
             <div class="prediction-strip es-meta-chips mt-4" role="status">
               @if (control.data.prediction.generated_at) {
                 <span class="es-meta-chip"
-                  >{{ 'entrySchedule.predictionFresh' | translate }}: {{ control.data.prediction.generated_at!.slice(0, 16) }}</span
+                  >{{ 'entrySchedule.predictionFresh' | translate }}: {{ predictionGeneratedAtDisplay(control.data.prediction.generated_at!) }}</span
                 >
               }
               @if (control.data.prediction.prediction_end_date) {
@@ -426,6 +427,10 @@ export class EntryScheduleDetailComponent implements EntryScheduleDetailView, On
 
   reload(): void {
     this.fetchFromRoute();
+  }
+
+  predictionGeneratedAtDisplay(value: string): string {
+    return formatIsoDateTimeForDisplay(value, this.translate.currentLang);
   }
 
   isLoggedIn(): boolean {
