@@ -84,6 +84,23 @@ describe('PublicPlanOptimizingComponent', () => {
     );
   });
 
+  it('keeps the progress layout without an error panel mid-phase', () => {
+    component.control = {
+      status: 'optimizing',
+      progress: 12,
+      phaseMessage: '気象データを予測しています...'
+    };
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector(
+        '.page-alert-error.public-plan-optimizing__error[role="alert"]'
+      )
+    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('.fixed-progress-bar')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('気象データを予測しています...');
+  });
+
   it('shows failure category detail and hint when optimization fails', () => {
     const state: PublicPlanOptimizingViewState = {
       status: 'failed',

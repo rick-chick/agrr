@@ -150,6 +150,19 @@ describe('PlanOptimizingComponent', () => {
     expect(textContent).toContain('約1分程度かかります');
   });
 
+  it('keeps the optimizing layout without an error alert mid-phase', () => {
+    component.control = {
+      status: 'optimizing',
+      progress: 12,
+      phaseMessage: 'Predicting weather...'
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.page-alert-error')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Predicting weather...');
+    expect(fixture.nativeElement.textContent).toContain('Progress: 12%');
+  });
+
   it('shows error alert with retry and back-to-plan actions on failure', () => {
     component.control = {
       status: 'failed',
