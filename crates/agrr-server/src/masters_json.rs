@@ -327,3 +327,58 @@ mod masters_destroy_undo_json_tests {
     }
 }
 
+#[cfg(test)]
+mod field_json_tests {
+    use super::*;
+    use agrr_domain::farm::entities::FieldEntity as FarmFieldEntity;
+    use agrr_domain::field::entities::FieldEntity;
+
+    #[test]
+    fn farm_field_to_json_maps_farm_nested_field_shape() {
+        let entity = FarmFieldEntity {
+            id: 3,
+            name: "North bed".into(),
+            area: Some(1.5),
+            daily_fixed_cost: Some(200.0),
+            region: Some("jp".into()),
+            farm_id: 9,
+            user_id: Some(4),
+            created_at: Some("2026-01-01T00:00:00Z".into()),
+            updated_at: Some("2026-01-02T00:00:00Z".into()),
+        };
+        let json = farm_field_to_json(&entity);
+        assert_eq!(json["id"], 3);
+        assert_eq!(json["name"], "North bed");
+        assert_eq!(json["farm_id"], 9);
+        assert_eq!(json["area"], 1.5);
+        assert_eq!(json["daily_fixed_cost"], 200.0);
+        assert_eq!(json["region"], "jp");
+        assert_eq!(json["user_id"], 4);
+    }
+
+    #[test]
+    fn field_to_json_maps_masters_fields_index_shape_and_omits_description() {
+        let entity = FieldEntity {
+            id: 11,
+            farm_id: 2,
+            user_id: Some(7),
+            name: "East".into(),
+            description: Some("internal note".into()),
+            created_at: Some("2026-02-01T00:00:00Z".into()),
+            updated_at: None,
+            area: Some(0.75),
+            daily_fixed_cost: None,
+            region: Some("jp".into()),
+        };
+        let json = field_to_json(&entity);
+        assert_eq!(json["id"], 11);
+        assert_eq!(json["name"], "East");
+        assert_eq!(json["farm_id"], 2);
+        assert_eq!(json["user_id"], 7);
+        assert_eq!(json["area"], 0.75);
+        assert!(json.get("description").is_none());
+        assert!(json["daily_fixed_cost"].is_null());
+        assert!(json["updated_at"].is_null());
+    }
+}
+

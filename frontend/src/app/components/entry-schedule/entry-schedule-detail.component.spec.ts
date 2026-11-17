@@ -174,6 +174,49 @@ describe('EntryScheduleDetailComponent', () => {
     expect(contentCard.querySelector('#crop-name-heading')).toBeTruthy();
   });
 
+  it('formats unix prediction generated_at as a readable datetime chip', async () => {
+    getEntryScheduleCrop.mockReturnValue(
+      of({
+        farm: { id: 3, name: 'Farm A', latitude: 35, longitude: 139, region: 'jp' },
+        crop: {
+          id: 7,
+          name: 'Tomato',
+          eligible: true,
+          sowing_summary: null,
+          transplant_summary: null,
+          entry_disclaimer: 'Disclaimer',
+          reason_summary: 'Summary',
+          reason_parts: {},
+          labels: { sowing: 'Sow', transplanting: 'Transplant' },
+          sowing_windows: [],
+          transplant_windows: [],
+          sowing_stage_id: null,
+          transplant_stage_id: null,
+          crop_stages: [],
+        },
+        prediction: { generated_at: '1788855795', prediction_end_date: '2027-12-31' },
+      }),
+    );
+
+    fixture = TestBed.createComponent(EntryScheduleDetailComponent);
+    translate.setTranslation('en', {
+      'entrySchedule.predictionFresh': 'Forecast updated',
+      'entrySchedule.predictionUntil': 'Valid through',
+    });
+    translate.use('en');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const chips = Array.from(
+      fixture.nativeElement.querySelectorAll('.es-meta-chip'),
+    ) as HTMLElement[];
+    const freshChip = chips.find((el) => el.textContent?.includes('Forecast updated'));
+    expect(freshChip).toBeTruthy();
+    expect(freshChip!.textContent).not.toContain('1788855795');
+    expect(freshChip!.textContent).toMatch(/2026/);
+  });
+
   it('renders breadcrumb with farm list link and crop name instead of inline back link', async () => {
     getEntryScheduleCrop.mockReturnValue(
       of({
