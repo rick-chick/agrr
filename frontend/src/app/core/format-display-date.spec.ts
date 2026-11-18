@@ -58,6 +58,13 @@ describe('formatIsoDateTimeForDisplay', () => {
     expect(formatted).toMatch(/2026/);
     expect(formatted).toMatch(/[0-9]{1,2}:[0-9]{2}/);
   });
+
+  it('formats UNIX epoch milliseconds like seconds (not raw digits)', () => {
+    const formatted = formatIsoDateTimeForDisplay('1788855795000', 'ja');
+    expect(formatted).not.toBe('1788855795000');
+    expect(formatted).toMatch(/2026/);
+    expect(formatted).toMatch(/[0-9]{1,2}:[0-9]{2}/);
+  });
 });
 
 describe('formatIsoMonthForDisplay', () => {
