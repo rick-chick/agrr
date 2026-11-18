@@ -64,6 +64,20 @@ mod farm_to_json_tests {
         assert_eq!("fetching", json["weather_data_status"].as_str().unwrap());
         assert_eq!(20, json["weather_data_progress"].as_i64().unwrap());
     }
+
+    #[test]
+    fn farm_to_json_serializes_reference_flag_and_nullable_coordinates() {
+        let mut farm = sample_farm(None, None, None);
+        farm.is_reference = true;
+        farm.latitude = None;
+        farm.longitude = None;
+        let json = farm_to_json(&farm);
+        assert_eq!(json["is_reference"], true);
+        assert!(json["latitude"].is_null());
+        assert!(json["longitude"].is_null());
+        assert_eq!(json["weather_data_progress"], 0);
+        assert!(json["weather_data_status"].is_null());
+    }
 }
 
 pub fn farm_field_to_json(entity: &FarmFieldEntity) -> Value {

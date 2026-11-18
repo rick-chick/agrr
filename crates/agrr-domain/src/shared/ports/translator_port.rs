@@ -28,3 +28,12 @@ pub trait TranslatorPort: Send + Sync {
         self.localize(date, format, options)
     }
 }
+
+#[cfg(test)]
+mod translator_port_apply_translation_options_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/shared/translator_port_apply_translation_options_test.rs"
+    ));
+}
