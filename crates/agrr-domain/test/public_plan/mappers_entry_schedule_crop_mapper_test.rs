@@ -192,6 +192,42 @@ fn prediction_meta_normalizes_unix_generated_at_numeric_string() {
 }
 
 #[test]
+fn prediction_meta_normalizes_unix_generated_at_milliseconds_string() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([("generated_at".into(), json!("1788855795000"))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    let generated_at = meta
+        .get("generated_at")
+        .and_then(|v| v.as_str())
+        .expect("generated_at");
+    assert!(
+        generated_at.starts_with("2026-"),
+        "expected ISO datetime, got {generated_at}"
+    );
+    assert_ne!(generated_at, "1788855795000");
+}
+
+#[test]
+fn prediction_meta_normalizes_unix_generated_at_milliseconds_number() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([("generated_at".into(), json!(1_788_855_795_000_i64))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    let generated_at = meta
+        .get("generated_at")
+        .and_then(|v| v.as_str())
+        .expect("generated_at");
+    assert!(generated_at.starts_with("2026-"));
+}
+
+#[test]
 fn prediction_meta_omits_weather_location_id_when_farm_has_none() {
     let farm = TestFarm {
         weather_location_id: None,

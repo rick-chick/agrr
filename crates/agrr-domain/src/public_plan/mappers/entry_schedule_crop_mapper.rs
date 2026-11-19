@@ -44,13 +44,24 @@ pub trait EntryScheduleFarmLike {
     fn weather_location_id(&self) -> Option<i64>;
 }
 
+fn unix_millis_or_seconds_to_secs(ts: i64) -> i64 {
+    if ts > 9_999_999_999 {
+        ts / 1_000
+    } else {
+        ts
+    }
+}
+
 fn normalize_prediction_generated_at(value: &Value) -> Value {
     let unix_secs = match value {
-        Value::Number(n) => n.as_i64(),
+        Value::Number(n) => n.as_i64().map(unix_millis_or_seconds_to_secs),
         Value::String(s) => {
             let trimmed = s.trim();
             if trimmed.len() >= 10 && trimmed.chars().all(|c| c.is_ascii_digit()) {
-                trimmed.parse::<i64>().ok()
+                trimmed
+                    .parse::<i64>()
+                    .ok()
+                    .map(unix_millis_or_seconds_to_secs)
             } else {
                 return Value::String(trimmed.to_string());
             }
