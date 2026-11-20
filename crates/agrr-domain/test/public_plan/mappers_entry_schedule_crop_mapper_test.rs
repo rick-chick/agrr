@@ -228,6 +228,61 @@ fn prediction_meta_normalizes_unix_generated_at_milliseconds_number() {
 }
 
 #[test]
+fn prediction_meta_normalizes_predicted_at_milliseconds_when_generated_at_missing() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([("predicted_at".into(), json!("1788855795000"))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    let generated_at = meta
+        .get("generated_at")
+        .and_then(|v| v.as_str())
+        .expect("generated_at from predicted_at alias");
+    assert!(generated_at.starts_with("2026-"));
+    assert_ne!(generated_at, "1788855795000");
+}
+
+#[test]
+fn prediction_meta_prefers_generated_at_over_predicted_at() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([
+        ("generated_at".into(), json!(1_700_000_000_i64)),
+        ("predicted_at".into(), json!("1788855795000")),
+    ]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    assert_eq!(
+        meta.get("generated_at").and_then(|v| v.as_str()),
+        Some("2023-11-14T22:13:20Z")
+    );
+}
+
+#[test]
+fn prediction_meta_treats_max_unix_seconds_as_seconds_not_millis() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([("generated_at".into(), json!(9_999_999_999_i64))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    let generated_at = meta
+        .get("generated_at")
+        .and_then(|v| v.as_str())
+        .expect("generated_at");
+    assert!(
+        generated_at.ends_with('Z') && generated_at.contains('T'),
+        "expected RFC3339, got {generated_at}"
+    );
+    assert_ne!(generated_at, "9999999999");
+}
+
+#[test]
 fn prediction_meta_omits_weather_location_id_when_farm_has_none() {
     let farm = TestFarm {
         weather_location_id: None,
