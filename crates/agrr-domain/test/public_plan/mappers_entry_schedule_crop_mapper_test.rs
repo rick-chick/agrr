@@ -283,6 +283,56 @@ fn prediction_meta_treats_max_unix_seconds_as_seconds_not_millis() {
 }
 
 #[test]
+fn prediction_meta_normalizes_whitespace_padded_unix_digit_strings() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([("generated_at".into(), json!("  1788855795000  "))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    let generated_at = meta
+        .get("generated_at")
+        .and_then(|v| v.as_str())
+        .expect("generated_at");
+    assert!(generated_at.starts_with("2026-"));
+    assert_ne!(generated_at, "  1788855795000  ");
+}
+
+#[test]
+fn prediction_meta_leaves_short_digit_strings_unnormalized() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([("generated_at".into(), json!("123456789"))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    assert_eq!(
+        meta.get("generated_at").and_then(|v| v.as_str()),
+        Some("123456789")
+    );
+}
+
+#[test]
+fn prediction_meta_prefers_prediction_end_date_over_target_end_date() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([
+        ("prediction_end_date".into(), json!("2026-06-30")),
+        ("target_end_date".into(), json!("2026-12-31")),
+    ]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    assert_eq!(
+        meta.get("prediction_end_date").and_then(|v| v.as_str()),
+        Some("2026-06-30")
+    );
+}
+
+#[test]
 fn prediction_meta_omits_weather_location_id_when_farm_has_none() {
     let farm = TestFarm {
         weather_location_id: None,

@@ -25,6 +25,9 @@ import {
   getGanttFieldLabelCenterX,
   getGanttFieldLabelAnchorX,
   getGanttFieldDividerX,
+  getGanttFieldLabelClipWidth,
+  computeGanttBarLabelPosition,
+  GANTT_FIELD_LABEL_CLIP_PADDING,
   GANTT_FIELD_LABEL_GAP,
   resolveGanttBarLabelPresentation,
   resolveGanttYearLabelPlacement,
@@ -275,6 +278,41 @@ describe('gantt-chart-layout', () => {
     const dividerX = getGanttFieldDividerX(marginLeft);
     const anchorX = getGanttFieldLabelAnchorX(marginLeft);
     expect(anchorX + GANTT_FIELD_LABEL_GAP).toBeLessThanOrEqual(dividerX);
+  });
+
+  it('getGanttFieldLabelClipWidth ends before the row divider padding', () => {
+    const desktopClip = getGanttFieldLabelClipWidth(GANTT_MARGIN_LEFT_DESKTOP);
+    const mobileClip = getGanttFieldLabelClipWidth(GANTT_MARGIN_LEFT_MOBILE);
+    expect(desktopClip).toBe(
+      getGanttFieldDividerX(GANTT_MARGIN_LEFT_DESKTOP) - GANTT_FIELD_LABEL_CLIP_PADDING
+    );
+    expect(mobileClip).toBe(
+      getGanttFieldDividerX(GANTT_MARGIN_LEFT_MOBILE) - GANTT_FIELD_LABEL_CLIP_PADDING
+    );
+    expect(desktopClip).toBe(66);
+    expect(mobileClip).toBe(22);
+  });
+
+  it('computeGanttBarLabelPosition centers labels vertically and defers horizontal layout', () => {
+    const narrow = computeGanttBarLabelPosition({
+      barX: 120,
+      barWidth: 48,
+      labelReserve: 32,
+      barY: 200,
+      barHeight: 48
+    });
+    expect(narrow.y).toBe(200 + 48 / 2 + 5);
+    expect(narrow.x).toBe(130);
+
+    const wide = computeGanttBarLabelPosition({
+      barX: 200,
+      barWidth: 120,
+      labelReserve: 32,
+      barY: 100,
+      barHeight: 40
+    });
+    expect(wide.y).toBe(125);
+    expect(wide.x).toBe(200 + (120 - 32) / 2);
   });
 
   it('resolveGanttDragFieldContext returns row index and name or null', () => {
