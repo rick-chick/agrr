@@ -50,7 +50,11 @@ import {
   shouldReinitializeGanttVisibleRange,
   parseGanttPlanBounds,
   buildGanttAddCropDisplayRange,
-  isPointInsideClientRect
+  isPointInsideClientRect,
+  clampGanttChartWidth,
+  formatIsoDateOnly,
+  isGanttVisibleRangeWithinPlan,
+  GANTT_MIN_CHART_WIDTH
 } from './gantt-chart-layout';
 
 describe('gantt-chart-layout', () => {
@@ -663,6 +667,46 @@ describe('gantt-chart-layout', () => {
     });
     expect(inner.textAnchor).toBe('middle');
     expect(inner.x).toBe(440);
+  });
+
+  it('clampGanttChartWidth never goes below the minimum chart width', () => {
+    expect(clampGanttChartWidth(720)).toBe(720);
+    expect(clampGanttChartWidth(200)).toBe(GANTT_MIN_CHART_WIDTH);
+    expect(clampGanttChartWidth(GANTT_MIN_CHART_WIDTH)).toBe(GANTT_MIN_CHART_WIDTH);
+  });
+
+  it('formatIsoDateOnly returns YYYY-MM-DD for valid dates and undefined for invalid', () => {
+    expect(formatIsoDateOnly(new Date('2026-03-15T12:00:00Z'))).toBe('2026-03-15');
+    expect(formatIsoDateOnly(new Date('invalid'))).toBeUndefined();
+  });
+
+  it('isGanttVisibleRangeWithinPlan requires the visible window to sit inside plan bounds', () => {
+    const planStart = new Date('2026-01-01').getTime();
+    const planEnd = new Date('2026-12-31').getTime();
+    expect(
+      isGanttVisibleRangeWithinPlan(
+        new Date('2026-02-01'),
+        new Date('2026-06-01'),
+        planStart,
+        planEnd
+      )
+    ).toBe(true);
+    expect(
+      isGanttVisibleRangeWithinPlan(
+        new Date('2025-12-01'),
+        new Date('2026-06-01'),
+        planStart,
+        planEnd
+      )
+    ).toBe(false);
+    expect(
+      isGanttVisibleRangeWithinPlan(
+        new Date('2026-02-01'),
+        new Date('2027-01-15'),
+        planStart,
+        planEnd
+      )
+    ).toBe(false);
   });
 
   it('resolveGanttBarLabelPresentation clips labels to the bar width for narrow and wide bars', () => {
