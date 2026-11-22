@@ -345,6 +345,39 @@ fn prediction_meta_omits_weather_location_id_when_farm_has_none() {
 }
 
 #[test]
+fn prediction_meta_preserves_rfc3339_generated_at_without_reencoding() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let iso = "2026-06-25T09:03:01Z";
+    let payload = BTreeMap::from([("generated_at".into(), json!(iso))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    assert_eq!(meta.get("generated_at").and_then(|v| v.as_str()), Some(iso));
+}
+
+#[test]
+fn crop_detail_null_window_summaries_when_crop_is_ineligible() {
+    let crop = TestCrop { id: 3, name: "Pepper" };
+    let translator = KeyTranslator;
+    let clock = FixedClock {
+        today: date!(2026-06-15),
+    };
+    let result = window_result(false, "agrr_failed", None);
+
+    let detail = crop_detail(&crop, &result, &translator, &[], &clock);
+
+    assert_eq!(detail.get("eligible").and_then(|v| v.as_bool()), Some(false));
+    assert!(detail.get("sowing_summary").is_some_and(|v| v.is_null()));
+    assert!(detail.get("transplant_summary").is_some_and(|v| v.is_null()));
+    assert_eq!(
+        detail.get("sowing_windows").and_then(|v| v.as_array()).map(|a| a.len()),
+        Some(0)
+    );
+}
+
+#[test]
 fn crop_detail_reason_summary_interpolates_agrr_template_for_optimize_period() {
     let crop = TestCrop { id: 7, name: "Tomato" };
     let translator = EntryScheduleTemplateTranslator;
