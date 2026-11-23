@@ -32,6 +32,7 @@ import {
   resolveGanttBarLabelPresentation,
   resolveGanttYearLabelPlacement,
   resolveGanttDragFieldContext,
+  resolveGanttDragDrop,
   GANTT_MARGIN_LEFT_DESKTOP,
   GANTT_MARGIN_LEFT_MOBILE,
   resolveGanttDragCommit,
@@ -169,6 +170,35 @@ describe('gantt-chart-layout', () => {
     expect(
       formatGanttVisibleRangeLabel(new Date('2026-01-15'), new Date('2026-12-20'))
     ).toBe('2026/01～2026/12');
+  });
+
+  it('computeGanttVisibleRangeEnd never returns a range end before the start', () => {
+    const start = new Date('2026-01-31T00:00:00Z');
+    const end = computeGanttVisibleRangeEnd(start, 0);
+    expect(end.getTime()).toBeGreaterThanOrEqual(start.getTime());
+  });
+
+  it('resolveGanttDragDrop keeps the original field when no row groups exist', () => {
+    const displayStart = new Date('2026-01-01');
+    const displayEnd = new Date('2026-12-31');
+    const resolved = resolveGanttDragDrop({
+      barX: 120,
+      barY: 200,
+      originalBarY: 180,
+      marginLeft: 80,
+      chartWidth: 900,
+      rowHeight: 68,
+      displayStart,
+      displayEnd,
+      originalFieldIndex: 0,
+      originalFieldName: 'North',
+      fieldGroups: []
+    });
+
+    expect(resolved.newFieldIndex).toBe(0);
+    expect(resolved.newFieldName).toBe('North');
+    expect(resolved.daysFromStart).toBeGreaterThanOrEqual(0);
+    expect(resolved.newStartDate.getTime()).toBeGreaterThanOrEqual(displayStart.getTime());
   });
 
   it('computes visible range end from start', () => {

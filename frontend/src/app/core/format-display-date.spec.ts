@@ -65,6 +65,20 @@ describe('formatIsoDateTimeForDisplay', () => {
     expect(formatted).toMatch(/2026/);
     expect(formatted).toMatch(/[0-9]{1,2}:[0-9]{2}/);
   });
+
+  it('formats RFC3339 timestamps with time for Japanese locale', () => {
+    const formatted = formatIsoDateTimeForDisplay('2026-06-25T09:03:01Z', 'ja');
+    expect(formatted).not.toBe('2026-06-25T09:03:01Z');
+    expect(formatted).toMatch(/2026/);
+    expect(formatted).toMatch(/6/);
+    expect(formatted).toMatch(/[0-9]{1,2}:[0-9]{2}/);
+  });
+
+  it('formats RFC3339 timestamps with time for English locale', () => {
+    const formatted = formatIsoDateTimeForDisplay('2026-06-25T09:03:01Z', 'en');
+    expect(formatted).toMatch(/June 25, 2026/);
+    expect(formatted).toMatch(/9:03/);
+  });
 });
 
 describe('formatIsoMonthForDisplay', () => {
