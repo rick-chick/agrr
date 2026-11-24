@@ -1,5 +1,6 @@
 // Tests for `helpers/predicted_weather_cache.rs` (cache payload normalization).
 
+    use crate::weather_data::dtos::{PredictedWeatherMetadata, PredictedWeatherScope};
     use serde_json::json;
     use time::macros::date;
 
@@ -159,4 +160,123 @@
                 .and_then(|v| v.as_str()),
             Some("2026-01-01")
         );
+    }
+
+    #[test]
+    fn build_metadata_from_payload_returns_none_without_prediction_dates() {
+        let payload = json!({
+            "data": [{ "time": "2026-06-15", "temperature_2m_mean": 20.0 }]
+        });
+        assert!(
+            build_metadata_from_payload(
+                PredictedWeatherScope::Plan,
+                9,
+                &payload,
+                date!(2026-06-15),
+                "generated".into()
+            )
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn build_metadata_from_payload_returns_none_for_empty_data_array() {
+        let payload = json!({
+            "prediction_start_date": "2026-01-01",
+            "prediction_end_date": "2026-12-31",
+            "data": []
+        });
+        assert!(
+            build_metadata_from_payload(
+                PredictedWeatherScope::Location,
+                1,
+                &payload,
+                date!(2026-06-15),
+                "generated".into()
+            )
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn build_metadata_from_payload_allows_short_series_but_metadata_fails_covers_check() {
+        let payload = json!({
+            "prediction_start_date": "2026-01-01",
+            "prediction_end_date": "2026-12-31",
+            "data": [{ "time": "2026-06-01", "temperature_2m_mean": 18.0 }]
+        });
+        let target = date!(2026-06-15);
+        let meta = build_metadata_from_payload(
+            PredictedWeatherScope::Plan,
+            2,
+            &payload,
+            target,
+            "generated".into(),
+        )
+        .expect("metadata row is still derived from payload headers");
+
+        assert_eq!(meta.data_end_date, date!(2026-06-01));
+        assert!(!metadata_covers_target(&meta, target));
+    }
+
+    #[test]
+    fn build_metadata_from_payload_records_data_end_when_payload_covers_target() {
+        let payload = json!({
+            "prediction_start_date": "2026-01-01",
+            "prediction_end_date": "2026-12-31",
+            "data": [
+                { "time": "2026-06-01", "temperature_2m_mean": 18.0 },
+                { "time": "2026-06-15", "temperature_2m_mean": 22.0 }
+            ]
+        });
+        let meta = build_metadata_from_payload(
+            PredictedWeatherScope::Plan,
+            3,
+            &payload,
+            date!(2026-06-15),
+            "2026-06-01T00:00:00Z".into(),
+        )
+        .expect("metadata");
+
+        assert_eq!(meta.scope, PredictedWeatherScope::Plan);
+        assert_eq!(meta.scope_id, 3);
+        assert_eq!(meta.prediction_end_date, date!(2026-12-31));
+        assert_eq!(meta.target_end_date, date!(2026-06-15));
+        assert_eq!(meta.data_end_date, date!(2026-06-15));
+        assert_eq!(meta.generated_at, "2026-06-01T00:00:00Z");
+    }
+
+    #[test]
+    fn metadata_covers_target_requires_prediction_span_and_data_through_target() {
+        let covers = PredictedWeatherMetadata {
+            scope: PredictedWeatherScope::Location,
+            scope_id: 1,
+            prediction_start_date: date!(2026-01-01),
+            prediction_end_date: date!(2026-12-31),
+            target_end_date: date!(2026-06-15),
+            data_end_date: date!(2026-06-15),
+            generated_at: "gen".into(),
+        };
+        let short_span = PredictedWeatherMetadata {
+            prediction_end_date: date!(2026-06-01),
+            ..covers.clone()
+        };
+        let short_series = PredictedWeatherMetadata {
+            data_end_date: date!(2026-06-01),
+            ..covers.clone()
+        };
+
+        assert!(metadata_covers_target(&covers, date!(2026-06-15)));
+        assert!(!metadata_covers_target(&short_span, date!(2026-12-31)));
+        assert!(!metadata_covers_target(&short_series, date!(2026-06-15)));
+    }
+
+    #[test]
+    fn cached_prediction_from_payload_returns_none_for_empty_data() {
+        let payload = json!({
+            "prediction_start_date": "2026-01-01",
+            "prediction_end_date": "2026-12-31",
+            "data": []
+        });
+        assert!(cached_prediction_from_payload(&payload, date!(2026-06-15)).is_none());
     }

@@ -751,4 +751,27 @@ describe('gantt-chart-layout', () => {
     expect(wide.x).toBe(200 + (120 - 32) / 2);
     expect(wide.clipWidth).toBe(120);
   });
+
+  it('resolveGanttBarLabelPresentation keeps start anchor at the min-width threshold', () => {
+    const atThreshold = resolveGanttBarLabelPresentation(100, 72);
+    expect(atThreshold.textAnchor).toBe('start');
+    expect(atThreshold.x).toBe(110);
+
+    const aboveThreshold = resolveGanttBarLabelPresentation(100, 73);
+    expect(aboveThreshold.textAnchor).toBe('middle');
+    expect(aboveThreshold.x).toBe(100 + (73 - 32) / 2);
+  });
+
+  it('resolveGanttYearLabelPlacement clamps the trailing year inside the chart right edge', () => {
+    const chartAreaRightX = 500;
+    const cramped = resolveGanttYearLabelPlacement({
+      segmentX: 480,
+      segmentWidth: 40,
+      chartAreaRightX,
+      isLastSegment: true
+    });
+    expect(cramped.textAnchor).toBe('end');
+    expect(cramped.x).toBe(chartAreaRightX - 4);
+    expect(cramped.x).toBeLessThan(480 + 40);
+  });
 });
