@@ -280,3 +280,52 @@
         });
         assert!(cached_prediction_from_payload(&payload, date!(2026-06-15)).is_none());
     }
+
+    #[test]
+    fn cached_future_data_returns_none_when_rows_only_after_target() {
+        let payload = json!({
+            "prediction_start_date": "2026-01-01",
+            "prediction_end_date": "2026-12-31",
+            "data": [{ "time": "2026-07-01", "temperature_2m_mean": 28.0 }]
+        });
+
+        assert!(cached_future_data(&payload, date!(2026-06-15)).is_none());
+    }
+
+    #[test]
+    fn cached_future_data_returns_none_when_prediction_dates_are_unparseable() {
+        let payload = json!({
+            "prediction_start_date": "not-a-date",
+            "prediction_end_date": "2026-12-31",
+            "data": [{ "time": "2026-06-15", "temperature_2m_mean": 20.0 }]
+        });
+
+        assert!(cached_future_data(&payload, date!(2026-06-15)).is_none());
+    }
+
+    #[test]
+    fn cached_prediction_from_payload_returns_none_when_prediction_end_before_target() {
+        let payload = json!({
+            "prediction_start_date": "2026-01-01",
+            "prediction_end_date": "2026-06-01",
+            "data": [{ "time": "2026-06-15", "temperature_2m_mean": 20.0 }]
+        });
+
+        assert!(cached_prediction_from_payload(&payload, date!(2026-12-31)).is_none());
+    }
+
+    #[test]
+    fn metadata_covers_target_accepts_data_end_on_target_day() {
+        let on_target = PredictedWeatherMetadata {
+            scope: PredictedWeatherScope::Plan,
+            scope_id: 4,
+            prediction_start_date: date!(2026-01-01),
+            prediction_end_date: date!(2026-12-31),
+            target_end_date: date!(2026-06-15),
+            data_end_date: date!(2026-06-15),
+            generated_at: "gen".into(),
+        };
+
+        assert!(metadata_covers_target(&on_target, date!(2026-06-15)));
+        assert!(!metadata_covers_target(&on_target, date!(2026-06-16)));
+    }
