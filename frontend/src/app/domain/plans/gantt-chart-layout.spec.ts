@@ -55,7 +55,12 @@ import {
   clampGanttChartWidth,
   formatIsoDateOnly,
   isGanttVisibleRangeWithinPlan,
-  GANTT_MIN_CHART_WIDTH
+  GANTT_MIN_CHART_WIDTH,
+  GanttTimeUnit,
+  getNextGanttTimeSegment,
+  getGanttTimeLabel,
+  shouldShowGanttYearOnAxis,
+  computeGanttFieldRowHighlightY
 } from './gantt-chart-layout';
 
 describe('gantt-chart-layout', () => {
@@ -773,5 +778,66 @@ describe('gantt-chart-layout', () => {
     expect(cramped.textAnchor).toBe('end');
     expect(cramped.x).toBe(chartAreaRightX - 4);
     expect(cramped.x).toBeLessThan(480 + 40);
+  });
+
+  it('shouldShowGanttYearOnAxis marks year breaks on January month segments after the first label', () => {
+    expect(shouldShowGanttYearOnAxis(new Date('2026-01-01'), GanttTimeUnit.Month, false)).toBe(true);
+    expect(shouldShowGanttYearOnAxis(new Date('2026-04-01'), GanttTimeUnit.Month, false)).toBe(false);
+    expect(shouldShowGanttYearOnAxis(new Date('2026-01-01'), GanttTimeUnit.Day, false)).toBe(true);
+    expect(shouldShowGanttYearOnAxis(new Date('2026-01-02'), GanttTimeUnit.Day, false)).toBe(false);
+  });
+
+  it('getNextGanttTimeSegment advances month and week boundaries', () => {
+    const month = getNextGanttTimeSegment(new Date('2026-03-15'), GanttTimeUnit.Month);
+    expect(month).not.toBeNull();
+    expect(month!.start.toISOString().slice(0, 10)).toBe('2026-03-01');
+    expect(month!.end.toISOString().slice(0, 10)).toBe('2026-04-01');
+
+    const week = getNextGanttTimeSegment(new Date('2026-03-18'), GanttTimeUnit.Week);
+    expect(week).not.toBeNull();
+    expect(week!.start.getDay()).toBe(1);
+    expect(daysBetween(week!.start, week!.end)).toBe(7);
+  });
+
+  it('getGanttTimeLabel appends unit suffixes for month and quarter scales', () => {
+    const suffixes = { day: '日', month: '月', quarter: 'Q' };
+    expect(getGanttTimeLabel(new Date('2026-03-01'), GanttTimeUnit.Month, suffixes)).toBe('3月');
+    expect(getGanttTimeLabel(new Date('2026-07-01'), GanttTimeUnit.Quarter, suffixes)).toBe('Q3');
+  });
+
+  it('buildGanttTimeAxisSegments shows year on later January months', () => {
+    const scale = { unit: GanttTimeUnit.Month, interval: 1 };
+    const segments = buildGanttTimeAxisSegments({
+      visibleStart: new Date('2026-01-01'),
+      visibleEnd: new Date('2027-03-31'),
+      marginLeft: 80,
+      chartWidth: 900,
+      timeScale: scale,
+      labelSuffixes: { day: '日', month: '月', quarter: 'Q' }
+    });
+    const january2027 = segments.find((segment) => segment.year === 2027 && segment.month === 1);
+    expect(january2027).toBeDefined();
+    expect(january2027!.showYear).toBe(true);
+  });
+
+  it('computeGanttFieldRowHighlightY offsets rows below the header', () => {
+    expect(
+      computeGanttFieldRowHighlightY({ targetFieldIndex: 0, rowHeight: 68, headerHeight: 60 })
+    ).toBe(60);
+    expect(
+      computeGanttFieldRowHighlightY({ targetFieldIndex: 2, rowHeight: 68, headerHeight: 60 })
+    ).toBe(196);
+  });
+
+  it('computeGanttBarLabelPosition defers horizontal layout to bar label presentation', () => {
+    const narrow = computeGanttBarLabelPosition({
+      barX: 100,
+      barWidth: 40,
+      labelReserve: 32,
+      barY: 200,
+      barHeight: 48
+    });
+    expect(narrow.x).toBe(110);
+    expect(narrow.y).toBe(229);
   });
 });
