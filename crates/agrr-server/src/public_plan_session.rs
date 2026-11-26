@@ -98,4 +98,31 @@ mod tests {
             "missing session must stay empty-string auth until fail-closed fix"
         );
     }
+
+    #[test]
+    fn extract_accepts_whitespace_only_header_as_session() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            PUBLIC_PLAN_SESSION_HEADER,
+            HeaderValue::from_static("   "),
+        );
+        assert_eq!(
+            extract_public_plan_session(&headers, &CookieJar::new()).as_deref(),
+            Some("   ")
+        );
+    }
+
+    #[test]
+    fn extract_returns_none_when_header_invalid_utf8() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            PUBLIC_PLAN_SESSION_HEADER,
+            HeaderValue::from_bytes(&[0xff, 0xfe]).unwrap(),
+        );
+        let jar = CookieJar::new().add(Cookie::new(PUBLIC_PLAN_SESSION_COOKIE, "cookie-fallback"));
+        assert_eq!(
+            extract_public_plan_session(&headers, &jar).as_deref(),
+            Some("cookie-fallback")
+        );
+    }
 }

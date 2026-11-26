@@ -67,5 +67,40 @@ mod tests {
         assert_eq!(body["total_profit"], 100.0);
         assert_eq!(body["total_revenue"], 300.0);
         assert_eq!(body["total_cost"], 200.0);
+        assert!(body["data"].get("farm_region").is_none());
+    }
+
+    #[test]
+    fn to_json_body_serializes_null_optional_plan_fields_and_empty_collections() {
+        let body = to_json_body(CultivationPlanWorkbenchSnapshot {
+            plan: CultivationPlanWorkbenchPlanHeader {
+                id: 2,
+                user_id: None,
+                plan_year: None,
+                plan_name: None,
+                plan_type: "public".into(),
+                status: "draft".into(),
+                total_area: 0.0,
+                planning_start_date: None,
+                planning_end_date: None,
+                total_profit: 0.0,
+                total_revenue: 0.0,
+                total_cost: 0.0,
+            },
+            fields: vec![],
+            crops: vec![],
+            cultivations: vec![],
+            available_crop_rows: vec![],
+            farm_region: "us".into(),
+        });
+
+        assert_eq!(body["success"], true);
+        assert!(body["data"]["plan_year"].is_null());
+        assert!(body["data"]["plan_name"].is_null());
+        assert!(body["data"]["planning_start_date"].is_null());
+        assert_eq!(body["data"]["fields"].as_array().unwrap().len(), 0);
+        assert_eq!(body["data"]["crops"].as_array().unwrap().len(), 0);
+        assert_eq!(body["data"]["cultivations"].as_array().unwrap().len(), 0);
+        assert_eq!(body["data"]["available_crops"].as_array().unwrap().len(), 0);
     }
 }

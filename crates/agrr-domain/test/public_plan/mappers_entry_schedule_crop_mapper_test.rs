@@ -358,6 +358,59 @@ fn prediction_meta_preserves_rfc3339_generated_at_without_reencoding() {
 }
 
 #[test]
+fn prediction_meta_passthrough_null_generated_at() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([("generated_at".into(), json!(null))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    assert!(meta.get("generated_at").is_some_and(|v| v.is_null()));
+}
+
+#[test]
+fn prediction_meta_leaves_non_integer_json_number_unchanged() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let payload = BTreeMap::from([("generated_at".into(), json!(1.788855795e9))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    assert_eq!(meta.get("generated_at"), payload.get("generated_at"));
+}
+
+#[test]
+fn prediction_meta_leaves_long_digit_string_with_suffix_unnormalized() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let raw = "1788855795000x";
+    let payload = BTreeMap::from([("generated_at".into(), json!(raw))]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    assert_eq!(
+        meta.get("generated_at").and_then(|v| v.as_str()),
+        Some(raw)
+    );
+}
+
+#[test]
+fn prediction_meta_returns_original_when_unix_timestamp_out_of_range() {
+    let farm = TestFarm {
+        weather_location_id: None,
+    };
+    let out_of_range = json!(9_223_372_036_854_775_807_i64);
+    let payload = BTreeMap::from([("generated_at".into(), out_of_range.clone())]);
+
+    let meta = prediction_meta(&farm, &payload, 2026);
+
+    assert_eq!(meta.get("generated_at"), Some(&out_of_range));
+}
+
+#[test]
 fn crop_detail_null_window_summaries_when_crop_is_ineligible() {
     let crop = TestCrop { id: 3, name: "Pepper" };
     let translator = KeyTranslator;
