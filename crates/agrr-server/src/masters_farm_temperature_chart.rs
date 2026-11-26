@@ -196,4 +196,103 @@ mod tests {
         assert_eq!(status, StatusCode::NOT_FOUND);
         assert_eq!(body["errors"][0], "missing farm");
     }
+
+    #[test]
+    fn temperature_chart_failure_maps_missing_weather_location_to_422() {
+        let (status, body) = temperature_chart_failure(TemperatureChartFailure::MissingWeatherLocation(
+            Error::new("farm has no weather location"),
+        ));
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(body["errors"][0], "farm has no weather location");
+    }
+
+    #[test]
+    fn temperature_chart_failure_maps_storage_error_to_500() {
+        let (status, body) =
+            temperature_chart_failure(TemperatureChartFailure::Storage(Error::new("sqlite busy")));
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body["errors"][0], "sqlite busy");
+    }
+
+    #[test]
+    fn temperature_chart_to_json_maps_dates_quality_and_sparse_points() {
+        use agrr_domain::farm::dtos::{
+            FarmTemperatureChartDataQuality, FarmTemperatureChartOutput, FarmTemperatureChartPoint,
+        };
+        use time::macros::date;
+
+        let output = FarmTemperatureChartOutput {
+            farm_id: 7,
+            period: "year".into(),
+            start_date: date!(2026-01-01),
+            end_date: date!(2026-12-31),
+            observed_only: true,
+            data_quality: FarmTemperatureChartDataQuality {
+                expected_days: 365,
+                present_days: 360,
+                missing_days: 5,
+            },
+            points: vec![
+                FarmTemperatureChartPoint {
+                    date: date!(2026-06-01),
+                    temperature_min: Some(12.0),
+                    temperature_mean: None,
+                    temperature_max: Some(28.5),
+                },
+                FarmTemperatureChartPoint {
+                    date: date!(2026-06-02),
+                    temperature_min: None,
+                    temperature_mean: None,
+                    temperature_max: None,
+                },
+            ],
+        };
+
+        let body = temperature_chart_to_json(&output);
+
+        assert_eq!(body["farm_id"], 7);
+        assert_eq!(body["period"], "year");
+        assert_eq!(body["start_date"], "2026-01-01");
+        assert_eq!(body["end_date"], "2026-12-31");
+        assert_eq!(body["observed_only"], true);
+        assert_eq!(body["data_quality"]["expected_days"], 365);
+        assert_eq!(body["data_quality"]["present_days"], 360);
+        assert_eq!(body["data_quality"]["missing_days"], 5);
+        let points = body["points"].as_array().expect("points array");
+        assert_eq!(points.len(), 2);
+        assert_eq!(points[0]["date"], "2026-06-01");
+        assert_eq!(points[0]["temperature_min"], 12.0);
+        assert!(points[0].get("temperature_mean").is_none());
+        assert_eq!(points[0]["temperature_max"], 28.5);
+        assert_eq!(points[1]["date"], "2026-06-02");
+        assert!(points[1].get("temperature_min").is_none());
+        assert!(points[1].get("temperature_mean").is_none());
+        assert!(points[1].get("temperature_max").is_none());
+    }
+
+    #[test]
+    fn temperature_chart_to_json_emits_empty_points_array() {
+        use agrr_domain::farm::dtos::{
+            FarmTemperatureChartDataQuality, FarmTemperatureChartOutput,
+        };
+        use time::macros::date;
+
+        let output = FarmTemperatureChartOutput {
+            farm_id: 1,
+            period: "month".into(),
+            start_date: date!(2026-03-01),
+            end_date: date!(2026-03-31),
+            observed_only: false,
+            data_quality: FarmTemperatureChartDataQuality {
+                expected_days: 31,
+                present_days: 0,
+                missing_days: 31,
+            },
+            points: vec![],
+        };
+
+        let body = temperature_chart_to_json(&output);
+        let points = body["points"].as_array().expect("points array");
+        assert!(points.is_empty());
+    }
 }
