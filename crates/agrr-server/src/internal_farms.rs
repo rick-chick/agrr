@@ -293,3 +293,149 @@ impl WeatherDataListPresenter {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::weather_data::dtos::{
+        InternalFarmWeatherDataListOutput, InternalFarmWeatherFetchFailure,
+        InternalFarmWeatherHttpStatus, InternalFarmWeatherStatusOutput,
+        InternalWeatherFetchFailure, InternalWeatherFetchHttpStatus,
+        InternalWeatherFetchStartOutput, InternalWeatherFetchStartVariant,
+    };
+    use agrr_domain::weather_data::ports::{
+        InternalFarmWeatherDataListOutputPort, InternalFarmWeatherStatusOutputPort,
+        InternalWeatherFetchStartOutputPort,
+    };
+
+    #[test]
+    fn fetch_start_presenter_maps_already_completed_with_count() {
+        let mut presenter = FetchStartPresenter::default();
+        presenter.on_success(InternalWeatherFetchStartOutput {
+            variant: InternalWeatherFetchStartVariant::AlreadyCompleted,
+            farm_id: 42,
+            weather_data_status: "completed".into(),
+            weather_data_count: Some(365),
+            total_blocks: 0,
+        });
+        let (status, body) = presenter.body.expect("body");
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body["success"], true);
+        assert_eq!(body["farm_id"], 42);
+        assert_eq!(body["status"], "completed");
+        assert_eq!(body["weather_data_count"], 365);
+        assert!(body.get("total_blocks").is_none());
+        assert!(body.get("message").is_some());
+    }
+
+    #[test]
+    fn fetch_start_presenter_maps_fetch_started_with_total_blocks() {
+        let mut presenter = FetchStartPresenter::default();
+        presenter.on_success(InternalWeatherFetchStartOutput {
+            variant: InternalWeatherFetchStartVariant::FetchStarted,
+            farm_id: 7,
+            weather_data_status: "fetching".into(),
+            weather_data_count: None,
+            total_blocks: 12,
+        });
+        let (status, body) = presenter.body.expect("body");
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body["success"], true);
+        assert_eq!(body["farm_id"], 7);
+        assert_eq!(body["status"], "fetching");
+        assert_eq!(body["total_blocks"], 12);
+        assert!(body.get("weather_data_count").is_none());
+        assert!(body.get("message").is_some());
+    }
+
+    #[test]
+    fn fetch_start_presenter_failure_maps_not_found_and_internal_error() {
+        let mut not_found = FetchStartPresenter::default();
+        not_found.on_failure(InternalWeatherFetchFailure {
+            message: "farm missing".into(),
+            http_status: InternalWeatherFetchHttpStatus::NotFound,
+        });
+        let (status, body) = not_found.body.expect("body");
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "farm missing");
+
+        let mut internal = FetchStartPresenter::default();
+        internal.on_failure(InternalWeatherFetchFailure {
+            message: "sqlite down".into(),
+            http_status: InternalWeatherFetchHttpStatus::InternalServerError,
+        });
+        let (status, body) = internal.body.expect("body");
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body["errors"][0], "sqlite down");
+    }
+
+    #[test]
+    fn weather_status_presenter_maps_success_payload() {
+        let mut presenter = WeatherStatusPresenter::default();
+        presenter.on_success(InternalFarmWeatherStatusOutput {
+            farm_id: 3,
+            status: "fetching".into(),
+            progress: 50,
+            fetched_blocks: 6,
+            total_blocks: 12,
+            weather_data_count: 180,
+            last_error: Some("transient".into()),
+        });
+        let (status, body) = presenter.body.expect("body");
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body["success"], true);
+        assert_eq!(body["farm_id"], 3);
+        assert_eq!(body["status"], "fetching");
+        assert_eq!(body["progress"], 50);
+        assert_eq!(body["fetched_blocks"], 6);
+        assert_eq!(body["total_blocks"], 12);
+        assert_eq!(body["weather_data_count"], 180);
+        assert_eq!(body["last_error"], "transient");
+    }
+
+    #[test]
+    fn weather_status_presenter_failure_maps_http_status() {
+        let mut presenter = WeatherStatusPresenter::default();
+        presenter.on_failure(InternalFarmWeatherFetchFailure {
+            message: "no farm".into(),
+            http_status: InternalFarmWeatherHttpStatus::NotFound,
+        });
+        let (status, body) = presenter.body.expect("body");
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "no farm");
+    }
+
+    #[test]
+    fn weather_data_list_presenter_maps_success_and_count() {
+        let rows = vec![json!({"date": "2026-01-01"}), json!({"date": "2026-01-02"})];
+        let mut presenter = WeatherDataListPresenter::default();
+        presenter.on_success(InternalFarmWeatherDataListOutput {
+            farm_summary: json!({"id": 1, "name": "North"}),
+            weather_location_summary: json!({"lat": 35.0}),
+            weather_data_rows: rows.clone(),
+            count: 2,
+        });
+        let (status, body) = presenter.body.expect("body");
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body["success"], true);
+        assert_eq!(body["farm"]["name"], "North");
+        assert_eq!(body["weather_location"]["lat"], 35.0);
+        let weather_data = body["weather_data"].as_array().expect("weather_data array");
+        assert_eq!(weather_data.len(), 2);
+        assert_eq!(weather_data[0]["date"], "2026-01-01");
+        assert_eq!(weather_data[1]["date"], "2026-01-02");
+        assert_eq!(body["count"], 2);
+    }
+
+    #[test]
+    fn weather_data_list_presenter_failure_maps_internal_error() {
+        let mut presenter = WeatherDataListPresenter::default();
+        presenter.on_failure(InternalFarmWeatherFetchFailure {
+            message: "storage".into(),
+            http_status: InternalFarmWeatherHttpStatus::InternalServerError,
+        });
+        let (status, body) = presenter.body.expect("body");
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body["errors"][0], "storage");
+    }
+}
