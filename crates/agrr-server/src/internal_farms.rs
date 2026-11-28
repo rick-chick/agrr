@@ -438,4 +438,64 @@ mod tests {
         assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
         assert_eq!(body["errors"][0], "storage");
     }
+
+    #[test]
+    fn weather_data_list_presenter_failure_maps_not_found() {
+        let mut presenter = WeatherDataListPresenter::default();
+        presenter.on_failure(InternalFarmWeatherFetchFailure {
+            message: "farm absent".into(),
+            http_status: InternalFarmWeatherHttpStatus::NotFound,
+        });
+        let (status, body) = presenter.body.expect("body");
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(body["errors"][0], "farm absent");
+    }
+
+    #[test]
+    fn weather_status_presenter_failure_maps_internal_error() {
+        let mut presenter = WeatherStatusPresenter::default();
+        presenter.on_failure(InternalFarmWeatherFetchFailure {
+            message: "read failed".into(),
+            http_status: InternalFarmWeatherHttpStatus::InternalServerError,
+        });
+        let (status, body) = presenter.body.expect("body");
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body["errors"][0], "read failed");
+    }
+
+    #[test]
+    fn weather_status_presenter_success_serializes_null_last_error() {
+        let mut presenter = WeatherStatusPresenter::default();
+        presenter.on_success(InternalFarmWeatherStatusOutput {
+            farm_id: 9,
+            status: "completed".into(),
+            progress: 100,
+            fetched_blocks: 12,
+            total_blocks: 12,
+            weather_data_count: 400,
+            last_error: None,
+        });
+        let (status, body) = presenter.body.expect("body");
+        assert_eq!(status, StatusCode::OK);
+        assert!(body["last_error"].is_null());
+    }
+
+    #[tokio::test]
+    async fn presenter_into_response_without_body_returns_internal_error_contract() {
+        use axum::body::to_bytes;
+        use axum::response::IntoResponse;
+
+        for response in [
+            FetchStartPresenter::default().into_response(),
+            WeatherStatusPresenter::default().into_response(),
+            WeatherDataListPresenter::default().into_response(),
+        ] {
+            assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+            let bytes = to_bytes(response.into_body(), usize::MAX)
+                .await
+                .expect("body bytes");
+            let body: Value = serde_json::from_slice(&bytes).expect("json");
+            assert_eq!(body["errors"][0], "internal");
+        }
+    }
 }
